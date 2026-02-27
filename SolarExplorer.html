@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kids Solar System Explorer</title>
+    <!-- Tailwind CSS for UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D simulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Canvas Confetti for the winning celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050510;
+            font-family: 'Nunito', sans-serif;
+            touch-action: none;
+            /* Prevent default touch actions on mobile */
+        }
+
+        h1,
+        h2,
+        h3,
+        .kid-font {
+            font-family: 'Fredoka One', cursive;
+            letter-spacing: 1px;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
+            pointer-events: none;
+            /* Let clicks pass through to canvas by default */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .interactive-ui {
+            pointer-events: auto;
+            /* Re-enable clicks for UI elements */
+        }
+
+        /* Custom Scrollbar for facts */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        .glass-panel {
+            background: rgba(20, 25, 45, 0.85);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Pulse animation for unvisited items */
+        @keyframes gentle-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .animate-gentle-pulse {
+            animation: gentle-pulse 2s infinite ease-in-out;
+        }
+
+        /* New classes for Title Shrink and UI */
+        #main-title-panel {
+            transition: all 0.5s ease;
+        }
+
+        .title-minimized {
+            transform: scale(0.6) origin-top-left;
+            opacity: 0.8;
+            padding: 0.5rem !important;
+        }
+
+        .ai-chat-bubble {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .fact-card-stage {
+            position: relative;
+            perspective: 1200px;
+            min-height: 368px;
+            overflow: hidden;
+        }
+
+        .fact-card-panel {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 1rem;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            box-sizing: border-box;
+        }
+
+        .fact-card-enter-right {
+            animation: fact-card-enter-right 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .fact-card-enter-left {
+            animation: fact-card-enter-left 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .fact-card-leave-left {
+            animation: fact-card-leave-left 0.3s ease forwards;
+        }
+
+        .fact-card-leave-right {
+            animation: fact-card-leave-right 0.3s ease forwards;
+        }
+
+        @keyframes fact-card-enter-right {
+            0% {
+                transform: translateX(105%) rotateY(-22deg) scale(0.95);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0) rotateY(0deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fact-card-enter-left {
+            0% {
+                transform: translateX(-105%) rotateY(22deg) scale(0.95);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0) rotateY(0deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fact-card-leave-left {
+            0% {
+                transform: translateX(0) rotateY(0deg) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(-95%) rotateY(20deg) scale(0.96);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fact-card-leave-right {
+            0% {
+                transform: translateX(0) rotateY(0deg) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(95%) rotateY(-20deg) scale(0.96);
+                opacity: 0;
+            }
+        }
+
+        .fact-nav-btn {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(30, 41, 59, 0.8);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: transform 0.18s ease, background-color 0.18s ease;
+        }
+
+        .fact-nav-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            background: rgba(59, 130, 246, 0.75);
+        }
+
+        .fact-nav-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .fact-dot {
+            width: 0.42rem;
+            height: 0.42rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.22);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .fact-dot.active {
+            background: #facc15;
+            transform: scale(1.35);
+        }
+    </style>
+</head>
+
+<body class="text-white">
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-layer" class="p-4 md:p-6">
+
+        <!-- Header & Controls -->
+        <div class="flex justify-between items-start">
+            <div id="main-title-panel"
+                class="glass-panel interactive-ui rounded-3xl p-4 flex flex-col items-center border-b-4 border-purple-500 origin-top-left">
+                <h1 id="main-title-text"
+                    class="text-2xl md:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-center drop-shadow-md transition-all duration-500">
+                    Solar Explorer
+                </h1>
+                <p id="main-title-sub"
+                    class="text-sm md:text-base text-gray-300 font-bold mt-1 transition-all duration-500">Discover the
+                    Solar System!</p>
+            </div>
+
+            <!-- Time Controls -->
+            <div
+                class="glass-panel interactive-ui rounded-full px-4 py-2 flex items-center gap-3 border-b-4 border-blue-500">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-300">Orbit Speed</span>
+                <button onclick="setSpeed(0)"
+                    class="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex justify-center items-center transition"
+                    title="Pause">⏸️</button>
+                <button onclick="setSpeed(0.3)"
+                    class="w-8 h-8 rounded-full bg-green-700 hover:bg-green-600 flex justify-center items-center transition"
+                    title="Normal">▶️</button>
+                <button onclick="setSpeed(1.5)"
+                    class="w-8 h-8 rounded-full bg-orange-600 hover:bg-orange-500 flex justify-center items-center transition"
+                    title="Fast">⏩</button>
+            </div>
+        </div>
+
+        <!-- Middle Area (Info Panel & Passport) -->
+        <div class="flex-1 flex flex-col md:flex-row justify-between items-end md:items-center mt-4 gap-4 pb-4">
+
+            <!-- Planet Info Panel (Hidden by default) -->
+            <div id="info-panel"
+                class="glass-panel interactive-ui rounded-3xl p-6 w-full md:w-96 border-l-4 border-yellow-400 hidden transform transition-all duration-300 translate-y-10 opacity-0 relative max-h-[88vh] flex flex-col">
+                <button onclick="closeInfoPanel()"
+                    class="absolute -top-3 -right-3 w-10 h-10 bg-red-500 hover:bg-red-400 rounded-full flex justify-center items-center text-xl font-bold border-2 border-white shadow-lg transition z-20">✖</button>
+
+                <div class="mb-3 flex items-center justify-center gap-3">
+                    <span id="info-emoji" class="text-5xl leading-none drop-shadow-lg shrink-0">🌍</span>
+                    <div class="flex items-center flex-wrap justify-center gap-2">
+                        <h2 id="info-title" class="text-3xl leading-tight text-yellow-300">Earth</h2>
+                        <span id="info-type"
+                            class="bg-blue-600 text-xs px-3 py-1 rounded-full uppercase tracking-widest font-bold inline-block">Planet</span>
+                    </div>
+                </div>
+
+                <div id="info-cards-container" class="flex-1 flex flex-col min-h-0">
+                    <div id="fact-card-stage" class="fact-card-stage"></div>
+                    <div id="fact-card-controls" class="mt-3 flex items-center justify-between gap-2">
+                        <button id="fact-prev-btn" class="fact-nav-btn" onclick="changeFactCard(-1)"
+                            aria-label="Previous card">◀</button>
+                        <div class="flex flex-col items-center gap-1">
+                            <span id="fact-card-progress"
+                                class="text-xs uppercase tracking-widest text-gray-300 font-bold">Card 1/1</span>
+                            <div id="fact-card-dots" class="flex items-center gap-1"></div>
+                        </div>
+                        <button id="fact-next-btn" class="fact-nav-btn" onclick="changeFactCard(1)"
+                            aria-label="Next card">▶</button>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-white/10 flex justify-between gap-2 shrink-0">
+                    <button onclick="resetCamera()"
+                        class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 py-2 rounded-xl font-bold shadow-lg transition">
+                        Zoom Out 🔭
+                    </button>
+                </div>
+            </div>
+
+            <!-- Space Passport (Progress) -->
+            <div
+                class="glass-panel interactive-ui rounded-3xl p-4 absolute bottom-4 right-4 md:bottom-6 md:right-6 w-auto border-r-4 border-green-400 transition-all duration-300 z-50 flex flex-col items-end">
+                <div class="flex justify-between items-center mb-2 border-b border-white/20 pb-2 gap-4 w-full">
+                    <h3 class="text-center text-lg text-green-300 m-0">🚀 Passport (<span
+                            id="progress-text">0/15</span>)</h3>
+                    <button onclick="togglePassport()" id="passport-toggle-btn"
+                        class="bg-green-800 hover:bg-green-700 w-8 h-8 rounded-full flex items-center justify-center transition"
+                        title="Toggle Passport">➖</button>
+                </div>
+                <div id="passport-grid"
+                    class="grid grid-cols-5 md:grid-cols-3 gap-2 justify-items-center transition-all duration-300 origin-bottom-right">
+                    <!-- JavaScript will populate this -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Mobile Hint -->
+        <div id="tutorial-hint"
+            class="interactive-ui text-center w-full absolute top-32 left-0 pointer-events-none transition-opacity duration-1000">
+            <span
+                class="bg-yellow-400 text-yellow-900 font-bold px-6 py-3 rounded-full shadow-lg animate-gentle-pulse inline-block kid-font">
+                👆 Tap or Click on a planet to explore! &nbsp; 🔄 Drag to look around.
+            </span>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA STRUCTURE (EDUCATIONAL CONTENT) ---
+        const celestialData = [
+            {
+                id: 'sun', name: 'Sun', type: 'Star', emoji: '☀️', radius: 6, distance: 0, speed: 0, color: 0xffcc00,
+                cards: [
+                    { image: 'images/sun1.png', fact: "I am a giant ball of burning, glowing gas! I'm so huge that over a million Earths could fit inside me." },
+                    { image: 'images/sun2.png', fact: "Sometimes, I shoot out huge bursts of energy called solar flares! They are massive explosions on my surface." },
+                    { image: 'images/sun3.png', fact: "I have dark patches called sunspots. They look dark because they are actually slightly cooler than the rest of my blazing hot surface." },
+                    { image: 'images/sun4.png', fact: "During a total solar eclipse, the Moon perfectly blocks my bright light, allowing you to see my glowing outer atmosphere called the corona." },
+                    { image: 'images/sun5.png', fact: "My gravity is so strong that it holds the entire solar system together, keeping all the planets safely in their orbits!" }
+                ]
+            },
+
+            {
+                id: 'mercury', name: 'Mercury', type: 'Planet', emoji: '🪨', radius: 0.8, distance: 12, speed: 0.028, color: 0x999999,
+                cards: [
+                    { image: 'images/mercury1.png', fact: "I am the smallest planet and closest to the Sun! I zoom around so fast that a year here is only 88 Earth days." },
+                    { image: 'images/mercury2.png', fact: "My surface is covered in craters from space rocks crashing into me. My biggest crater, the Caloris Basin, is wider than the state of Texas!" },
+                    { image: 'images/mercury3.png', fact: "Even though I am closest to the Sun, I don't have an atmosphere to trap heat. So at night, my surface drops to freezing, icy temperatures!" },
+                    { image: 'images/mercury4.png', fact: "From Earth, you can sometimes watch me pass directly in front of the Sun. This rare event is called a planetary transit." },
+                    { image: 'images/mercury5.png', fact: "Surprise! Scientists have found thick layers of frozen water ice hidden deep inside craters at my North and South poles." }
+                ]
+            },
+
+            {
+                id: 'venus', name: 'Venus', type: 'Planet', emoji: '🌋', radius: 1.2, distance: 18, speed: 0.0105, color: 0xe3bb76,
+                cards: [
+                    { image: 'images/venus1.png', fact: "I am the hottest planet in the solar system! I am covered in thick, yellowish clouds that trap heat like a giant greenhouse." },
+                    { image: 'images/venus2.png', fact: "Because of my thick clouds, scientists had to use special radar to map my surface. They discovered thousands of huge volcanoes!" },
+                    { image: 'images/venus3.png', fact: "In the 1980s, space probes actually landed on my surface and took pictures like this before melting from extreme heat just a few hours later." },
+                    { image: 'images/venus4.png', fact: "Strangely, I spin backwards compared to most other planets. On Venus, the Sun rises in the west and sets in the east!" },
+                    { image: 'images/venus5.png', fact: "My atmosphere moves super fast! The winds high up in my clouds whip around my entire planet in just 4 days." }
+                ]
+            },
+
+            {
+                id: 'earth', name: 'Earth', type: 'Planet', emoji: '🌍', radius: 1.3, distance: 25, speed: 0.007, color: 0x2b82c9,
+                moons: [{
+                    id: 'moon', name: 'Moon', type: 'Moon', emoji: '🌙', radius: 0.3, distance: 2.5, speed: 0.0938, color: 0xcccccc,
+                    cards: [
+                        { image: 'images/moon1.png', fact: "I am Earth's only natural satellite! I am covered in craters from asteroids hitting me billions of years ago." },
+                        { image: 'images/moon2.png', fact: "In 1969, human astronauts actually flew a spaceship here and walked on my surface for the very first time!" },
+                        { image: 'images/moon3.png', fact: "I don't make my own light. I shine because the Sun's light bounces off me. As I orbit Earth, you see different 'phases' of my lit side." }
+                    ]
+                }],
+                cards: [
+                    { image: 'images/earth1.png', fact: "You live here! From space, I look like a giant 'Blue Marble' because over 70% of my surface is covered by liquid water oceans." },
+                    { image: 'images/earth2.png', fact: "When the sun goes down, you can see millions of bright city lights glowing from space, showing exactly where humans live." },
+                    { image: 'images/earth3.png', fact: "This view is inspired by the famous 'Earthrise' picture. Astronauts on the Moon took a picture like this while looking back at our beautiful, colorful home." },
+                    { image: 'images/earth4.png', fact: "My magnetic field protects us from space radiation. Sometimes, solar energy hits my atmosphere, creating glowing colors in the sky called Auroras." },
+                    { image: 'images/earth5.png', fact: "Humans built the International Space Station, a giant flying laboratory that continuously orbits right above our heads!" }
+                ]
+            },
+
+            {
+                id: 'mars', name: 'Mars', type: 'Planet', emoji: '🔴', radius: 1.0, distance: 33, speed: 0.0056, color: 0xc1440e,
+                cards: [
+                    { image: 'images/mars1.png', fact: "I am known as the Red Planet because my surface is covered in rusty iron dust. I am the second smallest planet in the solar system." },
+                    { image: 'images/mars2.png', fact: "Humans have sent multiple robotic rovers, like Curiosity and Perseverance, to drive around on my surface and look for signs of ancient life!" },
+                    { image: 'images/mars3.png', fact: "I am home to Olympus Mons, the largest volcano in the entire solar system. It is almost three times taller than Mount Everest!" },
+                    { image: 'images/mars4.png', fact: "I also have a giant canyon called Valles Marineris. It is so incredibly long that it would stretch all the way across the United States." },
+                    { image: 'images/mars5.png', fact: "Because my atmosphere is very thin and full of red dust, sunsets on Mars actually glow with a beautiful, pale blue light!" }
+                ]
+            },
+
+            {
+                id: 'ceres', name: 'Ceres', type: 'Dwarf Planet', emoji: '🥔', radius: 0.5, distance: 40, speed: 0.0042, color: 0xaaaaaa,
+                cards: [
+                    { image: 'images/ceres1.png', fact: "I am the largest object in the Asteroid Belt between Mars and Jupiter. I was the first asteroid ever discovered!" },
+                    { image: 'images/ceres2.png', fact: "When a space probe visited me, it found super bright glowing spots inside my craters. Scientists discovered they are giant deposits of bright, shiny salt!" },
+                    { image: 'images/ceres3.png', fact: "I even have a lonely 'ice volcano' named Ahuna Mons. Instead of lava, it erupts a slushy mixture of freezing saltwater and mud." }
+                ]
+            },
+
+            {
+                id: 'jupiter', name: 'Jupiter', type: 'Planet', emoji: '🌪️', radius: 3.5, distance: 55, speed: 0.0028, color: 0xc88b3a,
+                cards: [
+                    { image: 'images/jupiter1.png', fact: "I am the King of the Planets! I am a Gas Giant, and I'm so massively big that all the other planets could fit inside me at once." },
+                    { image: 'images/jupiter2.png', fact: "My most famous feature is the Great Red Spot. It is a gigantic, swirling hurricane-like storm that has been blowing for hundreds of years!" },
+                    { image: 'images/jupiter3.png', fact: "When the Juno spacecraft flew over my poles, it discovered wild, tightly packed clusters of blueish cyclones swirling around like a mosaic." },
+                    { image: 'images/jupiter4.png', fact: "Just like Earth, I have glowing auroras at my North and South poles, but mine are hundreds of times more powerful!" },
+                    { image: 'images/jupiter5.png', fact: "I have over 90 moons! Some of them, like Ganymede and Io, are so big you can easily watch their shadows cross my surface." }
+                ]
+            },
+
+            {
+                id: 'saturn', name: 'Saturn', type: 'Planet', emoji: '🪐', radius: 3.0, distance: 75, speed: 0.0021, color: 0xeaddb9,
+                rings: { inner: 3.8, outer: 6.5, color: 0xd4c5a3 },
+                cards: [
+                    { image: 'images/saturn1.png', fact: "I am famous for my spectacular, massive rings! Even though I am huge, I am mostly made of light gas. If you found a bathtub big enough, I would float!" },
+                    { image: 'images/saturn2.png', fact: "I have a very weird weather pattern at my North Pole. It's a gigantic, spinning storm that is perfectly shaped like a six-sided hexagon." },
+                    { image: 'images/saturn3.png', fact: "My rings aren't solid. They are made of billions of tiny chunks of ice, rock, and dust zooming around me like a race track." },
+                    { image: 'images/saturn4.png', fact: "One of my moons, Enceladus, shoots massive geysers of water and ice straight out into space, which actually creates one of my outer rings!" },
+                    { image: 'images/saturn5.png', fact: "When a spacecraft flew behind me, it took a picture like this of the Sun shining through my rings. Look closely—that tiny blue dot in the background is Earth!" }
+                ]
+            },
+
+            {
+                id: 'uranus', name: 'Uranus', type: 'Planet', emoji: '🧊', radius: 2.2, distance: 95, speed: 0.0014, color: 0x4b70dd,
+                rings: { inner: 2.8, outer: 3.0, color: 0xffffff, opacity: 0.2 },
+                cards: [
+                    { image: 'images/uranus1.png', fact: "I am an Ice Giant. I get my lovely pale blue color from methane gas in my freezing cold atmosphere." },
+                    { image: 'images/uranus2.png', fact: "I am very unique because I spin completely on my side! I roll around the Sun like a giant, tilted barrel." },
+                    { image: 'images/uranus3.png', fact: "Even though I look smooth and featureless, powerful telescopes have spotted giant, bright white storms brewing under my blue haze." },
+                    { image: 'images/uranus4.png', fact: "One of my moons, Miranda, looks like it was smashed to pieces and glued back together. It has the tallest ice cliff in the solar system!" },
+                    { image: 'images/uranus5.png', fact: "I am much bigger than Earth, but much smaller than Jupiter or Saturn. You could fit exactly 63 Earths inside of me!" }
+                ]
+            },
+
+            {
+                id: 'neptune', name: 'Neptune', type: 'Planet', emoji: '🌀', radius: 2.1, distance: 110, speed: 0.00105, color: 0x274687,
+                cards: [
+                    { image: 'images/neptun1.png', fact: "I am the farthest official planet from the Sun! I am a deep, dark, freezing cold Ice Giant." },
+                    { image: 'images/neptun2.png', fact: "Just like Jupiter, I have had giant storms. My most famous one was the 'Great Dark Spot', a spinning vortex of freezing winds." },
+                    { image: 'images/neptun3.png', fact: "I also have thin, faint rings! When the James Webb Space Telescope looked at me in infrared light, my rings glowed brightly against the dark of space." },
+                    { image: 'images/neptun4.png', fact: "Hold onto your hat! I have the fastest, wildest winds in the entire solar system, blowing at over 1,200 miles per hour." },
+                    { image: 'images/neptun5.png', fact: "My biggest moon is named Triton. It is covered in strange, bumpy ice that makes it look exactly like the skin of a cantaloupe melon!" }
+                ]
+            },
+
+            {
+                id: 'pluto', name: 'Pluto', type: 'Dwarf Planet', emoji: '⛄', radius: 0.6, distance: 125, speed: 0.0007, color: 0xddcaba,
+                cards: [
+                    { image: 'images/pluto1.png', fact: "I used to be the 9th planet, but now I'm a proud Dwarf Planet! I live far out in the icy Kuiper Belt." },
+                    { image: 'images/pluto2.png', fact: "I have a giant, smooth glacier on my surface made of frozen nitrogen gas, and it is shaped exactly like a giant heart!" },
+                    { image: 'images/pluto3.png', fact: "Even though I am tiny and cold, I have a thin, beautiful blue atmosphere that glows when backlit by the faraway Sun." }
+                ]
+            },
+
+            {
+                id: 'haumea', name: 'Haumea', type: 'Dwarf Planet', emoji: '🥚', radius: 0.5, distance: 135, speed: 0.00063, color: 0xddeeff,
+                cards: [
+                    { image: 'images/haumea1.png', fact: "I am a very weird Dwarf Planet! When scientists take pictures like this from Earth, I mostly look like tiny blurry pixels in the deep dark." },
+                    { image: 'images/haumea2.png', fact: "But scientists know that I spin so incredibly fast that my shape stretched out, making me look like a giant space egg or football!" },
+                    { image: 'images/haumea3.png', fact: "As an extra surprise, I am the only object in the icy Kuiper Belt known to have my very own ring system!" }
+                ]
+            },
+
+            {
+                id: 'makemake', name: 'Makemake', type: 'Dwarf Planet', emoji: '🥶', radius: 0.55, distance: 145, speed: 0.00056, color: 0xccaaaa,
+                cards: [
+                    { image: 'images/makemake1.png', fact: "I am a reddish, icy Dwarf Planet. Can you spot the tiny white arrow in a Hubble picture like this? That points to my tiny, dark moon, MK2!" },
+                    { image: 'images/makemake2.png', fact: "It is so incredibly cold where I live that scientists believe the gases in my atmosphere actually freeze and fall to the ground as snow." },
+                    { image: 'images/makemake3.png', fact: "My name comes from the creator god of humanity in the mythology of the Rapa Nui people of Easter Island." }
+                ]
+            },
+
+            {
+                id: 'eris', name: 'Eris', type: 'Dwarf Planet', emoji: '❄️', radius: 0.6, distance: 160, speed: 0.00049, color: 0xeeeeee,
+                cards: [
+                    { image: 'images/eris1.png', fact: "I am one of the largest Dwarf Planets. I live so far away that it takes me over 500 years to orbit the Sun just one time!" },
+                    { image: 'images/eris2.png', fact: "Because I am almost the exact same size as Pluto, discovering me caused scientists to argue and eventually invent the word 'Dwarf Planet'." },
+                    { image: 'images/eris3.png', fact: "Because of the arguments my discovery caused, I was named after Eris, the Greek goddess of trouble and mischief!" }
+                ]
+            }
+        ];
+
+        // Helper to get all interactable bodies including moons
+        const getAllBodies = () => celestialData.concat(celestialData.flatMap(d => d.moons || []));
+
+        // --- 2. GLOBAL VARIABLES ---
+        let scene, camera, renderer, controls;
+        let bodies = [];      // Holds objects to animate
+        let clickables = [];  // Holds meshes for raycasting
+        let timeSpeed = 0.3;
+        let selectedBody = null;
+        let visitedBodies = new Set();
+        let isIntroComplete = false;
+        let isPassportMinimized = false;
+        let activeInfoCards = [];
+        let activeInfoCardIndex = 0;
+        let activeInfoBodyName = '';
+        let isFactCardAnimating = false;
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let isDragging = false;
+
+        // --- 3. INITIALIZATION ---
+        function init() {
+            // Scene Setup
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020208); // Deep space dark blue/black
+
+            // Camera Setup
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(0, 80, 100);
+
+            // Renderer Setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // optimize performance
+            container.appendChild(renderer.domElement);
+
+            // Controls Setup
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 300;
+            controls.minDistance = 10;
+            controls.autoRotate = true; // Gentle rotation before interaction
+            controls.autoRotateSpeed = 0.1;
+
+            // Lights Setup
+            const ambientLight = new THREE.AmbientLight(0x333333); // Dim background light
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.PointLight(0xffffff, 2.5, 300); // Light coming from the sun
+            scene.add(sunLight);
+
+            // Generate the Universe!
+            createStarfield();
+            createBelts();
+            createSolarSystem();
+            initPassportUI();
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize);
+
+            // Differentiate between dragging to rotate and clicking to select
+            renderer.domElement.addEventListener('pointerdown', () => isDragging = false);
+            renderer.domElement.addEventListener('pointermove', (e) => {
+                isDragging = true;
+                // Cursor hover effect
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(clickables);
+                document.body.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
+            });
+            renderer.domElement.addEventListener('pointerup', onPointerClick);
+
+            // Start Animation Loop
+            animate();
+
+            // Hide tutorial hint after 8 seconds
+            setTimeout(() => {
+                const hint = document.getElementById('tutorial-hint');
+                if (hint) hint.style.opacity = '0';
+            }, 8000);
+        }
+
+        // --- 4. SCENE GENERATION FUNCTIONS ---
+        function createStarfield() {
+            const starsGeo = new THREE.BufferGeometry();
+            const starsPos = [];
+            for (let i = 0; i < 3000; i++) {
+                // Scatter stars in a large sphere
+                const r = 300 + Math.random() * 400;
+                const theta = Math.random() * 2 * Math.PI;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+                starsPos.push(x, y, z);
+            }
+            starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsPos, 3));
+
+            // Create a custom shader or just basic points with tiny sizes
+            const starsMat = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.6,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const starMesh = new THREE.Points(starsGeo, starsMat);
+            scene.add(starMesh);
+        }
+
+        function createBelts() {
+            // Asteroid Belt (Between Mars and Jupiter)
+            createParticleRing(36, 46, 3000, 0x888888, 0.15);
+            // Kuiper Belt (Beyond Neptune)
+            createParticleRing(115, 170, 5000, 0xaaccff, 0.2);
+        }
+
+        function createParticleRing(innerRadius, outerRadius, count, colorHex, size) {
+            const geo = new THREE.BufferGeometry();
+            const pos = [];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const r = innerRadius + Math.pow(Math.random(), 1.5) * (outerRadius - innerRadius);
+                const x = Math.cos(angle) * r;
+                const z = Math.sin(angle) * r;
+                // Add some slight vertical thickness
+                const y = (Math.random() - 0.5) * 3 * (1 - Math.abs(r - (innerRadius + outerRadius) / 2) / ((outerRadius - innerRadius) / 2));
+                pos.push(x, y, z);
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({ color: colorHex, size: size, transparent: true, opacity: 0.6 });
+            const particles = new THREE.Points(geo, mat);
+            scene.add(particles);
+        }
+
+        function createSolarSystem() {
+            celestialData.forEach(data => {
+                // 1. Geometry & Material
+                const geo = new THREE.SphereGeometry(data.radius, 32, 32);
+                let mat;
+
+                if (data.type === 'Star') {
+                    // Sun is self-illuminating
+                    mat = new THREE.MeshBasicMaterial({ color: data.color });
+                } else {
+                    // Planets react to light
+                    mat = new THREE.MeshStandardMaterial({
+                        color: data.color,
+                        roughness: 0.6,
+                        metalness: 0.1
+                    });
+                }
+
+                const mesh = new THREE.Mesh(geo, mat);
+
+                // FIXED: Only add hitboxes to small objects, and ensure they don't overlap neighbors
+                if (data.radius < 1.0 && data.type !== 'Star') {
+                    const hitGeo = new THREE.SphereGeometry(data.radius * 2.5, 16, 16);
+                    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+                    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+                    mesh.add(hitMesh);
+                    hitMesh.userData = { id: data.id, isClickTarget: true, parentMesh: mesh };
+                    clickables.push(hitMesh);
+                } else {
+                    clickables.push(mesh);
+                }
+
+                mesh.userData = { ...data, isInteractable: true };
+
+                // 2. Orbital System (Decouples planet spin from moon orbits)
+                const systemGroup = new THREE.Group();
+                scene.add(systemGroup);
+                systemGroup.add(mesh); // Planet spins inside this group
+
+                // Set initial distance
+                systemGroup.position.x = data.distance;
+
+                // 3. Rings
+                if (data.rings) {
+                    const ringGeo = new THREE.RingGeometry(data.rings.inner, data.rings.outer, 64);
+                    const ringMat = new THREE.MeshStandardMaterial({
+                        color: data.rings.color,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: data.rings.opacity || 0.8
+                    });
+                    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                    // Tilt the rings
+                    ringMesh.rotation.x = Math.PI / 2 + 0.3;
+                    ringMesh.rotation.y = 0.1;
+                    mesh.add(ringMesh);
+                }
+
+                // 4. Moons
+                if (data.moons) {
+                    data.moons.forEach(moonData => {
+                        const mGeo = new THREE.SphereGeometry(moonData.radius, 16, 16);
+                        const mMat = new THREE.MeshStandardMaterial({ color: moonData.color });
+                        const mMesh = new THREE.Mesh(mGeo, mMat);
+
+                        // Add an invisible hitbox since the moon is very small
+                        const hitGeo = new THREE.SphereGeometry(moonData.radius * 3.5, 16, 16);
+                        const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+                        const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+                        mMesh.add(hitMesh);
+                        hitMesh.userData = { id: moonData.id, isClickTarget: true, parentMesh: mMesh };
+                        clickables.push(hitMesh);
+
+                        mMesh.userData = { ...moonData, isInteractable: true };
+
+                        const mOrbit = new THREE.Group();
+                        systemGroup.add(mOrbit); // Moon orbits the planet's center, NOT the spinning planet surface!
+                        mOrbit.add(mMesh);
+                        mMesh.position.x = moonData.distance;
+
+                        // Moons orbit their planet
+                        bodies.push({
+                            mesh: mMesh,
+                            orbitGroup: mOrbit,
+                            speed: moonData.speed,
+                            angle: Math.random() * Math.PI * 2,
+                            isMoon: true
+                        });
+                    });
+                }
+
+                // 5. Orbital Path Line
+                if (data.distance > 0) {
+                    const pathGeo = new THREE.RingGeometry(data.distance - 0.1, data.distance + 0.1, 128);
+                    const pathMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.05 });
+                    const pathMesh = new THREE.Mesh(pathGeo, pathMat);
+                    pathMesh.rotation.x = Math.PI / 2;
+                    scene.add(pathMesh);
+                }
+
+                // 6. Store for animation
+                bodies.push({
+                    mesh: mesh,
+                    systemGroup: systemGroup, // We store the whole system to move it together
+                    data: data,
+                    angle: Math.random() * Math.PI * 2 // Random starting position
+                });
+
+                // Add a glow effect to the sun
+                if (data.type === 'Star') {
+                    const glowGeo = new THREE.SphereGeometry(data.radius * 1.2, 32, 32);
+                    const glowMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+                    const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+                    mesh.add(glowMesh);
+                }
+            });
+        }
+
+        // --- 5. INTERACTION LOGIC ---
+        function onPointerClick(event) {
+            if (isDragging) return; // Don't click if user was just panning the camera
+
+            // Shrink title after first click interaction
+            if (!isIntroComplete) {
+                isIntroComplete = true;
+                const titlePanel = document.getElementById('main-title-panel');
+                titlePanel.classList.remove('p-4');
+                titlePanel.classList.add('p-2');
+
+                const titleText = document.getElementById('main-title-text');
+                titleText.classList.remove('text-2xl', 'md:text-4xl');
+                titleText.classList.add('text-xl');
+
+                const titleSub = document.getElementById('main-title-sub');
+                titleSub.style.display = 'none';
+            }
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(clickables);
+
+            if (intersects.length > 0) {
+                let object = intersects[0].object;
+
+                // If we clicked the invisible hit box, get its parent (the actual planet)
+                if (object.userData.isClickTarget) {
+                    object = object.userData.parentMesh;
+                }
+
+                selectBody(object);
+            }
+        }
+
+        function selectBody(mesh) {
+            controls.autoRotate = false; // Stop auto rotation if user clicks something
+            const data = mesh.userData;
+            if (!data || !data.isInteractable) return;
+
+            // Find the animation object corresponding to this mesh
+            selectedBody = bodies.find(b => b.mesh === mesh);
+
+            // Update UI
+            document.getElementById('info-emoji').innerText = data.emoji;
+            document.getElementById('info-title').innerText = data.name;
+            document.getElementById('info-title').style.color = '#' + data.color.toString(16).padStart(6, '0');
+            document.getElementById('info-type').innerText = data.type;
+
+            activeInfoBodyName = data.name;
+            activeInfoCards = Array.isArray(data.cards) ? data.cards : [];
+            activeInfoCardIndex = 0;
+            isFactCardAnimating = false;
+            renderFactCard(activeInfoCardIndex, true, 0);
+
+            // Show Panel
+            const panel = document.getElementById('info-panel');
+            panel.classList.remove('hidden');
+            // Small delay to allow display block to apply before animating opacity
+            setTimeout(() => {
+                panel.classList.remove('translate-y-10', 'opacity-0');
+            }, 10);
+
+            // Handle Passport
+            if (!visitedBodies.has(data.id)) {
+                visitedBodies.add(data.id);
+                updatePassportUI();
+            }
+        }
+
+        function buildFactCardElement(card) {
+            const cardDiv = document.createElement('article');
+            cardDiv.className = 'fact-card-panel';
+
+            let mediaHtml = '';
+            if (card.image) {
+                mediaHtml = `<img src="${card.image}" class="object-cover rounded-xl mb-3 shadow-md border border-white/5 bg-black mx-auto" style="aspect-ratio: 1 / 1; width: min(100%, 14rem);" alt="${activeInfoBodyName} image" loading="lazy" onerror="this.style.display='none'" />`;
+            }
+
+            cardDiv.innerHTML = `
+                ${mediaHtml}
+                <p class="text-sm leading-relaxed text-gray-200">${card.fact || ''}</p>
+            `;
+
+            return cardDiv;
+        }
+
+        function updateFactCardControls() {
+            const prevBtn = document.getElementById('fact-prev-btn');
+            const nextBtn = document.getElementById('fact-next-btn');
+            const progress = document.getElementById('fact-card-progress');
+            const dots = document.getElementById('fact-card-dots');
+            const total = activeInfoCards.length;
+            const hasMany = total > 1;
+
+            prevBtn.disabled = !hasMany || isFactCardAnimating;
+            nextBtn.disabled = !hasMany || isFactCardAnimating;
+            progress.innerText = total ? `Card ${activeInfoCardIndex + 1}/${total}` : 'Card 0/0';
+            dots.innerHTML = '';
+
+            for (let i = 0; i < total; i++) {
+                const dot = document.createElement('span');
+                dot.className = `fact-dot ${i === activeInfoCardIndex ? 'active' : ''}`;
+                dots.appendChild(dot);
+            }
+        }
+
+        function renderFactCard(newIndex, immediate = false, direction = 0) {
+            const stage = document.getElementById('fact-card-stage');
+            if (!stage) return;
+
+            const total = activeInfoCards.length;
+            if (total === 0) {
+                stage.innerHTML = `<div class="fact-card-panel"><p class="text-sm leading-relaxed text-gray-200">No fact cards available yet.</p></div>`;
+                updateFactCardControls();
+                return;
+            }
+
+            activeInfoCardIndex = Math.max(0, Math.min(newIndex, total - 1));
+            const nextCard = buildFactCardElement(activeInfoCards[activeInfoCardIndex]);
+            const currentCard = stage.firstElementChild;
+
+            if (immediate || !currentCard) {
+                stage.innerHTML = '';
+                stage.appendChild(nextCard);
+                isFactCardAnimating = false;
+                updateFactCardControls();
+                return;
+            }
+
+            isFactCardAnimating = true;
+            updateFactCardControls();
+
+            if (direction >= 0) {
+                currentCard.classList.add('fact-card-leave-left');
+                nextCard.classList.add('fact-card-enter-right');
+            } else {
+                currentCard.classList.add('fact-card-leave-right');
+                nextCard.classList.add('fact-card-enter-left');
+            }
+
+            stage.appendChild(nextCard);
+
+            const finishAnimation = () => {
+                if (currentCard && currentCard.parentNode === stage) {
+                    stage.removeChild(currentCard);
+                }
+                nextCard.classList.remove('fact-card-enter-right', 'fact-card-enter-left');
+                isFactCardAnimating = false;
+                updateFactCardControls();
+            };
+
+            nextCard.addEventListener('animationend', finishAnimation, { once: true });
+        }
+
+        function changeFactCard(delta) {
+            const total = activeInfoCards.length;
+            if (isFactCardAnimating || total <= 1) return;
+            const next = (activeInfoCardIndex + delta + total) % total;
+            renderFactCard(next, false, delta >= 0 ? 1 : -1);
+        }
+
+        function closeInfoPanel() {
+            const panel = document.getElementById('info-panel');
+            panel.classList.add('translate-y-10', 'opacity-0');
+            setTimeout(() => {
+                panel.classList.add('hidden');
+            }, 300); // match transition duration
+        }
+
+        function resetCamera() {
+            selectedBody = null;
+            closeInfoPanel();
+
+            // Animate camera back to overview
+            // Since we're in a simple setup without an animation library like GSAP, 
+            // we'll just snap it to a nice overview and let OrbitControls smooth the target
+            camera.position.set(0, 100, 150);
+            controls.target.set(0, 0, 0);
+        }
+
+        function setSpeed(mult) {
+            timeSpeed = mult;
+        }
+
+        // --- 6. UI MANAGEMENT & API LOGIC ---
+        function togglePassport() {
+            isPassportMinimized = !isPassportMinimized;
+            const grid = document.getElementById('passport-grid');
+            const btn = document.getElementById('passport-toggle-btn');
+
+            if (isPassportMinimized) {
+                grid.style.display = 'none';
+                btn.innerText = '➕';
+            } else {
+                grid.style.display = 'grid';
+                btn.innerText = '➖';
+            }
+        }
+
+        function initPassportUI() {
+            const grid = document.getElementById('passport-grid');
+            const allBodies = getAllBodies();
+            allBodies.forEach(data => {
+                const el = document.createElement('div');
+                el.id = `passport-${data.id}`;
+                el.className = 'w-10 h-10 md:w-12 md:h-12 bg-gray-800 border-2 border-gray-600 rounded-xl flex items-center justify-center text-xl md:text-2xl transition-all duration-500 opacity-50 grayscale cursor-help';
+                el.innerHTML = '?';
+                el.title = "Find this to unlock!";
+                grid.appendChild(el);
+            });
+        }
+
+        function updatePassportUI() {
+            const allBodies = getAllBodies();
+            const progressText = document.getElementById('progress-text');
+            progressText.innerText = `${visitedBodies.size}/${allBodies.length}`;
+
+            visitedBodies.forEach(id => {
+                const el = document.getElementById(`passport-${id}`);
+                if (el && el.innerHTML === '?') {
+                    // Find emoji
+                    const data = allBodies.find(d => d.id === id);
+                    el.innerHTML = data.emoji;
+                    el.title = data.name;
+                    el.classList.remove('opacity-50', 'grayscale', 'border-gray-600');
+                    el.classList.add('border-green-400', 'bg-green-900', 'animate-pulse');
+
+                    // Stop pulse after a moment
+                    setTimeout(() => el.classList.remove('animate-pulse'), 2000);
+                }
+            });
+
+            // Check Win Condition
+            if (visitedBodies.size === allBodies.length) {
+                triggerWinCelebration();
+            }
+        }
+
+        function triggerWinCelebration() {
+            // Wait a brief moment after the last click
+            setTimeout(() => {
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.6 },
+                    colors: ['#ffcc00', '#ff0000', '#00ff00', '#0000ff', '#ffffff']
+                });
+
+                // Create a temporary grand popup
+                const winDiv = document.createElement('div');
+                winDiv.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-indigo-900 to-purple-900 border-4 border-yellow-400 rounded-3xl p-8 text-center z-50 shadow-2xl glass-panel';
+                winDiv.innerHTML = `
+                    <div class="text-6xl mb-4">🏆👨‍🚀👩‍🚀🏆</div>
+                    <h2 class="text-4xl text-yellow-300 font-bold mb-2 kid-font">Master Explorer!</h2>
+                    <p class="text-xl text-white">You have discovered every major object in the Solar System!</p>
+                    <button onclick="this.parentElement.remove()" class="mt-6 bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded-full text-xl shadow-lg transition">Keep Playing</button>
+                `;
+                document.body.appendChild(winDiv);
+            }, 500);
+        }
+
+        // --- 7. ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update orbits and rotations
+            bodies.forEach(b => {
+                // Determine speed correctly depending on if it's a moon or planet
+                const speed = b.isMoon ? b.speed : (b.data ? b.data.speed : 0);
+
+                if (speed) {
+                    b.angle -= speed * timeSpeed;
+
+                    if (b.isMoon) {
+                        // Moon orbits its parent's center
+                        b.orbitGroup.rotation.y = b.angle;
+                        b.mesh.rotation.y += 0.01 * timeSpeed; // Moon rotates on its own axis
+                    } else {
+                        // Planet system orbits the sun
+                        b.systemGroup.position.x = Math.cos(b.angle) * b.data.distance;
+                        b.systemGroup.position.z = Math.sin(b.angle) * b.data.distance;
+                        b.mesh.rotation.y += 0.01 * timeSpeed; // Planet rotates on its own axis
+                    }
+                } else if (b.data && b.data.type === 'Star') {
+                    // Allow the Sun to slowly spin
+                    b.mesh.rotation.y += 0.005 * timeSpeed;
+                }
+            });
+
+            // If a body is selected, smoothly move the camera target to follow it
+            if (selectedBody && selectedBody.mesh) {
+                const targetPos = new THREE.Vector3();
+                selectedBody.mesh.getWorldPosition(targetPos);
+                // Smooth interpolation (lerp) towards the planet
+                controls.target.lerp(targetPos, 0.1);
+            } else if (controls.autoRotate) {
+                controls.update(); // only update autorotate if no planet is selected
+            } else {
+                controls.update(); // normal damping
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Boot up the universe!
+        init();
+
+    </script>
+</body>
+
+</html>
