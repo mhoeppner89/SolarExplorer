@@ -534,6 +534,10 @@
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         let isDragging = false;
+        const pointerDragThreshold = 8;
+        let activePointerId = null;
+        let pointerDownX = 0;
+        let pointerDownY = 0;
 
         // --- 3. INITIALIZATION ---
         function init() {
@@ -578,9 +582,25 @@
             window.addEventListener('resize', onWindowResize);
 
             // Differentiate between dragging to rotate and clicking to select
-            renderer.domElement.addEventListener('pointerdown', () => isDragging = false);
+            renderer.domElement.addEventListener('pointerdown', (e) => {
+                activePointerId = e.pointerId;
+                pointerDownX = e.clientX;
+                pointerDownY = e.clientY;
+                isDragging = false;
+            });
             renderer.domElement.addEventListener('pointermove', (e) => {
-                isDragging = true;
+                if (activePointerId === e.pointerId) {
+                    const dx = e.clientX - pointerDownX;
+                    const dy = e.clientY - pointerDownY;
+                    if ((dx * dx + dy * dy) > pointerDragThreshold * pointerDragThreshold) {
+                        isDragging = true;
+                    }
+                }
+
+                if (e.pointerType !== 'mouse') {
+                    return;
+                }
+
                 // Cursor hover effect
                 mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -588,7 +608,16 @@
                 const intersects = raycaster.intersectObjects(clickables);
                 document.body.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
             });
-            renderer.domElement.addEventListener('pointerup', onPointerClick);
+            renderer.domElement.addEventListener('pointerup', (e) => {
+                if (activePointerId !== e.pointerId) return;
+                onPointerClick(e);
+                activePointerId = null;
+                isDragging = false;
+            });
+            renderer.domElement.addEventListener('pointercancel', () => {
+                activePointerId = null;
+                isDragging = false;
+            });
 
             // Start Animation Loop
             animate();
