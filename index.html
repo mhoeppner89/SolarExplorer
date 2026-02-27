@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solar Explorer - Language</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --ink: #f8fcff;
+            --muted: #b0bfd9;
+            --panel: rgba(8, 16, 34, 0.76);
+            --line: rgba(205, 226, 255, 0.22);
+            --sun: #ffb648;
+            --orbit: rgba(133, 177, 255, 0.28);
+            --en-a: #40c4ff;
+            --en-b: #2669d9;
+            --de-a: #7ad26a;
+            --de-b: #328748;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Avenir Next Condensed", "Gill Sans", "Trebuchet MS", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 15% 15%, #1f4e89 0%, rgba(31, 78, 137, 0) 38%),
+                radial-gradient(circle at 85% 80%, #3b2d63 0%, rgba(59, 45, 99, 0) 44%),
+                linear-gradient(155deg, #050913 0%, #081326 44%, #0d1d3a 100%);
+            display: grid;
+            place-items: center;
+            padding: 1.2rem;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: -20%;
+            pointer-events: none;
+            background-image:
+                radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 1px, transparent 1.4px),
+                radial-gradient(circle, rgba(166, 212, 255, 0.5) 0 1px, transparent 1.3px),
+                radial-gradient(circle, rgba(255, 255, 255, 0.55) 0 0.8px, transparent 1.2px);
+            background-size: 170px 170px, 230px 230px, 120px 120px;
+            animation: drift 22s linear infinite;
+            opacity: 0.55;
+            z-index: 0;
+        }
+
+        body::after {
+            animation-duration: 34s;
+            animation-direction: reverse;
+            opacity: 0.35;
+        }
+
+        .panel {
+            width: min(100%, 42rem);
+            background:
+                linear-gradient(145deg, rgba(15, 30, 60, 0.9), rgba(10, 18, 36, 0.7)),
+                var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 1.35rem;
+            padding: clamp(1.1rem, 2.8vw, 1.9rem);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            width: 22rem;
+            aspect-ratio: 1 / 1;
+            top: -10.5rem;
+            right: -9.2rem;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle, rgba(255, 223, 133, 0.45) 0%, rgba(255, 190, 95, 0.15) 48%, transparent 72%);
+            pointer-events: none;
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+        }
+
+        .kicker {
+            margin: 0;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #ffd48f;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        h1 {
+            margin: 0.45rem 0 0;
+            font-family: "Copperplate", "Avenir Next Condensed", "Trebuchet MS", sans-serif;
+            font-size: clamp(1.45rem, 3.8vw, 2.35rem);
+            line-height: 1.12;
+            letter-spacing: 0.02em;
+            text-wrap: balance;
+        }
+
+        .subtitle {
+            margin: 0.55rem 0 0;
+            color: var(--muted);
+            font-size: clamp(0.92rem, 2vw, 1.03rem);
+        }
+
+        .orbit-display {
+            margin: 1.05rem 0 0.8rem;
+            height: 7.8rem;
+            display: grid;
+            place-items: center;
+            position: relative;
+        }
+
+        .sun {
+            width: 2.45rem;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            background: radial-gradient(circle at 32% 30%, #ffeeb3 0%, #ffd37b 37%, #ffad3c 72%);
+            box-shadow: 0 0 34px rgba(255, 179, 70, 0.8);
+            z-index: 2;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .orbit {
+            position: absolute;
+            border: 1px solid var(--orbit);
+            border-radius: 50%;
+            transform-origin: center center;
+            animation: spin 16s linear infinite;
+        }
+
+        .orbit:nth-child(2) {
+            width: 5.7rem;
+            height: 5.7rem;
+            animation-duration: 12s;
+        }
+
+        .orbit:nth-child(3) {
+            width: 8.2rem;
+            height: 8.2rem;
+            animation-duration: 18s;
+            animation-direction: reverse;
+        }
+
+        .orbit:nth-child(4) {
+            width: 10.6rem;
+            height: 10.6rem;
+            animation-duration: 24s;
+        }
+
+        .planet {
+            position: absolute;
+            top: 50%;
+            right: -0.36rem;
+            transform: translateY(-50%);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+        }
+
+        .orbit:nth-child(2) .planet {
+            width: 0.5rem;
+            height: 0.5rem;
+            background: #8dd6ff;
+        }
+
+        .orbit:nth-child(3) .planet {
+            width: 0.64rem;
+            height: 0.64rem;
+            background: #91ec9f;
+        }
+
+        .orbit:nth-child(4) .planet {
+            width: 0.44rem;
+            height: 0.44rem;
+            background: #d0a8ff;
+        }
+
+        .choices {
+            display: grid;
+            gap: 0.8rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            position: relative;
+            z-index: 1;
+        }
+
+        .choice {
+            display: grid;
+            gap: 0.24rem;
+            align-content: center;
+            justify-items: start;
+            text-decoration: none;
+            color: var(--ink);
+            border: 1px solid rgba(255, 255, 255, 0.26);
+            border-radius: 1rem;
+            padding: 0.92rem 1rem;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+            min-height: 5.6rem;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        .choice .lang {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+        }
+
+        .choice .desc {
+            font-size: 0.83rem;
+            color: #dce8ff;
+            line-height: 1.2;
+        }
+
+        .choice.en {
+            background: linear-gradient(145deg, rgba(53, 140, 255, 0.33), rgba(38, 83, 178, 0.25));
+        }
+
+        .choice.de {
+            background: linear-gradient(145deg, rgba(95, 197, 103, 0.34), rgba(44, 120, 56, 0.25));
+        }
+
+        .choice:hover,
+        .choice:focus-visible {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.52);
+            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+            outline: none;
+        }
+
+        .footnote {
+            margin: 0.8rem 0 0;
+            color: #9db0d3;
+            font-size: 0.77rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 34px rgba(255, 179, 70, 0.8);
+            }
+
+            50% {
+                transform: scale(1.06);
+                box-shadow: 0 0 42px rgba(255, 179, 70, 0.92);
+            }
+        }
+
+        @keyframes drift {
+            to {
+                transform: translate(-100px, -80px);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .panel {
+                width: min(100%, 32rem);
+            }
+
+            .choices {
+                grid-template-columns: 1fr;
+            }
+
+            .orbit-display {
+                height: 6.9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="panel">
+        <header class="hero">
+            <p class="kicker">Solar Explorer Mission Control</p>
+            <h1>Choose Your Launch Language</h1>
+            <p class="subtitle">Bitte wähle deine Sprache / Please choose your language.</p>
+        </header>
+
+        <div class="orbit-display" aria-hidden="true">
+            <div class="sun"></div>
+            <div class="orbit"><span class="planet"></span></div>
+            <div class="orbit"><span class="planet"></span></div>
+            <div class="orbit"><span class="planet"></span></div>
+        </div>
+
+        <div class="choices" aria-label="Language choices">
+            <a class="choice en" href="SolarExplorer.html" lang="en">
+                <span class="lang">English</span>
+                <span class="desc">Open Solar Explorer in English.</span>
+            </a>
+            <a class="choice de" href="solarexplorer_deutsch.html" lang="de">
+                <span class="lang">Deutsch</span>
+                <span class="desc">Starte Solar Explorer auf Deutsch.</span>
+            </a>
+        </div>
+
+        <p class="footnote">Tip: You can always switch languages from this page.</p>
+    </main>
+</body>
+
+</html>
