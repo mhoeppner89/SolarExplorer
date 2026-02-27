@@ -324,7 +324,7 @@
 
             <!-- Space Passport (Progress) -->
             <div id="passport-panel"
-                class="glass-panel interactive-ui rounded-2xl md:rounded-3xl p-2 md:p-4 absolute bottom-2 right-2 md:bottom-6 md:right-6 w-auto border-r-4 border-green-400 transition-all duration-300 z-50 flex flex-col items-end">
+                class="glass-panel interactive-ui rounded-2xl md:rounded-3xl p-2 md:p-4 fixed bottom-0 right-0 md:bottom-6 md:right-6 w-auto border-r-4 border-green-400 transition-all duration-300 z-50 flex flex-col items-end">
                 <div class="flex justify-between items-center mb-1 md:mb-2 border-b border-white/20 pb-1 md:pb-2 gap-2 md:gap-4 w-full">
                     <h3 class="text-center text-[10px] leading-tight md:text-lg text-green-300 m-0">🚀 Passport (<span
                             id="progress-text">0/15</span>)</h3>
@@ -529,8 +529,10 @@
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         let isDragging = false;
-        const pointerDragThreshold = 8;
+        const mouseDragThreshold = 8;
+        const touchDragThreshold = 24;
         let activePointerId = null;
+        let activePointerType = 'mouse';
         let pointerDownX = 0;
         let pointerDownY = 0;
 
@@ -579,6 +581,7 @@
             // Differentiate between dragging to rotate and clicking to select
             renderer.domElement.addEventListener('pointerdown', (e) => {
                 activePointerId = e.pointerId;
+                activePointerType = e.pointerType || 'mouse';
                 pointerDownX = e.clientX;
                 pointerDownY = e.clientY;
                 isDragging = false;
@@ -587,7 +590,8 @@
                 if (activePointerId === e.pointerId) {
                     const dx = e.clientX - pointerDownX;
                     const dy = e.clientY - pointerDownY;
-                    if ((dx * dx + dy * dy) > pointerDragThreshold * pointerDragThreshold) {
+                    const dragThreshold = activePointerType === 'mouse' ? mouseDragThreshold : touchDragThreshold;
+                    if ((dx * dx + dy * dy) > dragThreshold * dragThreshold) {
                         isDragging = true;
                     }
                 }
@@ -607,10 +611,12 @@
                 if (activePointerId !== e.pointerId) return;
                 onPointerClick(e);
                 activePointerId = null;
+                activePointerType = 'mouse';
                 isDragging = false;
             });
             renderer.domElement.addEventListener('pointercancel', () => {
                 activePointerId = null;
+                activePointerType = 'mouse';
                 isDragging = false;
             });
 
@@ -678,6 +684,35 @@
             scene.add(particles);
         }
 
+        function getPlanetHitboxRadius(bodyData) {
+            if (bodyData.id === 'earth') {
+                // Keep Earth's hitbox conservative so the Moon remains easy to select.
+                return bodyData.radius * 1.15;
+            }
+
+            if (bodyData.type === 'Dwarf Planet') {
+                return bodyData.radius * 5.2;
+            }
+
+            if (bodyData.radius <= 1.1) {
+                return bodyData.radius * 3.8;
+            }
+
+            if (bodyData.radius <= 2.2) {
+                return bodyData.radius * 2.1;
+            }
+
+            return bodyData.radius * 1.45;
+        }
+
+        function getMoonHitboxRadius(moonData, parentData) {
+            if (parentData.id === 'earth' && moonData.id === 'moon') {
+                return moonData.radius * 4.4;
+            }
+
+            return moonData.radius * 4.0;
+        }
+
         function createSolarSystem() {
             celestialData.forEach(data => {
                 // 1. Geometry & Material
@@ -698,9 +733,9 @@
 
                 const mesh = new THREE.Mesh(geo, mat);
 
-                // FIXED: Only add hitboxes to small objects, and ensure they don't overlap neighbors
-                if (data.radius < 1.0 && data.type !== 'Star') {
-                    const hitGeo = new THREE.SphereGeometry(data.radius * 2.5, 16, 16);
+                // Give every non-star body a pick helper to improve tap/click reliability.
+                if (data.type !== 'Star') {
+                    const hitGeo = new THREE.SphereGeometry(getPlanetHitboxRadius(data), 16, 16);
                     const hitMat = new THREE.MeshBasicMaterial({ visible: false });
                     const hitMesh = new THREE.Mesh(hitGeo, hitMat);
                     mesh.add(hitMesh);
@@ -743,8 +778,8 @@
                         const mMat = new THREE.MeshStandardMaterial({ color: moonData.color });
                         const mMesh = new THREE.Mesh(mGeo, mMat);
 
-                        // Add an invisible hitbox since the moon is very small
-                        const hitGeo = new THREE.SphereGeometry(moonData.radius * 3.5, 16, 16);
+                        // Add an invisible hitbox since the moon is very small.
+                        const hitGeo = new THREE.SphereGeometry(getMoonHitboxRadius(moonData, data), 16, 16);
                         const hitMat = new THREE.MeshBasicMaterial({ visible: false });
                         const hitMesh = new THREE.Mesh(hitGeo, hitMat);
                         mMesh.add(hitMesh);
