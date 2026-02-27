@@ -268,7 +268,7 @@
             <!-- Time Controls -->
             <div
                 class="glass-panel interactive-ui rounded-full px-4 py-2 flex items-center gap-3 border-b-4 border-blue-500">
-                <span class="text-xs font-bold uppercase tracking-wider text-blue-300">Umlaufgeschwindigkeit</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-300">Orbit</span>
                 <button onclick="setSpeed(0)"
                     class="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex justify-center items-center transition"
                     title="Pausieren">⏸️</button>
@@ -323,17 +323,18 @@
             </div>
 
             <!-- Space Passport (Progress) -->
-            <div
-                class="glass-panel interactive-ui rounded-3xl p-4 absolute bottom-4 right-4 md:bottom-6 md:right-6 w-auto border-r-4 border-green-400 transition-all duration-300 z-50 flex flex-col items-end">
-                <div class="flex justify-between items-center mb-2 border-b border-white/20 pb-2 gap-4 w-full">
-                    <h3 class="text-center text-lg text-green-300 m-0">🚀 Reisepass (<span
+            <div id="passport-panel"
+                class="glass-panel interactive-ui rounded-2xl md:rounded-3xl p-2 md:p-4 absolute bottom-2 right-2 md:bottom-6 md:right-6 w-auto border-r-4 border-green-400 transition-all duration-300 z-50 flex flex-col items-end">
+                <div
+                    class="flex justify-between items-center mb-1 md:mb-2 border-b border-white/20 pb-1 md:pb-2 gap-2 md:gap-4 w-full">
+                    <h3 class="text-center text-[10px] leading-tight md:text-lg text-green-300 m-0">🚀 Reisepass (<span
                             id="progress-text">0/15</span>)</h3>
                     <button onclick="togglePassport()" id="passport-toggle-btn"
-                        class="bg-green-800 hover:bg-green-700 w-8 h-8 rounded-full flex items-center justify-center transition"
+                        class="bg-green-800 hover:bg-green-700 w-6 h-6 md:w-8 md:h-8 text-xs md:text-base rounded-full flex items-center justify-center transition"
                         title="Reisepass umschalten">➖</button>
                 </div>
                 <div id="passport-grid"
-                    class="grid grid-cols-5 md:grid-cols-3 gap-2 justify-items-center transition-all duration-300 origin-bottom-right">
+                    class="grid grid-cols-5 md:grid-cols-3 gap-1 md:gap-2 justify-items-center transition-all duration-300 origin-bottom-right">
                     <!-- JavaScript will populate this -->
                 </div>
             </div>
@@ -530,6 +531,7 @@
         let activeInfoCardIndex = 0;
         let activeInfoBodyName = '';
         let isFactCardAnimating = false;
+        let passportReopenTimeout = null;
 
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
@@ -857,6 +859,7 @@
             activeInfoCardIndex = 0;
             isFactCardAnimating = false;
             renderFactCard(activeInfoCardIndex, true, 0);
+            setPassportPanelVisibility(true);
 
             // Show Panel
             const panel = document.getElementById('info-panel');
@@ -968,6 +971,7 @@
         function closeInfoPanel() {
             const panel = document.getElementById('info-panel');
             panel.classList.add('translate-y-10', 'opacity-0');
+            schedulePassportPanelVisibility(false, 300);
             setTimeout(() => {
                 panel.classList.add('hidden');
             }, 300); // match transition duration
@@ -986,6 +990,31 @@
 
         function setSpeed(mult) {
             timeSpeed = mult;
+        }
+
+        function setPassportPanelVisibility(hidden) {
+            if (passportReopenTimeout) {
+                clearTimeout(passportReopenTimeout);
+                passportReopenTimeout = null;
+            }
+
+            const passportPanel = document.getElementById('passport-panel');
+            if (!passportPanel) return;
+            passportPanel.style.display = hidden ? 'none' : 'flex';
+        }
+
+        function schedulePassportPanelVisibility(hidden, delayMs) {
+            if (passportReopenTimeout) {
+                clearTimeout(passportReopenTimeout);
+            }
+
+            passportReopenTimeout = setTimeout(() => {
+                const passportPanel = document.getElementById('passport-panel');
+                if (passportPanel) {
+                    passportPanel.style.display = hidden ? 'none' : 'flex';
+                }
+                passportReopenTimeout = null;
+            }, delayMs);
         }
 
         // --- 6. UI MANAGEMENT & API LOGIC ---
@@ -1009,7 +1038,7 @@
             allBodies.forEach(data => {
                 const el = document.createElement('div');
                 el.id = `passport-${data.id}`;
-                el.className = 'w-10 h-10 md:w-12 md:h-12 bg-gray-800 border-2 border-gray-600 rounded-xl flex items-center justify-center text-xl md:text-2xl transition-all duration-500 opacity-50 grayscale cursor-help';
+                el.className = 'w-7 h-7 md:w-12 md:h-12 bg-gray-800 border border-gray-600 md:border-2 rounded-lg md:rounded-xl flex items-center justify-center text-sm md:text-2xl transition-all duration-500 opacity-50 grayscale cursor-help';
                 el.innerHTML = '?';
                 el.title = "Finde dieses Objekt, um es freizuschalten!";
                 grid.appendChild(el);
