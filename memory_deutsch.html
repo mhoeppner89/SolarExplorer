@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solar Explorer - Memory</title>
+    <link rel="icon" href="data:," />
+    <style>
+        :root {
+            color-scheme: dark;
+            --ink: #f6fbff;
+            --muted: #abc0de;
+            --line: rgba(206, 226, 255, 0.18);
+            --line-strong: rgba(222, 236, 255, 0.26);
+            --panel: rgba(7, 14, 30, 0.94);
+            --panel-strong: rgba(10, 22, 44, 0.96);
+            --panel-soft: rgba(16, 33, 65, 0.8);
+            --accent: #8de58b;
+            --accent-strong: #4ab55e;
+            --accent-warm: #ffd57a;
+            --warning: #ffb871;
+            --shadow: rgba(0, 0, 0, 0.42);
+            --shell-padding: clamp(0.7rem, 1.7vw, 1rem);
+            --board-gap: clamp(0.3rem, 0.75vw, 0.52rem);
+            --card-size: 5.8rem;
+            --board-columns: 5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: "Avenir Next Condensed", "Gill Sans", "Trebuchet MS", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 16% 14%, rgba(43, 92, 162, 0.88), transparent 30%),
+                radial-gradient(circle at 82% 16%, rgba(119, 71, 153, 0.34), transparent 26%),
+                radial-gradient(circle at 50% 118%, rgba(21, 95, 78, 0.36), transparent 28%),
+                linear-gradient(160deg, #030710 0%, #071123 42%, #0b1a33 100%);
+            overflow: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: -15%;
+            pointer-events: none;
+            background-image:
+                radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 1px, transparent 1.4px),
+                radial-gradient(circle, rgba(176, 214, 255, 0.42) 0 1px, transparent 1.3px),
+                radial-gradient(circle, rgba(255, 255, 255, 0.4) 0 0.8px, transparent 1px);
+            background-size: 180px 180px, 240px 240px, 120px 120px;
+            opacity: 0.36;
+            animation: drift 30s linear infinite;
+        }
+
+        body::after {
+            animation-direction: reverse;
+            animation-duration: 42s;
+            opacity: 0.2;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            min-height: 100svh;
+            padding: 0.55rem;
+            display: grid;
+            place-items: center;
+        }
+
+        .shell {
+            position: relative;
+            width: min(100%, 83rem);
+            height: min(calc(100svh - 1.1rem), 60rem);
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 0.55rem;
+            padding: var(--shell-padding);
+            border-radius: 1.55rem;
+            border: 1px solid var(--line);
+            background:
+                linear-gradient(165deg, rgba(10, 20, 39, 0.98), rgba(10, 18, 35, 0.92) 42%, rgba(13, 24, 47, 0.9)),
+                var(--panel);
+            box-shadow: 0 28px 70px var(--shadow);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .shell::before,
+        .shell::after {
+            content: "";
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .shell::before {
+            width: 26rem;
+            aspect-ratio: 1 / 1;
+            top: -14rem;
+            right: -12rem;
+            background: radial-gradient(circle, rgba(255, 214, 123, 0.24) 0%, rgba(255, 176, 78, 0.08) 46%, transparent 74%);
+        }
+
+        .shell::after {
+            width: 24rem;
+            aspect-ratio: 1 / 1;
+            left: -15rem;
+            bottom: -16rem;
+            background: radial-gradient(circle, rgba(88, 154, 255, 0.16) 0%, transparent 68%);
+        }
+
+        .top-panel {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 0.45rem;
+        }
+
+        .command-rail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.6rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(222, 236, 255, 0.13);
+            background:
+                linear-gradient(135deg, rgba(20, 37, 70, 0.72), rgba(12, 21, 40, 0.78)),
+                rgba(255, 255, 255, 0.03);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                0 12px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        .rail-actions {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .progress-chip {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.42rem;
+            min-width: 0;
+            padding: 0.42rem 0.7rem 0.46rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+                rgba(255, 255, 255, 0.03);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+            white-space: nowrap;
+        }
+
+        .progress-chip__label {
+            font-size: 0.62rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .progress-chip strong {
+            margin: 0;
+            font-size: clamp(0.86rem, 1.08vw, 0.98rem);
+            line-height: 1;
+        }
+
+        .hero-panel {
+            padding: 0 0.22rem;
+        }
+
+        .eyebrow {
+            margin: 0;
+            color: var(--accent-warm);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-size: 0.66rem;
+            font-weight: 700;
+        }
+
+        h1 {
+            margin: 0.12rem 0 0;
+            font-family: "Copperplate", "Avenir Next Condensed", "Trebuchet MS", sans-serif;
+            font-size: clamp(1.42rem, 3vw, 2.38rem);
+            line-height: 1;
+            letter-spacing: 0.02em;
+        }
+
+        .subtitle {
+            margin: 0.18rem 0 0;
+            max-width: 34rem;
+            color: var(--muted);
+            font-size: clamp(0.8rem, 1.5vw, 0.94rem);
+            line-height: 1.14;
+        }
+
+        .button {
+            appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+            padding: 0.54rem 0.86rem;
+            color: var(--ink);
+            text-decoration: none;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+                rgba(255, 255, 255, 0.04);
+            font: inherit;
+            font-weight: 700;
+            font-size: 0.88rem;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .button:hover,
+        .button:focus-visible {
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24);
+            outline: none;
+        }
+
+        .button.primary {
+            background:
+                linear-gradient(135deg, rgba(110, 216, 117, 0.38), rgba(50, 135, 72, 0.3)),
+                rgba(74, 181, 94, 0.18);
+            border-color: rgba(155, 242, 160, 0.3);
+        }
+
+        .button.ghost {
+            background:
+                linear-gradient(135deg, rgba(158, 193, 255, 0.08), rgba(255, 255, 255, 0.02)),
+                rgba(255, 255, 255, 0.03);
+        }
+
+        .board-stage {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            min-height: 0;
+            border-radius: 1.4rem;
+            border: 1px solid rgba(197, 221, 255, 0.16);
+            background:
+                linear-gradient(180deg, rgba(16, 31, 60, 0.54), rgba(8, 15, 30, 0.3) 18%, rgba(9, 15, 29, 0.08)),
+                linear-gradient(150deg, rgba(13, 25, 49, 0.9), rgba(8, 15, 30, 0.92));
+            box-shadow:
+                inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04),
+                0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .board-stage::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 22%),
+                radial-gradient(circle at 50% 0%, rgba(152, 191, 255, 0.08), transparent 42%);
+            opacity: 0.9;
+        }
+
+        .board-stage::after {
+            content: "";
+            position: absolute;
+            inset: 0.65rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(202, 226, 255, 0.08);
+            pointer-events: none;
+        }
+
+        .stage-aura {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(10px);
+            pointer-events: none;
+            opacity: 0.65;
+        }
+
+        .stage-aura--one {
+            width: 18rem;
+            aspect-ratio: 1 / 1;
+            top: -10rem;
+            left: -7rem;
+            background: radial-gradient(circle, rgba(255, 211, 122, 0.16) 0%, transparent 70%);
+        }
+
+        .stage-aura--two {
+            width: 24rem;
+            aspect-ratio: 1 / 1;
+            right: -11rem;
+            bottom: -13rem;
+            background: radial-gradient(circle, rgba(89, 160, 255, 0.14) 0%, transparent 72%);
+        }
+
+        .board-wrap {
+            position: relative;
+            z-index: 1;
+            min-height: 0;
+            height: 100%;
+            display: grid;
+            place-items: center;
+            padding: clamp(0.52rem, 1vw, 0.82rem);
+            overflow: hidden;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(var(--board-columns), var(--card-size));
+            gap: var(--board-gap);
+            justify-content: center;
+            align-content: center;
+        }
+
+        .card {
+            position: relative;
+            appearance: none;
+            border: 0;
+            padding: 0;
+            background: transparent;
+            cursor: pointer;
+            aspect-ratio: 1 / 1;
+        }
+
+        .card:focus-visible {
+            outline: 2px solid rgba(221, 236, 255, 0.86);
+            outline-offset: 3px;
+            border-radius: 1.08rem;
+        }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            display: block;
+            overflow: hidden;
+            border-radius: 1.02rem;
+            border: 1px solid rgba(214, 230, 255, 0.12);
+            transition:
+                opacity 0.2s ease,
+                transform 0.2s ease,
+                border-color 0.22s ease,
+                box-shadow 0.22s ease,
+                filter 0.22s ease;
+        }
+
+        .card-front {
+            background: linear-gradient(180deg, rgba(247, 251, 255, 0.14), rgba(14, 24, 48, 0.94));
+            opacity: 0;
+            transform: scale(0.94);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-front img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            background: rgba(5, 9, 18, 0.92);
+        }
+
+        .card-name {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: block;
+            padding: 0.34rem 0.28rem 0.3rem;
+            text-align: center;
+            font-size: clamp(0.56rem, 0.76vw, 0.82rem);
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            color: #f7fbff;
+            background: linear-gradient(180deg, rgba(8, 16, 30, 0.04), rgba(7, 13, 24, 0.9));
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+        }
+
+        .card-back {
+            display: grid;
+            place-items: center;
+            background:
+                radial-gradient(circle at 24% 20%, rgba(255, 255, 255, 0.1), transparent 18%),
+                radial-gradient(circle at 75% 80%, rgba(108, 173, 255, 0.12), transparent 24%),
+                linear-gradient(180deg, rgba(38, 68, 120, 0.98), rgba(20, 34, 64, 0.96));
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                0 10px 24px rgba(0, 0, 0, 0.22);
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .card-back::before,
+        .card-back::after {
+            content: "";
+            position: absolute;
+        }
+
+        .card-back::before {
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 22% 28%, rgba(255, 255, 255, 0.92) 0 1px, transparent 1.6px),
+                radial-gradient(circle at 72% 18%, rgba(255, 255, 255, 0.55) 0 1px, transparent 1.5px),
+                radial-gradient(circle at 64% 68%, rgba(205, 229, 255, 0.5) 0 1px, transparent 1.7px),
+                radial-gradient(circle at 36% 74%, rgba(255, 255, 255, 0.38) 0 0.9px, transparent 1.4px);
+            opacity: 0.65;
+        }
+
+        .card-back::after {
+            width: 38%;
+            aspect-ratio: 1 / 1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -60%);
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 34%, #fff0bd 0%, #ffd57f 34%, #ffa639 68%, transparent 74%);
+            box-shadow:
+                0 0 22px rgba(255, 193, 92, 0.72),
+                0 0 0 10px rgba(198, 220, 255, 0.07),
+                0 0 0 22px rgba(198, 220, 255, 0.035);
+        }
+
+        .back-label {
+            position: absolute;
+            left: 0.4rem;
+            right: 0.4rem;
+            bottom: 0.42rem;
+            z-index: 1;
+            text-align: center;
+            font-size: clamp(0.54rem, 0.7vw, 0.72rem);
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(229, 239, 255, 0.88);
+        }
+
+        .card:hover .card-back,
+        .card:focus-visible .card-back {
+            transform: translateY(-2px) scale(1.01);
+            border-color: rgba(222, 236, 255, 0.28);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 16px 30px rgba(0, 0, 0, 0.28);
+        }
+
+        .card.is-revealed .card-front,
+        .card.is-matched .card-front {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .card.is-revealed .card-back,
+        .card.is-matched .card-back {
+            opacity: 0;
+            transform: scale(0.94);
+        }
+
+        .card.is-revealed .card-front {
+            border-color: rgba(255, 222, 160, 0.46);
+            box-shadow:
+                0 14px 30px rgba(0, 0, 0, 0.28),
+                0 0 0 1px rgba(255, 222, 160, 0.1) inset;
+        }
+
+        .card.is-pending .card-front {
+            border-color: rgba(255, 184, 113, 0.82);
+            box-shadow:
+                0 14px 30px rgba(0, 0, 0, 0.28),
+                0 0 0 1px rgba(255, 184, 113, 0.28) inset,
+                0 0 24px rgba(255, 184, 113, 0.18);
+        }
+
+        .card.is-matched::after {
+            content: "";
+            position: absolute;
+            inset: -0.12rem;
+            border-radius: 1.14rem;
+            box-shadow:
+                0 0 0 1px rgba(147, 237, 155, 0.52),
+                0 0 28px rgba(80, 194, 105, 0.24);
+            pointer-events: none;
+        }
+
+        .card.is-matched .card-front {
+            border-color: rgba(147, 237, 155, 0.9);
+            box-shadow:
+                0 16px 34px rgba(16, 64, 28, 0.32),
+                0 0 0 1px rgba(147, 237, 155, 0.2) inset;
+            filter: saturate(1.06);
+        }
+
+        .card.is-matched .card-name {
+            background: linear-gradient(180deg, rgba(11, 29, 16, 0.08), rgba(14, 44, 22, 0.82));
+        }
+
+        .win-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+            background: rgba(5, 10, 19, 0.18);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .win-overlay.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .win-overlay__panel {
+            width: min(100%, 24rem);
+            padding: 1rem 1.05rem 1.08rem;
+            border-radius: 1.2rem;
+            border: 1px solid rgba(162, 244, 167, 0.28);
+            background:
+                linear-gradient(145deg, rgba(18, 44, 23, 0.94), rgba(10, 24, 18, 0.92)),
+                rgba(10, 25, 20, 0.92);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                0 24px 50px rgba(0, 0, 0, 0.34);
+            text-align: center;
+        }
+
+        .win-overlay__eyebrow {
+            margin: 0;
+            color: #d0f7cf;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-size: 0.66rem;
+            font-weight: 700;
+        }
+
+        .win-overlay strong {
+            display: block;
+            margin-top: 0.34rem;
+            font-size: clamp(1.18rem, 2vw, 1.46rem);
+            line-height: 1.06;
+        }
+
+        .win-overlay span {
+            display: block;
+            margin-top: 0.34rem;
+            color: #d7f7d5;
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+
+        .win-overlay__button {
+            margin-top: 0.82rem;
+        }
+
+        @keyframes drift {
+            to {
+                transform: translate(-110px, -75px);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .command-rail {
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+
+            .progress-chip {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 640px) {
+            :root {
+                --shell-padding: 0.7rem;
+                --board-gap: 0.36rem;
+                --card-size: 4rem;
+                --board-columns: 5;
+            }
+
+            .page {
+                padding: 0.35rem;
+            }
+
+            .shell {
+                height: calc(100svh - 0.7rem);
+                gap: 0.42rem;
+                border-radius: 1.15rem;
+            }
+
+            .command-rail {
+                padding: 0.42rem 0.46rem;
+                gap: 0.42rem;
+                border-radius: 0.88rem;
+            }
+
+            .rail-actions {
+                gap: 0.38rem;
+            }
+
+            .progress-chip {
+                padding: 0.35rem 0.58rem 0.38rem;
+            }
+
+            .progress-chip__label {
+                font-size: 0.55rem;
+            }
+
+            .progress-chip strong {
+                font-size: 0.76rem;
+            }
+
+            .hero-panel {
+                padding: 0 0.08rem;
+            }
+
+            .eyebrow {
+                font-size: 0.58rem;
+            }
+
+            h1 {
+                font-size: 1.68rem;
+            }
+
+            .subtitle {
+                font-size: 0.74rem;
+                max-width: none;
+            }
+
+            .button {
+                padding: 0.45rem 0.72rem;
+                font-size: 0.78rem;
+            }
+
+            .board-stage {
+                border-radius: 1.05rem;
+            }
+
+            .board-stage::after {
+                inset: 0.4rem;
+                border-radius: 0.8rem;
+            }
+
+            .board-wrap {
+                padding: 0.38rem;
+            }
+
+            .card-face {
+                border-radius: 0.82rem;
+            }
+
+            .card-name {
+                padding: 0.28rem 0.22rem 0.24rem;
+                font-size: 0.56rem;
+            }
+
+            .back-label {
+                bottom: 0.34rem;
+                font-size: 0.5rem;
+            }
+
+            .win-overlay {
+                padding: 0.75rem;
+            }
+
+            .win-overlay__panel {
+                padding: 0.85rem 0.82rem 0.9rem;
+                border-radius: 1rem;
+            }
+
+            .win-overlay span {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <main class="shell">
+            <header class="top-panel">
+                <div class="command-rail">
+                    <div class="rail-actions">
+                        <a class="button ghost" href="index.html">Zurueck</a>
+                        <button class="button primary" id="restart-btn" type="button">Neu mischen</button>
+                    </div>
+                    <div class="progress-chip" aria-label="Gefundene Paare">
+                        <span class="progress-chip__label">Paare</span>
+                        <strong id="pairs-progress">0 / 15</strong>
+                    </div>
+                </div>
+
+                <div class="hero-panel">
+                    <p class="eyebrow">Solar Explorer Memory</p>
+                    <h1>Finde die Bildpaare</h1>
+                    <p class="subtitle">30 Karten. 15 Paare. Merke dir die Himmelskoerper und raeume das Deck ab.</p>
+                </div>
+            </header>
+
+            <section class="board-stage" aria-label="Memory-Spielfeld">
+                <div class="stage-aura stage-aura--one"></div>
+                <div class="stage-aura stage-aura--two"></div>
+
+                <div class="board-wrap">
+                    <section class="board" id="board" aria-label="Memory-Spielbrett"></section>
+                </div>
+
+                <div class="win-overlay" id="win-banner" role="status" aria-live="polite">
+                    <div class="win-overlay__panel">
+                        <p class="win-overlay__eyebrow">Mission geschafft</p>
+                        <strong>Alle 15 Paare sind gefunden.</strong>
+                        <span>Das Deck ist leer. Starte direkt eine neue Runde.</span>
+                        <button class="button primary win-overlay__button" id="win-restart-btn" type="button">Noch eine Runde</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const sourceBodies = [
+            { id: "sun", name: "Sonne", image: "images/sun1.png" },
+            { id: "mercury", name: "Merkur", image: "images/mercury1.png" },
+            { id: "venus", name: "Venus", image: "images/venus1.png" },
+            { id: "earth", name: "Erde", image: "images/earth1.png" },
+            { id: "moon", name: "Mond", image: "images/moon1.png" },
+            { id: "mars", name: "Mars", image: "images/mars1.png" },
+            { id: "jupiter", name: "Jupiter", image: "images/jupiter1.png" },
+            { id: "saturn", name: "Saturn", image: "images/saturn1.png" },
+            { id: "uranus", name: "Uranus", image: "images/uranus1.png" },
+            { id: "neptun", name: "Neptun", image: "images/neptun1.png" },
+            { id: "ceres", name: "Ceres", image: "images/ceres1.png" },
+            { id: "pluto", name: "Pluto", image: "images/pluto1.png" },
+            { id: "eris", name: "Eris", image: "images/eris1.png" },
+            { id: "haumea", name: "Haumea", image: "images/haumea1.png" },
+            { id: "makemake", name: "Makemake", image: "images/makemake1.png" }
+        ];
+
+        const preferredGridOptions = [
+            { columns: 5, rows: 6 },
+            { columns: 6, rows: 5 }
+        ];
+
+        const extendedGridOptions = [
+            { columns: 3, rows: 10 },
+            { columns: 10, rows: 3 }
+        ];
+
+        const state = {
+            cards: [],
+            revealedIds: [],
+            pendingMismatchIds: [],
+            matchedPairs: 0,
+            mode: "playing",
+            nextCardId: 0,
+            now: 0,
+            layout: {
+                columns: 5,
+                rows: 6
+            }
+        };
+
+        const boardWrapEl = document.querySelector(".board-wrap");
+        const boardEl = document.getElementById("board");
+        const pairsProgressEl = document.getElementById("pairs-progress");
+        const winBannerEl = document.getElementById("win-banner");
+        const restartBtn = document.getElementById("restart-btn");
+        const winRestartBtn = document.getElementById("win-restart-btn");
+
+        function getBoardGapPx() {
+            return parseFloat(getComputedStyle(boardEl).gap) || 0;
+        }
+
+        function getCandidateMetrics(option, horizontalBudget, verticalBudget, gap) {
+            const widthLimited = (horizontalBudget - (gap * (option.columns - 1))) / option.columns;
+            const heightLimited = (verticalBudget - (gap * (option.rows - 1))) / option.rows;
+            const size = Math.min(widthLimited, heightLimited);
+
+            if (size <= 0) {
+                return null;
+            }
+
+            return {
+                ...option,
+                size
+            };
+        }
+
+        function pickLargestLayout(options, horizontalBudget, verticalBudget, gap) {
+            return options
+                .map((option) => getCandidateMetrics(option, horizontalBudget, verticalBudget, gap))
+                .filter(Boolean)
+                .sort((left, right) => right.size - left.size)[0] || null;
+        }
+
+        function updateBoardMetrics() {
+            const wrapRect = boardWrapEl.getBoundingClientRect();
+            const gap = getBoardGapPx();
+            const widthSafety = window.innerWidth <= 640 ? 10 : 8;
+            const heightSafety = window.innerWidth <= 640 ? 10 : 16;
+            const horizontalBudget = Math.max(0, wrapRect.width - widthSafety);
+            const verticalBudget = Math.max(0, wrapRect.height - heightSafety);
+            const minCap = window.innerWidth <= 640 ? 48 : 60;
+            const viewportRatio = horizontalBudget / Math.max(verticalBudget, 1);
+
+            const preferred = pickLargestLayout(preferredGridOptions, horizontalBudget, verticalBudget, gap);
+            const extended = pickLargestLayout(extendedGridOptions, horizontalBudget, verticalBudget, gap);
+
+            let winner = preferred || extended || { columns: 5, rows: 6, size: minCap };
+
+            if (preferred && extended) {
+                const unusualTall = viewportRatio < 0.58 && extended.rows > extended.columns;
+                const unusualWide = viewportRatio > 2.15 && extended.columns > extended.rows;
+                const meaningfullyLarger = extended.size > preferred.size + (window.innerWidth <= 640 ? 8 : 14);
+
+                if ((unusualTall || unusualWide) && meaningfullyLarger) {
+                    winner = extended;
+                }
+            }
+
+            document.documentElement.style.setProperty("--card-size", `${Math.max(minCap, winner.size)}px`);
+            document.documentElement.style.setProperty("--board-columns", String(winner.columns));
+            state.layout = {
+                columns: winner.columns,
+                rows: winner.rows
+            };
+        }
+
+        function getTurnStatusText() {
+            if (state.mode === "won") {
+                return "Alle Paare gefunden.";
+            }
+            if (state.pendingMismatchIds.length) {
+                return "Kein Paar. Tippe eine Karte an, damit die beiden wieder umgedreht werden.";
+            }
+            if (state.revealedIds.length === 2) {
+                return "Zwei Karten offen.";
+            }
+            if (state.revealedIds.length === 1) {
+                return "Waehle jetzt die zweite Karte.";
+            }
+            return "Waehle die erste Karte.";
+        }
+
+        function shuffle(items) {
+            const array = [...items];
+            for (let i = array.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function buildDeck() {
+            const deck = [];
+            sourceBodies.forEach((body) => {
+                deck.push({ ...body, cardId: `card-${state.nextCardId += 1}` });
+                deck.push({ ...body, cardId: `card-${state.nextCardId += 1}` });
+            });
+            return shuffle(deck).map((card) => ({
+                ...card,
+                isRevealed: false,
+                isMatched: false
+            }));
+        }
+
+        function renderBoard() {
+            const cardsHtml = state.cards.map((card) => {
+                const classNames = [
+                    "card",
+                    (card.isRevealed || card.isMatched) ? "is-revealed" : "",
+                    state.pendingMismatchIds.includes(card.cardId) ? "is-pending" : "",
+                    card.isMatched ? "is-matched" : ""
+                ].filter(Boolean).join(" ");
+
+                return `
+                    <button
+                        class="${classNames}"
+                        type="button"
+                        data-card-id="${card.cardId}"
+                        aria-label="${card.isMatched ? `${card.name} gefunden` : `Karte ${card.name}`}"
+                        aria-pressed="${card.isRevealed || card.isMatched ? "true" : "false"}"
+                        ${card.isMatched ? "disabled" : ""}
+                    >
+                        <div class="card-face card-front">
+                            <img src="${card.image}" alt="${card.name}" loading="lazy" decoding="async" />
+                            <span class="card-name">${card.name}</span>
+                        </div>
+                        <div class="card-face card-back" aria-hidden="true">
+                            <span class="back-label">Solar</span>
+                        </div>
+                    </button>
+                `;
+            }).join("");
+
+            boardEl.innerHTML = cardsHtml;
+
+            boardEl.querySelectorAll(".card").forEach((button) => {
+                button.addEventListener("click", () => handleCardSelection(button.dataset.cardId));
+            });
+        }
+
+        function updateHud() {
+            pairsProgressEl.textContent = `${state.matchedPairs} / 15`;
+            winBannerEl.classList.toggle("is-visible", state.mode === "won");
+            winBannerEl.setAttribute("aria-hidden", state.mode === "won" ? "false" : "true");
+        }
+
+        function render() {
+            renderBoard();
+            updateHud();
+            requestAnimationFrame(updateBoardMetrics);
+        }
+
+        function getCardById(cardId) {
+            return state.cards.find((card) => card.cardId === cardId);
+        }
+
+        function closePendingMismatch() {
+            state.pendingMismatchIds.forEach((cardId) => {
+                const card = getCardById(cardId);
+                if (card && !card.isMatched) {
+                    card.isRevealed = false;
+                }
+            });
+            state.pendingMismatchIds = [];
+        }
+
+        function finishGameIfComplete() {
+            if (state.matchedPairs === sourceBodies.length) {
+                state.mode = "won";
+                state.revealedIds = [];
+                render();
+            }
+        }
+
+        function handleCardSelection(cardId) {
+            if (state.mode === "won") {
+                return;
+            }
+
+            if (state.pendingMismatchIds.length) {
+                const clickedPendingCard = state.pendingMismatchIds.includes(cardId);
+                closePendingMismatch();
+                render();
+                if (clickedPendingCard) {
+                    return;
+                }
+            }
+
+            const card = getCardById(cardId);
+            if (!card || card.isMatched || card.isRevealed) {
+                return;
+            }
+
+            card.isRevealed = true;
+            state.revealedIds.push(cardId);
+            render();
+
+            if (state.revealedIds.length < 2) {
+                return;
+            }
+
+            const [firstId, secondId] = state.revealedIds;
+            const first = getCardById(firstId);
+            const second = getCardById(secondId);
+
+            if (first && second && first.id === second.id) {
+                first.isMatched = true;
+                second.isMatched = true;
+                state.revealedIds = [];
+                state.matchedPairs += 1;
+                finishGameIfComplete();
+                render();
+                return;
+            }
+
+            state.pendingMismatchIds = [firstId, secondId];
+            state.revealedIds = [];
+            render();
+        }
+
+        function restartGame() {
+            state.cards = buildDeck();
+            state.revealedIds = [];
+            state.pendingMismatchIds = [];
+            state.matchedPairs = 0;
+            state.mode = "playing";
+            render();
+        }
+
+        function renderGameToText() {
+            const payload = {
+                mode: state.mode,
+                grid: {
+                    columns: state.layout.columns,
+                    rows: state.layout.rows,
+                    note: "Reihen laufen von oben nach unten, Karten werden zeilenweise links nach rechts gelesen."
+                },
+                matchedPairs: state.matchedPairs,
+                turnStatus: getTurnStatusText(),
+                pendingMismatchIds: [...state.pendingMismatchIds],
+                cards: state.cards.map((card, index) => ({
+                    index,
+                    pair: card.id,
+                    label: card.name,
+                    revealed: card.isRevealed,
+                    matched: card.isMatched
+                }))
+            };
+            return JSON.stringify(payload);
+        }
+
+        window.render_game_to_text = renderGameToText;
+        window.advanceTime = (ms) => {
+            state.now += ms;
+            render();
+        };
+
+        window.addEventListener("resize", updateBoardMetrics);
+
+        restartBtn.addEventListener("click", restartGame);
+        winRestartBtn.addEventListener("click", restartGame);
+
+        restartGame();
+    </script>
+</body>
+
+</html>

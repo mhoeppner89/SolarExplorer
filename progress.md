@@ -1,0 +1,26 @@
+Original prompt: Okay, now the second game should be a "Memory", utilizing the images in the repo. Let's use the first image of every celestial body (should be 15 total), so we have 30 cards. Display them in a 5x6 grid.
+
+- Confirmed 15 usable `*1.png` celestial-body images in `/images`, matching the planned 30-card deck.
+- Scope for this pass: add a standalone German memory game page, wire `Minispiel 2` to it, and keep unrelated changes in `solarexplorer_deutsch.html` untouched.
+- Planned test loop: serve the repo locally, exercise the game with Playwright, inspect screenshots, and verify `render_game_to_text`.
+- Implemented `memory_deutsch.html` with a 30-card shuffled deck, deterministic mismatch scheduling via `window.advanceTime`, and `window.render_game_to_text` for browser checks.
+- Updated `index.html` so `Minispiel 2` now links to the new Memory page.
+- Browser verification passed on `http://127.0.0.1:8123`: 30 cards rendered, board stayed at 5 columns, mismatch timing reset correctly, one-pair match worked, full win state triggered, restart reshuffled, and the landing-page link plus back link both navigated correctly.
+- The bundled `web_game_playwright_client.js` could not run as-is because its Node import for `playwright` is missing in this environment (`ERR_MODULE_NOT_FOUND`). I used the built-in Playwright browser tools to complete the interaction and visual checks instead.
+- Follow-up refinement: removed the visible raster stat from the HUD and changed the card layout so each card is truly square, with the image filling the full 1:1 tile and the name overlaid at the bottom.
+- Bugfix follow-up: replaced the fragile 3D card-face transform with a more reliable front/back face swap so revealed images render correctly, and changed mismatch behavior so wrong pairs stay open until the next click/tap closes them.
+- Verified the latest bugfix in-browser: revealed cards now show the actual image tile again, and a mismatched pair stays open until the next click/tap closes it and continues play.
+- UI optimization pass: compacted the header, HUD, controls, and board sizing to target a single-screen layout with viewport-based square cards instead of relying on board scrolling.
+- Verified the compact layout in-browser: on mobile (`390x844`) and desktop (`1440x900`) the page stays within the viewport with no body scrolling, the board no longer overflows horizontally, and cards remain square and clickable.
+- Layout compression follow-up complete: removed the visible turn-status field, moved the deck counter into the top control row, and switched board sizing to a layout-aware calculation that uses both available width and remaining height.
+- Verified the updated layout at `390x844`, `1024x768`, and `1440x900`: no body scrolling, no board overflow, the full 5x6 grid stays visible, cards remain square, and card tiles grow larger again on bigger screens.
+- Verified gameplay after the UI refactor: the deck counter updates after a successful match and after restart, mismatch-hold/next-click-close behavior still works, and the win state does not push the board out of the viewport.
+- Responsive-grid follow-up complete: replaced the fixed 5-column board with a best-fit layout solver that chooses the largest square-card arrangement for 30 cards based on the current viewport.
+- Verified the solver in-browser: `390x844` stays at `5x6`, while `1024x768`, `1440x900`, and `1920x1080` switch to `6x5` because that yields bigger 1:1 cards without introducing scroll or overflow.
+- Re-verified gameplay after the grid change: mismatch pairs still stay open until the next click closes them, matched pairs still increment the deck counter, and `render_game_to_text` now reports the active dynamic grid.
+- Memory UI redesign pass: rebuilt the page around a compact command rail, shorter hero block, framed board stage, upgraded solar card backs, stronger reveal/mismatch/match states, and a centered win overlay with its own replay button.
+- Layout logic refinement: narrowed the grid solver to preferred `5x6` and `6x5` layouts with `3x10` / `10x3` only as stretch options for unusually tall or wide viewports.
+- Validation complete: fixed a sizing regression where the board could clip vertically by constraining the board stage correctly and using the board's computed pixel gap instead of parsing the root `clamp(...)` token.
+- Browser checks passed on `390x844`, `1024x768`, `1440x900`, and `1920x1080`: no page scroll, no board overflow, cards stay square, mobile keeps `5x6`, and tablet/desktop stay on `6x5`.
+- Interaction regression checks passed: mismatch pairs get the new pending styling and stay open until the next click closes them, matched pairs update the compact progress chip, the centered win overlay appears on completion, and the overlay replay button fully resets the game.
+- Console check passed with no browser errors or warnings during the validation run.
