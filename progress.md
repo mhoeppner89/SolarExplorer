@@ -24,3 +24,9 @@ Original prompt: Okay, now the second game should be a "Memory", utilizing the i
 - Browser checks passed on `390x844`, `1024x768`, `1440x900`, and `1920x1080`: no page scroll, no board overflow, cards stay square, mobile keeps `5x6`, and tablet/desktop stay on `6x5`.
 - Interaction regression checks passed: mismatch pairs get the new pending styling and stay open until the next click closes them, matched pairs update the compact progress chip, the centered win overlay appears on completion, and the overlay replay button fully resets the game.
 - Console check passed with no browser errors or warnings during the validation run.
+- New user request: do suggestions #2 through #5 before adding another minigame.
+- Added lightweight project scaffolding: `package.json`, `.gitignore`, `README.md`, `IMAGE_CREDITS.md`, and `scripts/static-check.mjs`.
+- Refactored the duplicated 3D explorer runtime out of `SolarExplorer.html` and `solarexplorer_deutsch.html` into `scripts/explorer-runtime.js`; the two HTML files now keep only localized data/copy plus the shared runtime include.
+- Started explorer polish in the shared runtime: saved passport progress via `localStorage`, `window.render_game_to_text`, `window.advanceTime`, keyboard shortcuts for facts/reset, and focusable passport object buttons.
+- Cleaned leftover German ASCII fallbacks in the landing page and Memory page, added visible back links for explorer pages, and removed `images/.DS_Store`.
+- Verification: `npm test` passes, no `.DS_Store` files remain, and the German fallback-spelling sweep is clean. The bundled Playwright web-game client still cannot import `playwright`, and the in-app Browser plugin timed out attaching a webview, so visual browser validation could not be completed in this environment.

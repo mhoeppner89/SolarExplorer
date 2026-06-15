@@ -1,0 +1,12 @@
+{
+  "name": "solar-explorer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 8123",
+    "check:syntax": "node --check scripts/explorer-runtime.js && node --check scripts/static-check.mjs",
+    "check:static": "node scripts/static-check.mjs",
+    "test": "npm run check:syntax && npm run check:static"
+  }
+}
