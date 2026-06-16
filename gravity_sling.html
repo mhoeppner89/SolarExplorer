@@ -1,0 +1,1802 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Solar Explorer - Gravity Sling</title>
+    <link rel="icon" href="data:," />
+    <style>
+        :root {
+            color-scheme: dark;
+            --ink: #f8fdff;
+            --muted: #a8d6e8;
+            --line: rgba(101, 219, 255, 0.42);
+            --panel: rgba(7, 38, 68, 0.9);
+            --panel-strong: rgba(9, 43, 76, 0.96);
+            --accent: #67e85c;
+            --accent-strong: #20ba61;
+            --gold: #ffd340;
+            --danger: #ff7f68;
+            --cyan: #28e0ff;
+            --teal: #20d3c9;
+            --shadow: rgba(0, 0, 0, 0.48);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: "Avenir Next Condensed", "Gill Sans", "Trebuchet MS", Arial, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 14% 14%, rgba(0, 181, 255, 0.34), transparent 30%),
+                radial-gradient(circle at 88% 18%, rgba(175, 55, 210, 0.28), transparent 26%),
+                radial-gradient(circle at 78% 86%, rgba(64, 221, 142, 0.18), transparent 28%),
+                linear-gradient(150deg, #03091c 0%, #071b35 46%, #102c52 100%);
+            touch-action: none;
+        }
+
+        .stage {
+            position: relative;
+            width: 100vw;
+            height: 100svh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding:
+                max(0.35rem, env(safe-area-inset-top))
+                max(0.35rem, env(safe-area-inset-right))
+                max(0.35rem, env(safe-area-inset-bottom))
+                max(0.35rem, env(safe-area-inset-left));
+        }
+
+        .game-shell {
+            position: relative;
+            width: calc(100vw - 0.7rem);
+            max-width: 90rem;
+            max-height: calc(100svh - 0.7rem);
+            aspect-ratio: 16 / 9;
+            border: 2px solid rgba(75, 205, 255, 0.38);
+            border-radius: 1.1rem;
+            overflow: hidden;
+            background: rgba(3, 13, 31, 0.72);
+            box-shadow:
+                inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 28px 72px var(--shadow);
+        }
+
+        .game-shell::before,
+        .game-shell::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .game-shell::before {
+            background:
+                radial-gradient(circle at 50% 45%, transparent 0 52%, rgba(2, 8, 22, 0.12) 74%, rgba(1, 4, 12, 0.42) 100%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 18%, rgba(0, 0, 0, 0.08));
+        }
+
+        .game-shell::after {
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 80px rgba(6, 15, 34, 0.62);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .hud {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            gap: clamp(0.42rem, 1vw, 0.75rem);
+            padding: clamp(0.48rem, 1.15vw, 0.8rem);
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: clamp(0.45rem, 1vw, 0.8rem);
+            min-height: 3.8rem;
+            padding: 0.48rem 0.62rem;
+            border: 2px solid rgba(62, 203, 255, 0.34);
+            border-radius: 0.95rem;
+            background:
+                linear-gradient(180deg, rgba(10, 57, 92, 0.92), rgba(4, 25, 54, 0.88)),
+                rgba(3, 13, 32, 0.9);
+            box-shadow:
+                inset 0 2px 0 rgba(255, 255, 255, 0.11),
+                inset 0 -12px 28px rgba(0, 0, 0, 0.18),
+                0 14px 28px rgba(0, 0, 0, 0.28);
+        }
+
+        .cluster {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.38rem;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.46rem;
+            min-width: max-content;
+            padding: 0.1rem 0.28rem 0.1rem 0;
+            font-family: "Copperplate", "Avenir Next Condensed", "Trebuchet MS", sans-serif;
+            font-size: clamp(1.15rem, 2.8vw, 2.15rem);
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: 0.01em;
+            text-shadow: 0 3px 0 rgba(0, 0, 0, 0.26);
+        }
+
+        .brand-mark {
+            width: 2.55rem;
+            min-width: 2.55rem;
+            aspect-ratio: 1 / 1;
+            display: grid;
+            place-items: center;
+            border-radius: 0.78rem;
+            border: 2px solid rgba(125, 232, 255, 0.48);
+            background:
+                radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.3), transparent 32%),
+                linear-gradient(180deg, rgba(18, 123, 150, 0.9), rgba(5, 55, 88, 0.95));
+            box-shadow:
+                inset 0 2px 0 rgba(255, 255, 255, 0.18),
+                0 0 18px rgba(40, 224, 255, 0.18);
+            font-size: 1.15rem;
+        }
+
+        .brand-accent {
+            color: #05f1df;
+        }
+
+        .chip,
+        button,
+        .button {
+            border: 2px solid rgba(98, 214, 255, 0.28);
+            color: var(--ink);
+            background:
+                linear-gradient(180deg, rgba(28, 116, 151, 0.55), rgba(5, 38, 72, 0.85)),
+                var(--panel);
+            box-shadow:
+                inset 0 2px 0 rgba(255, 255, 255, 0.12),
+                0 7px 16px rgba(0, 0, 0, 0.18);
+        }
+
+        .chip {
+            min-height: 2.25rem;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.34rem;
+            padding: 0.36rem 0.62rem;
+            border-radius: 0.68rem;
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+        }
+
+        .chip span {
+            color: var(--muted);
+            font-size: 0.64rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .chip strong {
+            font-size: clamp(0.9rem, 1.45vw, 1.16rem);
+            line-height: 1;
+        }
+
+        .speed-chip {
+            min-width: 10rem;
+            display: grid;
+            grid-template-columns: auto minmax(4.3rem, 1fr) auto;
+            align-items: center;
+            gap: 0.48rem;
+        }
+
+        .speed-meter {
+            height: 0.52rem;
+            border-radius: 999px;
+            border: 1px solid rgba(136, 218, 255, 0.34);
+            background: rgba(3, 18, 42, 0.82);
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+        }
+
+        .speed-meter__fill {
+            display: block;
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #67e85c, #f8e64f, #ff9d30);
+            box-shadow: 0 0 10px rgba(103, 232, 92, 0.4);
+            transition: width 0.16s linear;
+        }
+
+        .speed-readout {
+            min-width: 2.1rem;
+            text-align: right;
+        }
+
+        .message {
+            align-self: end;
+            justify-self: center;
+            max-width: min(25rem, 58vw);
+            margin: 0 0 0.2rem;
+            padding: 0.56rem 0.68rem;
+            border: 2px solid rgba(98, 214, 255, 0.24);
+            border-radius: 0.82rem;
+            background:
+                linear-gradient(180deg, rgba(12, 55, 88, 0.88), rgba(6, 26, 58, 0.8)),
+                var(--panel-strong);
+            color: var(--ink);
+            text-align: left;
+            line-height: 1.2;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
+            backdrop-filter: blur(10px);
+            transition: opacity 0.16s ease, transform 0.16s ease;
+        }
+
+        .message strong {
+            display: block;
+            margin-bottom: 0.14rem;
+            color: var(--gold);
+            letter-spacing: 0.04em;
+        }
+
+        .message.has-cta {
+            margin-bottom: clamp(4.35rem, 7vw, 5.15rem);
+        }
+
+        .hud.is-aiming .message,
+        .hud.is-active-flight .message {
+            opacity: 0;
+            transform: translateY(0.9rem);
+        }
+
+        .actions {
+            pointer-events: auto;
+            display: flex;
+            gap: 0.4rem;
+            justify-content: flex-end;
+        }
+
+        button,
+        .button {
+            min-width: 2.75rem;
+            min-height: 2.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 0.44rem 0.74rem;
+            text-decoration: none;
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        button:hover,
+        button:focus-visible,
+        .button:hover,
+        .button:focus-visible {
+            border-color: rgba(255, 213, 122, 0.55);
+            outline: none;
+        }
+
+        #nextButton {
+            position: absolute;
+            left: 50%;
+            bottom: clamp(0.9rem, 3vw, 1.6rem);
+            min-width: clamp(8rem, 20vw, 12rem);
+            min-height: clamp(3rem, 6vw, 4rem);
+            border-radius: 1rem;
+            border-color: rgba(215, 255, 219, 0.7);
+            background: linear-gradient(180deg, #75ec58, #2bbc48);
+            color: #fafff7;
+            font-size: clamp(1.18rem, 2.3vw, 1.9rem);
+            text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+            box-shadow:
+                inset 0 3px 0 rgba(255, 255, 255, 0.24),
+                0 12px 28px rgba(18, 181, 82, 0.32);
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 0.75rem) scale(0.98);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+
+        #nextButton.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, 0) scale(1);
+        }
+
+        #nextButton::after {
+            content: ">";
+            margin-left: 0.65rem;
+            font-size: 0.88em;
+        }
+
+        @media (orientation: portrait) {
+            .game-shell {
+                width: calc(100vw - 0.7rem);
+                max-width: calc(100vw - 0.7rem);
+                height: auto;
+                max-height: calc(100svh - 0.7rem);
+                aspect-ratio: 9 / 16;
+                border-radius: 1rem;
+            }
+
+            .hud {
+                padding: 0.46rem;
+                gap: 0.4rem;
+            }
+
+            .topbar {
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                align-items: start;
+                min-height: 3.1rem;
+                padding: 0.4rem;
+                gap: 0.34rem;
+                border-radius: 0.82rem;
+            }
+
+            .brand {
+                grid-column: 1;
+                padding: 0;
+            }
+
+            .brand span:not(.brand-mark) {
+                display: none;
+            }
+
+            .brand-mark {
+                width: 2.75rem;
+                min-width: 2.75rem;
+                border-radius: 0.72rem;
+            }
+
+            .cluster {
+                grid-column: 2;
+                display: grid;
+                grid-template-columns: repeat(2, max-content);
+                justify-content: center;
+                gap: 0.25rem;
+            }
+
+            .chip {
+                min-height: 1.85rem;
+                padding: 0.28rem 0.42rem;
+                border-width: 1px;
+                border-radius: 0.56rem;
+                gap: 0.24rem;
+            }
+
+            .chip span {
+                font-size: 0.56rem;
+                letter-spacing: 0.08em;
+            }
+
+            .chip strong {
+                font-size: 0.9rem;
+            }
+
+            .status-chip {
+                display: none;
+            }
+
+            .speed-chip {
+                min-width: 0;
+                grid-template-columns: auto auto;
+            }
+
+            .speed-meter {
+                display: none;
+            }
+
+            .speed-readout {
+                min-width: 1.3rem;
+            }
+
+            .actions {
+                grid-column: 3;
+                display: grid;
+                grid-template-columns: repeat(2, 2.75rem);
+                gap: 0.25rem;
+            }
+
+            button,
+            .button {
+                min-width: 2.75rem;
+                min-height: 2.75rem;
+                padding: 0.2rem 0.35rem;
+            }
+
+            .message {
+                justify-self: center;
+                max-width: calc(100% - 1rem);
+                margin-bottom: 0.1rem;
+                padding: 0.46rem 0.54rem;
+                font-size: 0.88rem;
+                border-radius: 0.68rem;
+            }
+
+            .message.has-cta {
+                margin-bottom: 4.55rem;
+            }
+
+            #nextButton {
+                bottom: 1rem;
+                min-width: 8.4rem;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .game-shell {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                aspect-ratio: 9 / 16;
+            }
+        }
+
+        @media (min-aspect-ratio: 16 / 9) and (orientation: landscape) {
+            .game-shell {
+                width: auto;
+                height: calc(100svh - 0.7rem);
+            }
+        }
+
+
+        @media (max-height: 430px) and (orientation: landscape) {
+            .hud {
+                padding: 0.34rem;
+            }
+
+            .topbar {
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                align-items: center;
+                min-height: 2.9rem;
+                padding: 0.34rem 0.44rem;
+            }
+
+            .cluster {
+                flex-wrap: nowrap;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            .brand {
+                font-size: 1rem;
+            }
+
+            .brand-mark {
+                width: 2.1rem;
+                min-width: 2.1rem;
+            }
+
+            .chip {
+                min-height: 1.7rem;
+                padding: 0.22rem 0.44rem;
+            }
+
+            .chip span {
+                font-size: 0.52rem;
+            }
+
+            .chip strong {
+                font-size: 0.78rem;
+            }
+
+            .status-chip {
+                display: none;
+            }
+
+            .speed-chip {
+                min-width: 0;
+                grid-template-columns: auto auto;
+            }
+
+            .speed-meter {
+                display: none;
+            }
+
+            .message {
+                max-width: min(22rem, 54vw);
+                padding: 0.4rem 0.5rem;
+                font-size: 0.78rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="stage">
+        <section class="game-shell" aria-label="Gravity Sling Spiel">
+            <canvas id="game" width="960" height="540"></canvas>
+            <div class="hud" aria-hidden="true">
+                <div class="topbar">
+                    <div class="brand" aria-label="Gravity Sling">
+                        <span class="brand-mark">✦</span>
+                        <span>Gravity <span class="brand-accent">Sling</span></span>
+                    </div>
+                    <div class="cluster">
+                        <div class="chip"><span>Mission</span><strong id="levelLabel">1</strong></div>
+                        <div class="chip"><span>Starts</span><strong id="shotLabel">0</strong></div>
+                        <div class="chip status-chip"><span>Status</span><strong id="stateLabel">Bereit</strong></div>
+                        <div class="chip"><span>Zeit</span><strong id="timeLabel">0.0s</strong></div>
+                        <div class="chip speed-chip">
+                            <span>Tempo</span>
+                            <span class="speed-meter"><span id="speedFill" class="speed-meter__fill"></span></span>
+                            <strong id="speedLabel" class="speed-readout">0</strong>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <a class="button" href="index.html" title="Zurück zur Spielstation" aria-label="Zurück zur Spielstation">←</a>
+                        <button id="restartButton" title="Mission neu starten" aria-label="Mission neu starten">↻</button>
+                    </div>
+                </div>
+                <div id="message" class="message">
+                    <strong>Gravity Sling</strong>
+                    Ziehe die Sonde zurück, lass los und nutze Schwerkraft als Schleuder.
+                </div>
+                <button id="nextButton" title="Nächste Mission">Weiter</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        (() => {
+            "use strict";
+
+            const VIEW_SIZES = {
+                landscape: { width: 960, height: 540 },
+                portrait: { width: 540, height: 960 },
+            };
+            const WORLD = { ...VIEW_SIZES.landscape };
+            const SHIP_RADIUS = 10;
+            const MAX_DRAG = 118;
+            const LAUNCH_POWER = 3.35;
+            const FIXED_DT = 1 / 60;
+            const TIME_LIMIT = 20;
+            const FLY_MARGIN = 180;
+            const GRAVITY_SCALE = 340000;
+
+            const canvas = document.getElementById("game");
+            const ctx = canvas.getContext("2d");
+            const ui = {
+                hud: document.querySelector(".hud"),
+                level: document.getElementById("levelLabel"),
+                state: document.getElementById("stateLabel"),
+                shots: document.getElementById("shotLabel"),
+                speed: document.getElementById("speedLabel"),
+                speedFill: document.getElementById("speedFill"),
+                time: document.getElementById("timeLabel"),
+                message: document.getElementById("message"),
+                restart: document.getElementById("restartButton"),
+                next: document.getElementById("nextButton"),
+            };
+
+            const levels = [
+                {
+                    name: "Direkter Flug",
+                    launch: { x: 116, y: 430 },
+                    target: { x: 812, y: 158, r: 34 },
+                    planets: [],
+                    hazards: [],
+                    hint: "Ziehen, zielen, loslassen. Ohne Schwerkraft fliegt die Sonde geradeaus.",
+                },
+                {
+                    name: "Erste Ablenkung",
+                    launch: { x: 118, y: 420 },
+                    target: { x: 830, y: 170, r: 42 },
+                    planets: [
+                        { label: "Erde", x: 492, y: 300, r: 52, mass: 2, softening: 100, color: "#62a7ff", ring: false },
+                    ],
+                    hazards: [],
+                    hint: "Ziehe mittelstark nach links unten. Die Erde biegt die Bahn sichtbar ins Ziel.",
+                },
+                {
+                    name: "Mond-Fenster",
+                    launch: { x: 96, y: 290 },
+                    target: { x: 848, y: 286, r: 31 },
+                    planets: [
+                        { label: "Mond", x: 450, y: 210, r: 30, mass: 0.72, softening: 80, color: "#d7deea", ring: false },
+                    ],
+                    hazards: [
+                        { label: "Asteroid", x: 610, y: 372, r: 28, color: "#9c8b7a" },
+                    ],
+                    hint: "Der Mond zieht schwächer, aber genau genug für einen kleinen Kursknick.",
+                },
+                {
+                    name: "Sonnen-Schwung",
+                    launch: { x: 116, y: 460 },
+                    target: { x: 838, y: 126, r: 31 },
+                    planets: [
+                        { label: "Sonne", x: 476, y: 286, r: 64, mass: 1.9, softening: 112, color: "#ffd36b", ring: false, hotRadius: 94 },
+                    ],
+                    hazards: [],
+                    hint: "Nah an der Sonne wird die Sonde schnell. Zu nah wird es heiß.",
+                },
+                {
+                    name: "Doppelpass",
+                    launch: { x: 108, y: 122 },
+                    target: { x: 836, y: 420, r: 32 },
+                    planets: [
+                        { label: "Venus", x: 356, y: 216, r: 38, mass: 0.92, softening: 86, color: "#f2c166", ring: false },
+                        { label: "Mars", x: 626, y: 344, r: 34, mass: 0.8, softening: 82, color: "#ff8e68", ring: false },
+                    ],
+                    hazards: [],
+                    hint: "Zwei Körper formen die Flugbahn nacheinander. Der zweite Pass entscheidet.",
+                },
+                {
+                    name: "Saturn-Lücke",
+                    launch: { x: 110, y: 430 },
+                    target: { x: 838, y: 438, r: 32 },
+                    planets: [
+                        { label: "Saturn", x: 506, y: 284, r: 56, mass: 1.22, softening: 104, color: "#e2c987", ring: true },
+                    ],
+                    hazards: [
+                        { label: "Ringbrocken", x: 622, y: 270, r: 20, color: "#c5b08d" },
+                        { label: "Ringbrocken", x: 408, y: 314, r: 18, color: "#c5b08d" },
+                    ],
+                    hint: "Saturn zieht stark. Die kleinen Brocken markieren die gefährliche Ringzone.",
+                },
+                {
+                    name: "Äußere Bahn",
+                    launch: { x: 96, y: 282 },
+                    target: { x: 856, y: 286, r: 31 },
+                    planets: [
+                        { label: "Jupiter", x: 334, y: 302, r: 62, mass: 1.55, softening: 115, color: "#d79d55", ring: false },
+                        { label: "Neptun", x: 674, y: 170, r: 42, mass: 0.9, softening: 92, color: "#709cff", ring: false },
+                    ],
+                    hazards: [],
+                    hint: "Jupiter macht den großen Schwung, Neptun korrigiert am Ende.",
+                },
+                {
+                    name: "Einfangen bei Pluto",
+                    launch: { x: 104, y: 452 },
+                    target: { x: 812, y: 190, r: 38, maxSpeed: 270 },
+                    planets: [
+                        { label: "Sonne", x: 436, y: 304, r: 58, mass: 1.55, softening: 108, color: "#ffd36b", ring: false, hotRadius: 86 },
+                        { label: "Pluto", x: 812, y: 190, r: 24, mass: 0.48, softening: 74, color: "#c6d5eb", ring: false },
+                    ],
+                    hazards: [],
+                    hint: "Treffen reicht nicht: Bei Pluto muss die Sonde langsam genug ankommen.",
+                },
+            ];
+
+            const portraitLevels = [
+                {
+                    launch: { x: 142, y: 800 },
+                    target: { x: 406, y: 214, r: 40 },
+                    planets: [],
+                    hazards: [],
+                },
+                {
+                    launch: { x: 142, y: 800 },
+                    target: { x: 410, y: 240, r: 54 },
+                    planets: [
+                        { label: "Erde", x: 300, y: 600, r: 60, mass: 0.75, softening: 180, color: "#62a7ff", ring: false },
+                    ],
+                    hazards: [],
+                },
+                {
+                    launch: { x: 106, y: 720 },
+                    target: { x: 422, y: 275, r: 34 },
+                    planets: [
+                        { label: "Mond", x: 274, y: 454, r: 34, mass: 0.68, softening: 86, color: "#d7deea", ring: false },
+                    ],
+                    hazards: [
+                        { label: "Asteroid", x: 354, y: 592, r: 28, color: "#9c8b7a" },
+                    ],
+                },
+                {
+                    launch: { x: 128, y: 820 },
+                    target: { x: 408, y: 168, r: 34 },
+                    planets: [
+                        { label: "Sonne", x: 270, y: 510, r: 68, mass: 1.75, softening: 126, color: "#ffd36b", ring: false, hotRadius: 98 },
+                    ],
+                    hazards: [],
+                },
+                {
+                    launch: { x: 108, y: 730 },
+                    target: { x: 420, y: 235, r: 34 },
+                    planets: [
+                        { label: "Venus", x: 228, y: 430, r: 40, mass: 0.92, softening: 88, color: "#f2c166", ring: false },
+                        { label: "Mars", x: 346, y: 604, r: 35, mass: 0.82, softening: 84, color: "#ff8e68", ring: false },
+                    ],
+                    hazards: [],
+                },
+                {
+                    launch: { x: 126, y: 790 },
+                    target: { x: 408, y: 380, r: 35 },
+                    planets: [
+                        { label: "Saturn", x: 280, y: 532, r: 58, mass: 1.16, softening: 110, color: "#e2c987", ring: true },
+                    ],
+                    hazards: [
+                        { label: "Ringbrocken", x: 378, y: 514, r: 20, color: "#c5b08d" },
+                        { label: "Ringbrocken", x: 196, y: 568, r: 18, color: "#c5b08d" },
+                    ],
+                },
+                {
+                    launch: { x: 100, y: 700 },
+                    target: { x: 428, y: 260, r: 34 },
+                    planets: [
+                        { label: "Jupiter", x: 236, y: 536, r: 64, mass: 1.48, softening: 118, color: "#d79d55", ring: false },
+                        { label: "Neptun", x: 368, y: 358, r: 43, mass: 0.88, softening: 94, color: "#709cff", ring: false },
+                    ],
+                    hazards: [],
+                },
+                {
+                    launch: { x: 128, y: 815 },
+                    target: { x: 408, y: 250, r: 39, maxSpeed: 270 },
+                    planets: [
+                        { label: "Sonne", x: 268, y: 560, r: 62, mass: 1.5, softening: 112, color: "#ffd36b", ring: false, hotRadius: 90 },
+                        { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.48, softening: 74, color: "#c6d5eb", ring: false },
+                    ],
+                    hazards: [],
+                },
+            ];
+
+            const stars = Array.from({ length: 190 }, (_, i) => ({
+                nx: ((i * 157 + 43) % 1000) / 1000,
+                ny: ((i * 89 + 71) % 1000) / 1000,
+                r: 0.7 + ((i * 13) % 10) / 10,
+                a: 0.28 + ((i * 17) % 10) / 18,
+                drift: 0.3 + (i % 5) * 0.09,
+            }));
+
+            const sparkles = Array.from({ length: 24 }, (_, i) => ({
+                nx: ((i * 211 + 71) % 1000) / 1000,
+                ny: ((i * 127 + 53) % 1000) / 1000,
+                r: 2.8 + (i % 4),
+                hue: i % 3 === 0 ? "#78f0ff" : i % 3 === 1 ? "#ffd340" : "#ff8adc",
+            }));
+
+            const distantBodies = [
+                { nx: 0.16, ny: 0.18, r: 24, color: "#ccb7a8", kind: "moon" },
+                { nx: 0.86, ny: 0.74, r: 31, color: "#ff844b", kind: "mars" },
+                { nx: 0.1, ny: 0.58, r: 26, color: "#7d706f", kind: "asteroid" },
+                { nx: 0.9, ny: 0.36, r: 20, color: "#69606a", kind: "asteroid" },
+            ];
+
+            const state = {
+                levelIndex: 0,
+                mode: "ready",
+                ship: { x: 0, y: 0, vx: 0, vy: 0, r: SHIP_RADIUS },
+                drag: { active: false, x: 0, y: 0 },
+                trail: [],
+                shots: 0,
+                elapsed: 0,
+                message: "",
+                lastOutcome: "none",
+                accumulator: 0,
+                viewMode: "landscape",
+            };
+
+            function currentLevel() {
+                const base = levels[state.levelIndex];
+                const layout = state.viewMode === "portrait" ? portraitLevels[state.levelIndex] : null;
+                if (!layout) return base;
+                return {
+                    ...base,
+                    launch: { ...layout.launch },
+                    target: { ...base.target, ...layout.target },
+                    planets: (layout.planets || []).map((planet, index) => ({
+                        ...(base.planets[index] || {}),
+                        ...planet,
+                    })),
+                    hazards: (layout.hazards || []).map((hazard, index) => ({
+                        ...((base.hazards || [])[index] || {}),
+                        ...hazard,
+                    })),
+                };
+            }
+
+            function resetLevel(keepMessage = false) {
+                const level = currentLevel();
+                state.mode = "ready";
+                state.ship.x = level.launch.x;
+                state.ship.y = level.launch.y;
+                state.ship.vx = 0;
+                state.ship.vy = 0;
+                state.drag.active = false;
+                state.trail = [];
+                state.shots = 0;
+                state.elapsed = 0;
+                state.lastOutcome = "none";
+                state.message = keepMessage ? state.message : level.hint;
+                updateUi();
+                render();
+            }
+
+            function nextLevel() {
+                state.levelIndex = (state.levelIndex + 1) % levels.length;
+                state.message = currentLevel().hint;
+                resetLevel(true);
+            }
+
+            function length(x, y) {
+                return Math.hypot(x, y);
+            }
+
+            function clamp(value, min, max) {
+                return Math.max(min, Math.min(max, value));
+            }
+
+            function clampDrag(point) {
+                const launch = currentLevel().launch;
+                const dx = point.x - launch.x;
+                const dy = point.y - launch.y;
+                const d = length(dx, dy);
+                if (d <= MAX_DRAG) return { x: point.x, y: point.y };
+                const scale = MAX_DRAG / d;
+                return { x: launch.x + dx * scale, y: launch.y + dy * scale };
+            }
+
+            function screenToWorld(event) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: (event.clientX - rect.left) * (WORLD.width / rect.width),
+                    y: (event.clientY - rect.top) * (WORLD.height / rect.height),
+                };
+            }
+
+            function setMode(mode, message, outcome = mode) {
+                state.mode = mode;
+                state.message = message;
+                state.lastOutcome = outcome;
+                updateUi();
+            }
+
+            function shipSpeed() {
+                return length(state.ship.vx, state.ship.vy);
+            }
+
+            function softeningFor(planet) {
+                return planet.softening || Math.max(72, planet.r * 1.8);
+            }
+
+            function gravityAt(x, y, level) {
+                let ax = 0;
+                let ay = 0;
+                for (const planet of level.planets) {
+                    const dx = planet.x - x;
+                    const dy = planet.y - y;
+                    const rawDistance = Math.max(1, length(dx, dy));
+                    const softening = softeningFor(planet);
+                    const softenedDistanceSq = dx * dx + dy * dy + softening * softening;
+                    const force = GRAVITY_SCALE * planet.mass / softenedDistanceSq;
+                    ax += (dx / rawDistance) * force;
+                    ay += (dy / rawDistance) * force;
+                }
+                return { ax, ay };
+            }
+
+            function applyGravity(entity, level, dt) {
+                const gravity = gravityAt(entity.x, entity.y, level);
+                entity.vx += gravity.ax * dt;
+                entity.vy += gravity.ay * dt;
+                entity.x += entity.vx * dt;
+                entity.y += entity.vy * dt;
+            }
+
+            function checkProbeOutcome(probe, level, elapsed) {
+                for (const planet of level.planets) {
+                    if (length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.r) {
+                        return { mode: "crashed", message: "Zu nah dran. Beim nächsten Start etwas mehr Abstand halten.", outcome: "planet_collision" };
+                    }
+
+                    if (planet.hotRadius &&
+                        length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.hotRadius) {
+                        return { mode: "crashed", message: "Die Sonde ist in die Hitzezone geraten.", outcome: "hot_zone" };
+                    }
+                }
+
+                for (const hazard of level.hazards || []) {
+                    if (length(probe.x - hazard.x, probe.y - hazard.y) <= SHIP_RADIUS + hazard.r) {
+                        return { mode: "crashed", message: "Kollision mit Trümmern. Neue Flugbahn?", outcome: "hazard_collision" };
+                    }
+                }
+
+                const target = level.target;
+                if (length(probe.x - target.x, probe.y - target.y) <= SHIP_RADIUS + target.r) {
+                    if (target.maxSpeed && length(probe.vx, probe.vy) > target.maxSpeed) {
+                        return { mode: "crashed", message: "Zu schnell am Ziel. Nutze die Schwerkraft zum Abbremsen.", outcome: "too_fast" };
+                    }
+                    return {
+                        mode: "won",
+                        message: state.levelIndex === levels.length - 1
+                            ? "Letzte Bahn erreicht. Alle Missionen geschafft."
+                            : "Mission geschafft. Bereit für den nächsten Kurs?",
+                        outcome: "target_reached"
+                    };
+                }
+
+                if (elapsed >= TIME_LIMIT) {
+                    return { mode: "timeout", message: "Das Signal ist abgelaufen. Die Sonde war zu lange unterwegs.", outcome: "timeout" };
+                }
+
+                const flyMargin = Math.max(FLY_MARGIN, Math.min(WORLD.width, WORLD.height) * 0.32);
+                if (probe.x < -flyMargin || probe.x > WORLD.width + flyMargin ||
+                    probe.y < -flyMargin || probe.y > WORLD.height + flyMargin) {
+                    return { mode: "flyaway", message: "Die Sonde verlässt den Sektor.", outcome: "flyaway" };
+                }
+
+                return null;
+            }
+
+            function launchFromDrag() {
+                const launch = currentLevel().launch;
+                const dx = launch.x - state.drag.x;
+                const dy = launch.y - state.drag.y;
+                const pull = length(dx, dy);
+                state.drag.active = false;
+                if (pull < 12) {
+                    state.ship.x = launch.x;
+                    state.ship.y = launch.y;
+                    state.message = currentLevel().hint;
+                    updateUi();
+                    return;
+                }
+                state.ship.vx = dx * LAUNCH_POWER;
+                state.ship.vy = dy * LAUNCH_POWER;
+                state.mode = "flying";
+                state.elapsed = 0;
+                state.shots += 1;
+                state.trail = [{ x: state.ship.x, y: state.ship.y }];
+                state.message = "Sonde unterwegs.";
+                updateUi();
+            }
+
+            function onPointerDown(event) {
+                if (state.mode !== "ready") return;
+                const point = screenToWorld(event);
+                const launch = currentLevel().launch;
+                if (length(point.x - state.ship.x, point.y - state.ship.y) > 48 &&
+                    length(point.x - launch.x, point.y - launch.y) > 60) {
+                    return;
+                }
+                state.drag.active = true;
+                const clamped = clampDrag(point);
+                state.drag.x = clamped.x;
+                state.drag.y = clamped.y;
+                state.ship.x = clamped.x;
+                state.ship.y = clamped.y;
+                canvas.setPointerCapture(event.pointerId);
+                updateUi();
+                render();
+            }
+
+            function onPointerMove(event) {
+                if (!state.drag.active) return;
+                const clamped = clampDrag(screenToWorld(event));
+                state.drag.x = clamped.x;
+                state.drag.y = clamped.y;
+                state.ship.x = clamped.x;
+                state.ship.y = clamped.y;
+                render();
+            }
+
+            function onPointerUp(event) {
+                if (!state.drag.active) return;
+                canvas.releasePointerCapture(event.pointerId);
+                launchFromDrag();
+                render();
+            }
+
+            function step(dt) {
+                if (state.mode !== "flying") return;
+                const level = currentLevel();
+                state.elapsed += dt;
+
+                applyGravity(state.ship, level, dt);
+
+                if (state.trail.length === 0 ||
+                    length(state.ship.x - state.trail[state.trail.length - 1].x, state.ship.y - state.trail[state.trail.length - 1].y) > 6) {
+                    state.trail.push({ x: state.ship.x, y: state.ship.y });
+                    if (state.trail.length > 170) state.trail.shift();
+                }
+
+                const outcome = checkProbeOutcome(state.ship, level, state.elapsed);
+                if (outcome) {
+                    setMode(outcome.mode, outcome.message, outcome.outcome);
+                    return;
+                }
+
+                updateUi();
+            }
+
+            function predictPath() {
+                if (!state.drag.active) return { points: [], outcome: "idle" };
+                const level = currentLevel();
+                const launch = level.launch;
+                const sim = {
+                    x: launch.x,
+                    y: launch.y,
+                    vx: (launch.x - state.drag.x) * LAUNCH_POWER,
+                    vy: (launch.y - state.drag.y) * LAUNCH_POWER,
+                };
+                const points = [];
+                let outcome = null;
+                for (let i = 0; i < 420; i += 1) {
+                    applyGravity(sim, level, FIXED_DT);
+                    if (i % 5 === 0) points.push({ x: sim.x, y: sim.y });
+                    outcome = checkProbeOutcome(sim, level, i * FIXED_DT);
+                    if (outcome) break;
+                }
+                return { points, outcome: outcome ? outcome.outcome : "flight" };
+            }
+
+            function drawDistantBody(body, time) {
+                const x = body.nx * WORLD.width;
+                const y = body.ny * WORLD.height;
+                const r = body.r * (state.viewMode === "portrait" ? 0.86 : 1);
+                ctx.save();
+                ctx.globalAlpha = body.kind === "asteroid" ? 0.52 : 0.66;
+                ctx.translate(x, y);
+                ctx.rotate(Math.sin(time * 0.15 + body.nx * 9) * 0.08);
+
+                if (body.kind === "asteroid") {
+                    ctx.beginPath();
+                    for (let i = 0; i < 12; i += 1) {
+                        const angle = (i / 12) * Math.PI * 2;
+                        const wobble = 0.76 + ((i * 31) % 29) / 95;
+                        const px = Math.cos(angle) * r * wobble;
+                        const py = Math.sin(angle) * r * (0.78 + wobble * 0.22);
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    const rock = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r);
+                    rock.addColorStop(0, "#d1c0b8");
+                    rock.addColorStop(0.42, body.color);
+                    rock.addColorStop(1, "#242233");
+                    ctx.fillStyle = rock;
+                    ctx.fill();
+                    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                } else {
+                    const planet = ctx.createRadialGradient(-r * 0.35, -r * 0.42, r * 0.1, 0, 0, r);
+                    planet.addColorStop(0, "#fff7e7");
+                    planet.addColorStop(0.22, body.color);
+                    planet.addColorStop(1, "#17284f");
+                    ctx.shadowColor = body.color;
+                    ctx.shadowBlur = 20;
+                    ctx.fillStyle = planet;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.clip();
+                    ctx.globalAlpha *= 0.68;
+                    ctx.fillStyle = body.kind === "mars" ? "rgba(93,36,39,0.34)" : "rgba(40,35,48,0.28)";
+                    for (let i = 0; i < 4; i += 1) {
+                        ctx.beginPath();
+                        ctx.ellipse(
+                            -r * 0.35 + i * r * 0.28,
+                            -r * 0.12 + Math.sin(i + time) * r * 0.18,
+                            r * (0.15 + i * 0.025),
+                            r * 0.08,
+                            i * 0.5,
+                            0,
+                            Math.PI * 2
+                        );
+                        ctx.fill();
+                    }
+                }
+                ctx.restore();
+            }
+
+            function drawBackground() {
+                const time = performance.now() / 1000;
+                const gradient = ctx.createLinearGradient(0, 0, WORLD.width, WORLD.height);
+                gradient.addColorStop(0, "#04081f");
+                gradient.addColorStop(0.38, "#061b3b");
+                gradient.addColorStop(0.72, "#112855");
+                gradient.addColorStop(1, "#06122c");
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+                const nebulaA = ctx.createRadialGradient(WORLD.width * 0.18, WORLD.height * 0.27, 10, WORLD.width * 0.18, WORLD.height * 0.27, WORLD.width * 0.42);
+                nebulaA.addColorStop(0, "rgba(0, 209, 255, 0.28)");
+                nebulaA.addColorStop(0.38, "rgba(19, 112, 198, 0.13)");
+                nebulaA.addColorStop(1, "rgba(42, 93, 164, 0)");
+                ctx.fillStyle = nebulaA;
+                ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+                const nebulaB = ctx.createRadialGradient(WORLD.width * 0.82, WORLD.height * 0.72, 16, WORLD.width * 0.82, WORLD.height * 0.72, WORLD.height * 0.42);
+                nebulaB.addColorStop(0, "rgba(238, 74, 210, 0.18)");
+                nebulaB.addColorStop(0.48, "rgba(76, 222, 170, 0.1)");
+                nebulaB.addColorStop(1, "rgba(93, 58, 148, 0)");
+                ctx.fillStyle = nebulaB;
+                ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+                ctx.save();
+                ctx.globalAlpha = 0.34;
+                ctx.lineWidth = state.viewMode === "portrait" ? 18 : 24;
+                for (let band = 0; band < 3; band += 1) {
+                    ctx.strokeStyle = band === 0 ? "rgba(36, 210, 255, 0.18)" : band === 1 ? "rgba(165, 95, 255, 0.13)" : "rgba(74, 255, 170, 0.11)";
+                    ctx.beginPath();
+                    const yBase = WORLD.height * (0.2 + band * 0.23);
+                    ctx.moveTo(-60, yBase);
+                    for (let x = -60; x <= WORLD.width + 80; x += 90) {
+                        const y = yBase + Math.sin(x * 0.012 + time * 0.18 + band) * WORLD.height * 0.08;
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                for (const body of distantBodies) drawDistantBody(body, time);
+
+                for (const star of stars) {
+                    const x = star.nx * WORLD.width;
+                    const y = (star.ny * WORLD.height + Math.sin(time * star.drift + star.nx * 10) * 2.2 + WORLD.height) % WORLD.height;
+                    ctx.globalAlpha = star.a;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.beginPath();
+                    ctx.arc(x, y, star.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+
+                for (const sparkle of sparkles) {
+                    const x = sparkle.nx * WORLD.width;
+                    const y = sparkle.ny * WORLD.height;
+                    const pulse = 0.78 + Math.sin(time * 1.4 + sparkle.nx * 12) * 0.22;
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.strokeStyle = sparkle.hue;
+                    ctx.globalAlpha = 0.42 + pulse * 0.22;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-sparkle.r * pulse, 0);
+                    ctx.lineTo(sparkle.r * pulse, 0);
+                    ctx.moveTo(0, -sparkle.r * pulse);
+                    ctx.lineTo(0, sparkle.r * pulse);
+                    ctx.stroke();
+                    ctx.fillStyle = sparkle.hue;
+                    ctx.globalAlpha = 0.22;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, sparkle.r * 0.32, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            function drawGravityField(planet) {
+                const fieldRadius = Math.max(planet.r * 3.4, softeningFor(planet) * 1.55);
+                ctx.save();
+                ctx.translate(planet.x, planet.y);
+                ctx.strokeStyle = "rgba(19, 215, 239, 0.2)";
+                ctx.fillStyle = "rgba(19, 215, 239, 0.05)";
+                ctx.lineWidth = 2;
+                for (let i = 3; i >= 1; i -= 1) {
+                    const r = fieldRadius * (i / 3);
+                    ctx.globalAlpha = 0.18 + (4 - i) * 0.12;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r, 0, Math.PI * 2);
+                    if (i === 3) ctx.fill();
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 0.35;
+                ctx.setLineDash([7, 11]);
+                ctx.beginPath();
+                ctx.arc(0, 0, fieldRadius * 0.66, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawPlanet(planet) {
+                ctx.save();
+                if (planet.hotRadius) {
+                    ctx.fillStyle = "rgba(255, 134, 120, 0.1)";
+                    ctx.strokeStyle = "rgba(255, 134, 120, 0.34)";
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(planet.x, planet.y, planet.hotRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+
+                if (planet.ring) {
+                    ctx.translate(planet.x, planet.y);
+                    ctx.rotate(-0.28);
+                    ctx.strokeStyle = "rgba(232, 219, 255, 0.58)";
+                    ctx.lineWidth = 7;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, planet.r * 1.55, planet.r * 0.42, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                    ctx.save();
+                }
+                const g = ctx.createRadialGradient(
+                    planet.x - planet.r * 0.32,
+                    planet.y - planet.r * 0.36,
+                    planet.r * 0.15,
+                    planet.x,
+                    planet.y,
+                    planet.r
+                );
+                g.addColorStop(0, "#ffffff");
+                g.addColorStop(0.16, planet.color);
+                g.addColorStop(0.74, planet.color);
+                g.addColorStop(1, "#10366f");
+                ctx.fillStyle = g;
+                ctx.shadowColor = planet.color;
+                ctx.shadowBlur = 30;
+                ctx.beginPath();
+                ctx.arc(planet.x, planet.y, planet.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.26)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.clip();
+                if (planet.label === "Erde") {
+                    ctx.fillStyle = "rgba(76, 205, 86, 0.72)";
+                    [
+                        [-16, -12, 18, 9, -0.4],
+                        [18, -4, 22, 10, 0.2],
+                        [-2, 18, 25, 11, 0.4],
+                        [28, 19, 12, 6, -0.2],
+                    ].forEach(([x, y, rx, ry, rot]) => {
+                        ctx.beginPath();
+                        ctx.ellipse(planet.x + x, planet.y + y, rx, ry, rot, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+                    [
+                        [-28, 7, 15, 5, 0.2],
+                        [24, 13, 17, 5, -0.25],
+                        [5, -22, 13, 4, 0.15],
+                    ].forEach(([x, y, rx, ry, rot]) => {
+                        ctx.beginPath();
+                        ctx.ellipse(planet.x + x, planet.y + y, rx, ry, rot, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                } else if (planet.label === "Mond" || planet.label === "Pluto") {
+                    ctx.fillStyle = "rgba(34, 30, 44, 0.22)";
+                    [
+                        [-0.26, -0.18, 0.16],
+                        [0.24, 0.08, 0.13],
+                        [-0.06, 0.3, 0.11],
+                        [0.18, -0.34, 0.08],
+                    ].forEach(([x, y, r]) => {
+                        ctx.beginPath();
+                        ctx.arc(planet.x + x * planet.r, planet.y + y * planet.r, planet.r * r, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                } else if (planet.label === "Mars") {
+                    ctx.fillStyle = "rgba(132, 42, 40, 0.32)";
+                    [
+                        [-0.22, -0.2, 0.18, 0.08, 0.25],
+                        [0.2, 0.2, 0.24, 0.1, -0.15],
+                        [0.08, -0.38, 0.12, 0.05, 0.4],
+                    ].forEach(([x, y, rx, ry, rot]) => {
+                        ctx.beginPath();
+                        ctx.ellipse(planet.x + x * planet.r, planet.y + y * planet.r, planet.r * rx, planet.r * ry, rot, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                } else if (planet.label === "Sonne") {
+                    ctx.globalAlpha = 0.36;
+                    ctx.strokeStyle = "#fff4a8";
+                    ctx.lineWidth = Math.max(2, planet.r * 0.08);
+                    for (let y = -planet.r * 0.54; y <= planet.r * 0.54; y += planet.r * 0.28) {
+                        ctx.beginPath();
+                        ctx.ellipse(planet.x, planet.y + y, planet.r * 0.82, planet.r * 0.09, 0.18, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                } else {
+                    ctx.globalAlpha = planet.label === "Jupiter" || planet.label === "Saturn" ? 0.34 : 0.22;
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = Math.max(2, planet.r * 0.08);
+                    for (let y = -planet.r * 0.65; y <= planet.r * 0.65; y += planet.r * 0.36) {
+                        ctx.beginPath();
+                        ctx.ellipse(planet.x, planet.y + y, planet.r * 0.88, planet.r * 0.12, -0.18, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+                ctx.restore();
+
+                ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+                ctx.beginPath();
+                ctx.arc(planet.x + planet.r * 0.33, planet.y - planet.r * 0.38, planet.r * 0.14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function drawHazard(hazard) {
+                ctx.save();
+                const points = 11;
+                ctx.beginPath();
+                for (let i = 0; i < points; i += 1) {
+                    const angle = (i / points) * Math.PI * 2;
+                    const wobble = 0.78 + ((i * 37) % 23) / 80;
+                    const x = hazard.x + Math.cos(angle) * hazard.r * wobble;
+                    const y = hazard.y + Math.sin(angle) * hazard.r * wobble;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                const g = ctx.createRadialGradient(
+                    hazard.x - hazard.r * 0.3,
+                    hazard.y - hazard.r * 0.35,
+                    hazard.r * 0.1,
+                    hazard.x,
+                    hazard.y,
+                    hazard.r
+                );
+                g.addColorStop(0, "#f0dcc7");
+                g.addColorStop(0.28, hazard.color || "#9c8b7a");
+                g.addColorStop(1, "#3a312e");
+                ctx.fillStyle = g;
+                ctx.strokeStyle = "rgba(255, 230, 200, 0.28)";
+                ctx.lineWidth = 2;
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = "rgba(20, 15, 18, 0.38)";
+                [[-0.25, -0.2, 0.22], [0.28, 0.08, 0.18], [-0.02, 0.32, 0.12]].forEach(([x, y, r]) => {
+                    ctx.beginPath();
+                    ctx.arc(hazard.x + x * hazard.r, hazard.y + y * hazard.r, hazard.r * r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.restore();
+            }
+
+            function drawTargetIcon(target, pulse) {
+                ctx.save();
+                ctx.translate(target.x, target.y);
+                ctx.scale(pulse, pulse);
+                ctx.fillStyle = "#72f45e";
+                ctx.beginPath();
+                ctx.moveTo(9, -1);
+                ctx.lineTo(-8, -11);
+                ctx.lineTo(-3, 0);
+                ctx.lineTo(-8, 11);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = "#073d2a";
+                ctx.beginPath();
+                ctx.arc(-1, 0, 2.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function drawTarget(target) {
+                ctx.save();
+                const pulse = 1 + Math.sin(performance.now() / 260) * 0.06;
+                const glow = ctx.createRadialGradient(target.x, target.y, target.r * 0.2, target.x, target.y, target.r * 2.1);
+                glow.addColorStop(0, "rgba(124, 242, 56, 0.34)");
+                glow.addColorStop(0.5, "rgba(124, 242, 56, 0.12)");
+                glow.addColorStop(1, "rgba(124, 242, 56, 0)");
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, target.r * 2.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = "rgba(124, 242, 56, 0.88)";
+                ctx.lineWidth = 7;
+                ctx.setLineDash([24, 9]);
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, target.r * pulse, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.strokeStyle = "rgba(215, 255, 219, 0.7)";
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, target.r * 0.62, 0, Math.PI * 2);
+                ctx.stroke();
+                drawTargetIcon(target, pulse);
+                if (target.maxSpeed) {
+                    ctx.fillStyle = "rgba(247, 251, 255, 0.78)";
+                    ctx.font = "700 13px Avenir Next Condensed, Trebuchet MS, sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText(`Tempo < ${target.maxSpeed}`, target.x, target.y + target.r + 20);
+                }
+                ctx.restore();
+            }
+
+            function drawLaunchOrigin(launch) {
+                const pulse = 1 + Math.sin(performance.now() / 360) * 0.05;
+                ctx.save();
+                ctx.translate(launch.x, launch.y);
+                const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, 52);
+                glow.addColorStop(0, "rgba(255, 226, 92, 0.36)");
+                glow.addColorStop(0.52, "rgba(30, 222, 255, 0.13)");
+                glow.addColorStop(1, "rgba(30, 222, 255, 0)");
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(0, 0, 54, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = "rgba(255, 226, 92, 0.72)";
+                ctx.lineWidth = 3;
+                ctx.setLineDash([9, 8]);
+                ctx.beginPath();
+                ctx.arc(0, 0, 27 * pulse, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.strokeStyle = "rgba(103, 232, 92, 0.36)";
+                ctx.lineWidth = 7;
+                ctx.beginPath();
+                ctx.arc(0, 0, 38, -0.8, 1.5);
+                ctx.stroke();
+                ctx.strokeStyle = "rgba(40, 224, 255, 0.38)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, 44, 1.9, 5.4);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawSlingshot() {
+                const launch = currentLevel().launch;
+                ctx.save();
+                drawLaunchOrigin(launch);
+                if (state.drag.active) {
+                    const aimX = launch.x + (launch.x - state.ship.x);
+                    const aimY = launch.y + (launch.y - state.ship.y);
+                    const pull = length(launch.x - state.ship.x, launch.y - state.ship.y);
+
+                    const pullRatio = pull / MAX_DRAG;
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.48)";
+                    ctx.lineWidth = 7;
+                    ctx.beginPath();
+                    ctx.moveTo(launch.x, launch.y);
+                    ctx.lineTo(state.ship.x, state.ship.y);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = "rgba(119, 244, 255, 0.96)";
+                    ctx.fillStyle = "rgba(119, 244, 255, 0.96)";
+                    ctx.shadowColor = "#28e0ff";
+                    ctx.shadowBlur = 16;
+                    ctx.lineWidth = 5 + pullRatio * 2;
+                    ctx.beginPath();
+                    ctx.moveTo(launch.x, launch.y);
+                    ctx.lineTo(aimX, aimY);
+                    ctx.stroke();
+                    const angle = Math.atan2(aimY - launch.y, aimX - launch.x);
+                    ctx.beginPath();
+                    ctx.moveTo(aimX, aimY);
+                    ctx.lineTo(aimX - Math.cos(angle - 0.55) * 13, aimY - Math.sin(angle - 0.55) * 13);
+                    ctx.lineTo(aimX - Math.cos(angle + 0.55) * 13, aimY - Math.sin(angle + 0.55) * 13);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.fillStyle = "rgba(247, 251, 255, 0.86)";
+                    ctx.font = "700 13px Avenir Next Condensed, Trebuchet MS, sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText(`${Math.round(pullRatio * 100)}%`, state.ship.x, state.ship.y - 24);
+                }
+                ctx.restore();
+            }
+
+            function drawTrail() {
+                if (state.trail.length < 2) return;
+                ctx.save();
+                ctx.lineWidth = 5;
+                ctx.lineCap = "round";
+                for (let i = 1; i < state.trail.length; i += 1) {
+                    const a = i / state.trail.length;
+                    ctx.strokeStyle = `rgba(19, 215, 239, ${0.08 + a * 0.62})`;
+                    ctx.beginPath();
+                    ctx.moveTo(state.trail[i - 1].x, state.trail[i - 1].y);
+                    ctx.lineTo(state.trail[i].x, state.trail[i].y);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            function drawPrediction() {
+                const prediction = predictPath();
+                const points = prediction.points;
+                if (!points.length) return;
+                ctx.save();
+                const isWin = prediction.outcome === "target_reached";
+                const isDanger = prediction.outcome && prediction.outcome !== "flight" && !isWin;
+                const fill = isWin ? "#7cf238" : isDanger ? "#ff7f68" : "#13d7ef";
+                ctx.fillStyle = fill;
+                ctx.shadowColor = fill;
+                ctx.shadowBlur = 12;
+                for (let i = 0; i < points.length; i += 1) {
+                    const p = points[i];
+                    ctx.globalAlpha = clamp(1 - i / points.length, 0.2, 0.9);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, i === points.length - 1 ? 6.5 : 4.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+
+            function drawShip() {
+                ctx.save();
+                ctx.translate(state.ship.x, state.ship.y);
+                const angle = state.mode === "flying" ? Math.atan2(state.ship.vy, state.ship.vx) : -0.35;
+                ctx.rotate(angle);
+                ctx.scale(state.viewMode === "portrait" ? 1.42 : 1.26, state.viewMode === "portrait" ? 1.42 : 1.26);
+
+                if (state.mode === "flying" || state.drag.active) {
+                    const flame = state.mode === "flying" ? 1 : 0.65;
+                    ctx.fillStyle = "rgba(255, 132, 28, 0.88)";
+                    ctx.beginPath();
+                    ctx.moveTo(-10, -5);
+                    ctx.lineTo(-26 * flame, 0);
+                    ctx.lineTo(-10, 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = "rgba(255, 230, 79, 0.9)";
+                    ctx.beginPath();
+                    ctx.moveTo(-10, -3);
+                    ctx.lineTo(-19 * flame, 0);
+                    ctx.lineTo(-10, 3);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                const hull = ctx.createLinearGradient(-15, -10, 16, 9);
+                hull.addColorStop(0, "#dff7ff");
+                hull.addColorStop(0.48, "#ffffff");
+                hull.addColorStop(1, "#bdd4ff");
+                ctx.fillStyle = hull;
+                ctx.strokeStyle = "rgba(5, 28, 58, 0.78)";
+                ctx.lineWidth = 2.4;
+                ctx.beginPath();
+                ctx.moveTo(16, 0);
+                ctx.bezierCurveTo(8, -11, -8, -11, -14, 0);
+                ctx.bezierCurveTo(-8, 11, 8, 11, 16, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = "#ff4c2f";
+                ctx.beginPath();
+                ctx.moveTo(16, 0);
+                ctx.lineTo(5, -7);
+                ctx.lineTo(5, 7);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#ff4c2f";
+                ctx.beginPath();
+                ctx.moveTo(-8, -8);
+                ctx.lineTo(-18, -14);
+                ctx.lineTo(-14, -2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(-8, 8);
+                ctx.lineTo(-18, 14);
+                ctx.lineTo(-14, 2);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#7fc8ff";
+                ctx.beginPath();
+                ctx.arc(-1, 0, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "rgba(255,255,255,0.72)";
+                ctx.beginPath();
+                ctx.arc(0.8, -1.4, 1.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "rgba(5, 28, 58, 0.45)";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawLevelLabels() {
+                const level = currentLevel();
+                ctx.save();
+                ctx.fillStyle = "rgba(247, 251, 255, 0.78)";
+                ctx.font = "700 18px Avenir Next Condensed, Trebuchet MS, sans-serif";
+                ctx.fillText(level.name, 28, 82);
+                ctx.fillStyle = "rgba(168, 189, 216, 0.72)";
+                ctx.font = "14px Avenir Next Condensed, Trebuchet MS, sans-serif";
+                ctx.fillText("Ziel", level.target.x - 12, level.target.y - level.target.r - 14);
+                for (const planet of level.planets) {
+                    ctx.fillText(planet.label || "Schwerkraft", planet.x - 22, planet.y + planet.r + 22);
+                }
+                for (const hazard of level.hazards || []) {
+                    ctx.fillText(hazard.label || "Gefahr", hazard.x - 22, hazard.y + hazard.r + 20);
+                }
+                ctx.restore();
+            }
+
+            function render() {
+                drawBackground();
+                const level = currentLevel();
+                for (const planet of level.planets) drawGravityField(planet);
+                drawTarget(level.target);
+                for (const planet of level.planets) drawPlanet(planet);
+                for (const hazard of level.hazards || []) drawHazard(hazard);
+                drawSlingshot();
+                drawTrail();
+                drawPrediction();
+                drawShip();
+            }
+
+            function updateUi() {
+                ui.level.textContent = `${state.levelIndex + 1}/${levels.length}`;
+                ui.shots.textContent = String(state.shots);
+                ui.speed.textContent = String(Math.round(shipSpeed()));
+                ui.speedFill.style.width = `${clamp(shipSpeed() / 520, 0, 1) * 100}%`;
+                ui.time.textContent = `${state.elapsed.toFixed(1)}s`;
+
+                const labels = {
+                    ready: "Bereit",
+                    flying: "Flug",
+                    won: "Geschafft",
+                    crashed: "Kollision",
+                    timeout: "Zeit aus",
+                    flyaway: "Verloren",
+                };
+                ui.state.textContent = labels[state.mode] || state.mode;
+                ui.hud.classList.toggle("is-aiming", state.drag.active);
+                ui.hud.classList.toggle("is-active-flight", state.mode === "flying");
+                const title = state.mode === "ready" ? "Gravity Sling" :
+                    state.mode === "won" ? "Mission geschafft" :
+                        state.mode === "flying" ? "Sonde unterwegs" : "Nochmal versuchen";
+                ui.message.innerHTML = `<strong>${title}</strong>${state.message}`;
+                ui.next.classList.toggle("is-visible", state.mode === "won");
+                ui.message.classList.toggle("has-cta", state.mode === "won");
+            }
+
+            function resizeCanvas() {
+                const shell = canvas.parentElement;
+                const rect = shell.getBoundingClientRect();
+                const nextMode = rect.height > rect.width * 1.18 ? "portrait" : "landscape";
+                const viewChanged = nextMode !== state.viewMode;
+                state.viewMode = nextMode;
+                WORLD.width = VIEW_SIZES[nextMode].width;
+                WORLD.height = VIEW_SIZES[nextMode].height;
+                const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+                canvas.width = Math.round(rect.width * dpr);
+                canvas.height = Math.round(rect.height * dpr);
+                ctx.setTransform(canvas.width / WORLD.width, 0, 0, canvas.height / WORLD.height, 0, 0);
+                if (viewChanged) resetLevel(true);
+                else render();
+            }
+
+            function frame(now) {
+                if (!frame.last) frame.last = now;
+                const delta = Math.min(0.05, (now - frame.last) / 1000);
+                frame.last = now;
+                state.accumulator += delta;
+                while (state.accumulator >= FIXED_DT) {
+                    step(FIXED_DT);
+                    state.accumulator -= FIXED_DT;
+                }
+                render();
+                requestAnimationFrame(frame);
+            }
+
+            function handleKey(event) {
+                const key = event.key.toLowerCase();
+                if (key === "r") resetLevel();
+                if (key === "n" && state.mode === "won") nextLevel();
+                if (key === "f") {
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        document.documentElement.requestFullscreen().catch(() => { });
+                    }
+                }
+            }
+
+            function renderGameToText() {
+                const level = currentLevel();
+                const payload = {
+                    coordinates: `world units; origin top-left; x right; y down; canvas world ${WORLD.width}x${WORLD.height}`,
+                    mode: state.mode,
+                    level: {
+                        index: state.levelIndex,
+                        number: state.levelIndex + 1,
+                        count: levels.length,
+                        name: level.name,
+                    },
+                    view: {
+                        mode: state.viewMode,
+                        width: WORLD.width,
+                        height: WORLD.height,
+                    },
+                    ship: {
+                        x: Number(state.ship.x.toFixed(1)),
+                        y: Number(state.ship.y.toFixed(1)),
+                        vx: Number(state.ship.vx.toFixed(1)),
+                        vy: Number(state.ship.vy.toFixed(1)),
+                        r: state.ship.r,
+                    },
+                    launch: level.launch,
+                    target: level.target,
+                    planets: level.planets.map((planet) => ({
+                        label: planet.label || "",
+                        x: planet.x,
+                        y: planet.y,
+                        r: planet.r,
+                        mass: planet.mass,
+                        hotRadius: planet.hotRadius || null,
+                    })),
+                    hazards: (level.hazards || []).map((hazard) => ({
+                        label: hazard.label || "",
+                        x: hazard.x,
+                        y: hazard.y,
+                        r: hazard.r,
+                    })),
+                    speed: Number(shipSpeed().toFixed(1)),
+                    drag: state.drag.active ? {
+                        x: Number(state.drag.x.toFixed(1)),
+                        y: Number(state.drag.y.toFixed(1)),
+                    } : null,
+                    shots: state.shots,
+                    elapsed: Number(state.elapsed.toFixed(2)),
+                    timeLimit: TIME_LIMIT,
+                    lastOutcome: state.lastOutcome,
+                    message: state.message,
+                };
+                return JSON.stringify(payload);
+            }
+
+            window.render_game_to_text = renderGameToText;
+            window.advanceTime = (ms) => {
+                const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+                for (let i = 0; i < steps; i += 1) step(FIXED_DT);
+                render();
+                return renderGameToText();
+            };
+
+            canvas.addEventListener("pointerdown", onPointerDown);
+            canvas.addEventListener("pointermove", onPointerMove);
+            canvas.addEventListener("pointerup", onPointerUp);
+            canvas.addEventListener("pointercancel", () => {
+                if (state.drag.active) resetLevel();
+            });
+            ui.restart.addEventListener("click", () => resetLevel());
+            ui.next.addEventListener("click", () => nextLevel());
+            window.addEventListener("keydown", handleKey);
+            window.addEventListener("resize", resizeCanvas);
+            document.addEventListener("fullscreenchange", resizeCanvas);
+
+            resetLevel();
+            resizeCanvas();
+            requestAnimationFrame(frame);
+        })();
+    </script>
+</body>
+
+</html>

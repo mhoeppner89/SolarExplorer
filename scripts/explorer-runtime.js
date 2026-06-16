@@ -71,8 +71,6 @@
         beltLayers: [],
         orbitPaths: [],
         sunGlowLayers: [],
-        selectionHalo: null,
-        selectionRing: null,
         selectedOrbitPath: null,
         focusLight: null,
         scratchVector: null,
@@ -260,35 +258,6 @@
         mesh.add(atmosphere);
     }
 
-    function createSelectionHalo() {
-        visualState.selectionHalo = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 32, 32),
-            new THREE.MeshBasicMaterial({
-                color: 0x9edcff,
-                transparent: true,
-                opacity: 0,
-                side: THREE.BackSide,
-                depthWrite: false,
-                blending: THREE.AdditiveBlending
-            })
-        );
-        visualState.selectionHalo.visible = false;
-        scene.add(visualState.selectionHalo);
-
-        visualState.selectionRing = new THREE.Mesh(
-            new THREE.TorusGeometry(1, 0.018, 8, 96),
-            new THREE.MeshBasicMaterial({
-                color: 0xf7d77a,
-                transparent: true,
-                opacity: 0,
-                depthWrite: false,
-                blending: THREE.AdditiveBlending
-            })
-        );
-        visualState.selectionRing.visible = false;
-        scene.add(visualState.selectionRing);
-    }
-
     function addSunGlow(mesh, data) {
         const layers = [
             { scale: 1.35, color: 0xffcf6a, opacity: 0.24 },
@@ -373,7 +342,6 @@
         // Generate the Universe!
         createStarfield();
         createBelts();
-        createSelectionHalo();
         createSolarSystem();
         loadVisitedBodies();
         initPassportUI();
@@ -1045,66 +1013,24 @@
             }
         });
     
-        // If a body is selected, smoothly move the camera target to follow it
+        // If a body is selected, add only local lighting. Camera navigation stays user-controlled.
         if (selectedBody && selectedBody.mesh) {
             const targetPos = new THREE.Vector3();
             selectedBody.mesh.getWorldPosition(targetPos);
             const radius = selectedBody.mesh.userData.radius || 1;
-
-            if (visualState.selectionHalo && visualState.selectionRing) {
-                const haloScale = radius * (2.25 + Math.sin(visualState.clock * 2.4) * 0.1);
-                visualState.selectionHalo.visible = true;
-                visualState.selectionHalo.position.copy(targetPos);
-                visualState.selectionHalo.scale.setScalar(haloScale);
-                visualState.selectionHalo.material.opacity = 0.08 + Math.sin(visualState.clock * 2.4) * 0.02;
-
-                visualState.selectionRing.visible = true;
-                visualState.selectionRing.position.copy(targetPos);
-                visualState.selectionRing.scale.setScalar(radius * 2.55);
-                visualState.selectionRing.rotation.x = Math.PI / 2 + Math.sin(visualState.clock * 0.8) * 0.22;
-                visualState.selectionRing.rotation.z += 0.018;
-                visualState.selectionRing.material.opacity = 0.42;
-            }
 
             if (visualState.focusLight) {
                 visualState.focusLight.visible = true;
                 visualState.focusLight.position.copy(targetPos).add(new THREE.Vector3(radius * 2.2, radius * 3.4, radius * 2.2));
                 visualState.focusLight.intensity = 1.3 + Math.sin(visualState.clock * 2) * 0.18;
             }
-
-            // Smooth interpolation (lerp) towards the planet
-            controls.target.lerp(targetPos, 0.1);
-
-            const cameraDirection = camera.position.clone().sub(targetPos);
-            if (cameraDirection.lengthSq() < 0.001) {
-                cameraDirection.set(1, 0.5, 1);
-            }
-            cameraDirection.normalize();
-            const desiredDistance = Math.min(58, Math.max(10, radius * 6.8));
-            const desiredCamera = targetPos.clone()
-                .add(cameraDirection.multiplyScalar(desiredDistance))
-                .add(new THREE.Vector3(0, radius * 1.35, 0));
-            camera.position.lerp(desiredCamera, 0.06);
-            controls.update();
-        } else if (controls.autoRotate) {
-            if (visualState.selectionHalo && visualState.selectionRing) {
-                visualState.selectionHalo.visible = false;
-                visualState.selectionRing.visible = false;
-            }
-            if (visualState.focusLight) {
-                visualState.focusLight.visible = false;
-            }
-            controls.update(); // only update autorotate if no planet is selected
         } else {
-            if (visualState.selectionHalo && visualState.selectionRing) {
-                visualState.selectionHalo.visible = false;
-                visualState.selectionRing.visible = false;
-            }
             if (visualState.focusLight) {
                 visualState.focusLight.visible = false;
             }
-            controls.update(); // normal damping
         }
+
+        controls.update();
     
         renderer.render(scene, camera);
     }

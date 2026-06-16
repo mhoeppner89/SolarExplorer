@@ -2,15 +2,22 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const htmlFiles = [
+const coreHtmlFiles = [
   "index.html",
   "SolarExplorer.html",
   "solarexplorer_deutsch.html",
   "memory_deutsch.html"
 ];
+const optionalGameFiles = [
+  "gravity_sling.html"
+];
+const htmlFiles = [
+  ...coreHtmlFiles,
+  ...optionalGameFiles.filter((file) => fs.existsSync(path.join(root, file)))
+];
 
 const requiredFiles = [
-  ...htmlFiles,
+  ...coreHtmlFiles,
   "scripts/explorer-runtime.js",
   "IMAGE_CREDITS.md"
 ];
@@ -84,6 +91,9 @@ const englishExplorer = exists("SolarExplorer.html")
 const memory = exists("memory_deutsch.html")
   ? fs.readFileSync(path.join(root, "memory_deutsch.html"), "utf8")
   : "";
+const gravitySling = exists("gravity_sling.html")
+  ? fs.readFileSync(path.join(root, "gravity_sling.html"), "utf8")
+  : "";
 const germanTextFiles = {
   "index.html": exists("index.html") ? fs.readFileSync(path.join(root, "index.html"), "utf8") : "",
   "memory_deutsch.html": memory,
@@ -109,6 +119,21 @@ if ((memory.match(/id: "/g) || []).length !== 15) {
 
 if (!memory.includes("window.render_game_to_text")) {
   fail("Memory game does not expose window.render_game_to_text.");
+}
+
+if (gravitySling) {
+  const index = germanTextFiles["index.html"];
+  if (!index.includes('href="gravity_sling.html"') && !index.includes("href='gravity_sling.html'")) {
+    fail("Index page must link Minispiel 3 to gravity_sling.html.");
+  }
+
+  if (!gravitySling.includes("window.render_game_to_text")) {
+    fail("Gravity Sling game does not expose window.render_game_to_text.");
+  }
+
+  if (!gravitySling.includes("window.advanceTime")) {
+    fail("Gravity Sling game does not expose window.advanceTime.");
+  }
 }
 
 for (const [file, contents] of Object.entries(germanTextFiles)) {

@@ -10,7 +10,7 @@ npm run serve
 
 Then open `http://127.0.0.1:8123`.
 
-The explorer pages use CDN-hosted Tailwind, Three.js, OrbitControls, and canvas-confetti, so the 3D explorer needs network access when first loaded. The landing page and Memory game use local files only.
+The explorer pages use CDN-hosted Tailwind, Three.js, OrbitControls, and canvas-confetti, so the 3D explorer needs network access when first loaded. The landing page, Memory game, and Gravity Sling game use local files only.
 
 ## Pages
 
@@ -18,6 +18,7 @@ The explorer pages use CDN-hosted Tailwind, Three.js, OrbitControls, and canvas-
 - `solarexplorer_deutsch.html` - German 3D Solar Explorer.
 - `SolarExplorer.html` - English 3D Solar Explorer.
 - `memory_deutsch.html` - German Memory game.
+- `gravity_sling.html` - German gravity/orbit launch puzzle.
 
 ## Checks
 
