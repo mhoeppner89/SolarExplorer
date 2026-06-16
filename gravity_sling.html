@@ -592,27 +592,27 @@
                     launch: { x: 142, y: 800 },
                     target: { x: 410, y: 240, r: 54 },
                     planets: [
-                        { label: "Erde", x: 300, y: 600, r: 60, mass: 0.95, softening: 168, color: "#62a7ff", ring: false },
+                        { label: "Merkur", x: 300, y: 600, r: 54, mass: 0.95, softening: 168, color: "#b9aba0", ring: false },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 214, y: 700, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 382, y: 482, r: 24, color: "#8d817c" },
                     ],
-                    hint: "Ziehe mittelstark nach links unten. Die Erde zieht die Bahn zwischen den Brocken ins Ziel.",
+                    hint: "Ziehe mittelstark nach links unten. Merkur zieht die Bahn zwischen den Brocken ins Ziel.",
                 },
                 {
-                    name: "Mond-Fenster",
+                    name: "Atmosphären-Fenster",
                     launch: { x: 106, y: 720 },
                     target: { x: 422, y: 275, r: 34 },
                     planets: [
-                        { label: "Mond", x: 274, y: 454, r: 34, mass: 0.76, softening: 92, color: "#d7deea", ring: false },
+                        { label: "Mars", x: 274, y: 454, r: 36, mass: 0.76, softening: 96, color: "#ff8e68", ring: false, atmosphereRadius: 86, atmosphereDrag: 0.72, atmosphereColor: "#ffb07e" },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 354, y: 592, r: 28, color: "#9c8b7a" },
                         { label: "Asteroid", x: 190, y: 492, r: 22, color: "#8d817c" },
                         { label: "Asteroid", x: 430, y: 438, r: 20, color: "#9c8b7a" },
                     ],
-                    hint: "Der Mond zieht schwächer, aber genau genug für einen kleinen Kursknick.",
+                    hint: "Die helle Atmosphärenzone bremst die Sonde. Streife Mars knapp, statt nur vorbei zu schießen.",
                 },
                 {
                     name: "Sonnen-Schwung",
@@ -683,7 +683,7 @@
                     target: { x: 408, y: 250, r: 45, maxSpeed: 360 },
                     planets: [
                         { label: "Sonne", x: 268, y: 560, r: 62, mass: 0.92, softening: 128, color: "#ffd36b", ring: false, hotRadius: 90 },
-                        { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.34, softening: 86, color: "#c6d5eb", ring: false },
+                        { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.34, softening: 86, color: "#c6d5eb", ring: false, atmosphereRadius: 70, atmosphereDrag: 0.42, atmosphereColor: "#b8ecff" },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 168, y: 680, r: 23, color: "#9c8b7a" },
@@ -693,7 +693,7 @@
                         { label: "Asteroid", x: 292, y: 238, r: 20, color: "#9c8b7a" },
                         { label: "Asteroid", x: 454, y: 344, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Treffen reicht nicht: Bei Pluto muss die Sonde langsam genug ankommen. Nutze den engen Sonnenbogen.",
+                    hint: "Treffen reicht nicht: Streife Plutos helle Atmosphäre, um vor dem Ziel Tempo abzubauen.",
                 },
                 {
                     name: "Drei-Körper-Kanal",
@@ -701,7 +701,7 @@
                     target: { x: 420, y: 190, r: 35 },
                     planets: [
                         { label: "Jupiter", x: 218, y: 620, r: 58, mass: 0.86, softening: 138, color: "#d79d55", ring: false },
-                        { label: "Erde", x: 358, y: 442, r: 48, mass: 0.68, softening: 122, color: "#62a7ff", ring: false },
+                        { label: "Erde", x: 358, y: 442, r: 48, mass: 0.68, softening: 122, color: "#62a7ff", ring: false, atmosphereRadius: 96, atmosphereDrag: 0.34, atmosphereColor: "#75e8ff" },
                         { label: "Mond", x: 218, y: 288, r: 30, mass: 0.44, softening: 96, color: "#d7deea", ring: false },
                     ],
                     hazards: [
@@ -712,7 +712,7 @@
                         { label: "Asteroid", x: 136, y: 616, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 338, y: 304, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Die erste Masse zieht dich hoch, die zweite lenkt dich quer. Kleine Korrekturen reichen.",
+                    hint: "Die erste Masse zieht dich hoch, die Erde bremst im hellen Atmosphärenring. Kleine Korrekturen reichen.",
                 },
                 {
                     name: "Finaler Sonnenbogen",
@@ -720,8 +720,8 @@
                     target: { x: 396, y: 154, r: 33, maxSpeed: 380 },
                     planets: [
                         { label: "Sonne", x: 272, y: 585, r: 66, mass: 1.04, softening: 136, color: "#ffd36b", ring: false, hotRadius: 96 },
-                        { label: "Saturn", x: 396, y: 372, r: 50, mass: 0.72, softening: 124, color: "#e2c987", ring: true },
-                        { label: "Pluto", x: 396, y: 154, r: 23, mass: 0.32, softening: 88, color: "#c6d5eb", ring: false },
+                        { label: "Saturn", x: 396, y: 372, r: 50, mass: 0.72, softening: 124, color: "#e2c987", ring: true, atmosphereRadius: 96, atmosphereDrag: 0.38, atmosphereColor: "#ffe0a5" },
+                        { label: "Pluto", x: 396, y: 154, r: 23, mass: 0.32, softening: 88, color: "#c6d5eb", ring: false, atmosphereRadius: 58, atmosphereDrag: 0.26, atmosphereColor: "#b8ecff" },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 184, y: 520, r: 23, color: "#9c8b7a" },
@@ -732,14 +732,14 @@
                         { label: "Asteroid", x: 242, y: 386, r: 20, color: "#9c8b7a" },
                         { label: "Asteroid", x: 438, y: 220, r: 19, color: "#8d817c" },
                     ],
-                    hint: "Der Sonnenbogen gibt Schwung, Saturn bremst. Komme sauber und nicht zu schnell bei Pluto an.",
+                    hint: "Der Sonnenbogen gibt Schwung, Saturns Atmosphäre bremst. Komme sauber bei Pluto an.",
                 },
                 {
                     name: "Orbit-Schleuse",
                     launch: { x: 116, y: 815 },
                     target: { x: 420, y: 760, r: 38, maxSpeed: 85 },
                     planets: [
-                        { label: "Jupiter", x: 270, y: 545, r: 66, mass: 1.35, softening: 118, color: "#d79d55", ring: false },
+                        { label: "Jupiter", x: 270, y: 545, r: 66, mass: 1.35, softening: 118, color: "#d79d55", ring: false, atmosphereRadius: 118, atmosphereDrag: 0.18, atmosphereColor: "#ffd189" },
                     ],
                     hazards: [
                         { label: "Asteroiden", x: 198, y: 805, r: 29, color: "#9c8b7a" },
@@ -753,7 +753,7 @@
                         { label: "Asteroiden", x: 316, y: 846, r: 27, color: "#9c8b7a" },
                         { label: "Asteroiden", x: 390, y: 810, r: 24, color: "#8d817c" },
                     ],
-                    hint: "Der direkte Weg ist dicht. Ziehe nur ein Stück nach rechts und lass Jupiter die Sonde langsam außen herum tragen.",
+                    hint: "Der direkte Weg ist dicht. Ziehe kurz nach rechts und lass Jupiters Atmosphäre den langen Bogen zähmen.",
                 },
             ];
 
@@ -806,6 +806,9 @@
                 launchSpeed: 0,
                 levelScore: 0,
                 highScores: loadHighScores(),
+                atmosphereTime: 0,
+                currentAtmosphereStrength: 0,
+                maxAtmosphereStrength: 0,
                 elapsed: 0,
                 message: "",
                 lastOutcome: "none",
@@ -829,6 +832,9 @@
                 state.shots = 0;
                 state.launchSpeed = 0;
                 state.levelScore = 0;
+                state.atmosphereTime = 0;
+                state.currentAtmosphereStrength = 0;
+                state.maxAtmosphereStrength = 0;
                 state.elapsed = 0;
                 state.lastOutcome = "none";
                 state.message = keepMessage ? state.message : level.hint;
@@ -848,6 +854,20 @@
 
             function clamp(value, min, max) {
                 return Math.max(min, Math.min(max, value));
+            }
+
+            function colorWithAlpha(color, alpha) {
+                if (!color || !color.startsWith("#")) return `rgba(117, 232, 255, ${alpha})`;
+                const hex = color.slice(1);
+                const fullHex = hex.length === 3
+                    ? hex.split("").map((char) => char + char).join("")
+                    : hex;
+                const value = Number.parseInt(fullHex, 16);
+                if (Number.isNaN(value)) return `rgba(117, 232, 255, ${alpha})`;
+                const r = (value >> 16) & 255;
+                const g = (value >> 8) & 255;
+                const b = value & 255;
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
             }
 
             function totalHighScore() {
@@ -911,6 +931,15 @@
                 return planet.softening || Math.max(72, planet.r * 1.8);
             }
 
+            function atmosphereStrengthAt(x, y, planet) {
+                if (!planet.atmosphereRadius || !planet.atmosphereDrag) return 0;
+                const distance = length(x - planet.x, y - planet.y);
+                if (distance >= planet.atmosphereRadius) return 0;
+                const innerEdge = planet.r + SHIP_RADIUS;
+                const width = Math.max(1, planet.atmosphereRadius - innerEdge);
+                return Math.pow(clamp((planet.atmosphereRadius - distance) / width, 0, 1), 1.35);
+            }
+
             function gravityAt(x, y, level) {
                 let ax = 0;
                 let ay = 0;
@@ -929,10 +958,20 @@
 
             function applyGravity(entity, level, dt) {
                 const gravity = gravityAt(entity.x, entity.y, level);
+                let strongestAtmosphere = 0;
                 entity.vx += gravity.ax * dt;
                 entity.vy += gravity.ay * dt;
+                for (const planet of level.planets) {
+                    const strength = atmosphereStrengthAt(entity.x, entity.y, planet);
+                    if (strength <= 0) continue;
+                    strongestAtmosphere = Math.max(strongestAtmosphere, strength);
+                    const damping = Math.exp(-planet.atmosphereDrag * strength * dt);
+                    entity.vx *= damping;
+                    entity.vy *= damping;
+                }
                 entity.x += entity.vx * dt;
                 entity.y += entity.vy * dt;
+                return { atmosphereStrength: strongestAtmosphere };
             }
 
             function checkProbeOutcome(probe, level, elapsed) {
@@ -998,6 +1037,9 @@
                 state.ship.vy = dy * LAUNCH_POWER;
                 state.launchSpeed = pull * LAUNCH_POWER;
                 state.levelScore = 0;
+                state.atmosphereTime = 0;
+                state.currentAtmosphereStrength = 0;
+                state.maxAtmosphereStrength = 0;
                 state.mode = "flying";
                 state.elapsed = 0;
                 state.shots += 1;
@@ -1047,7 +1089,12 @@
                 const level = currentLevel();
                 state.elapsed += dt;
 
-                applyGravity(state.ship, level, dt);
+                const environment = applyGravity(state.ship, level, dt);
+                state.currentAtmosphereStrength = environment.atmosphereStrength;
+                if (environment.atmosphereStrength > 0) {
+                    state.atmosphereTime += dt;
+                    state.maxAtmosphereStrength = Math.max(state.maxAtmosphereStrength, environment.atmosphereStrength);
+                }
 
                 if (state.trail.length === 0 ||
                     length(state.ship.x - state.trail[state.trail.length - 1].x, state.ship.y - state.trail[state.trail.length - 1].y) > 6) {
@@ -1251,6 +1298,44 @@
                 ctx.beginPath();
                 ctx.arc(0, 0, fieldRadius * 0.66, 0, Math.PI * 2);
                 ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawAtmosphere(planet) {
+                if (!planet.atmosphereRadius) return;
+                const color = planet.atmosphereColor || "#75e8ff";
+                const time = performance.now() / 1000;
+                const pulse = 1 + Math.sin(time * 1.7 + planet.x * 0.02) * 0.025;
+                const radius = planet.atmosphereRadius * pulse;
+                ctx.save();
+                ctx.translate(planet.x, planet.y);
+
+                const haze = ctx.createRadialGradient(0, 0, planet.r * 0.9, 0, 0, radius);
+                haze.addColorStop(0, colorWithAlpha(color, 0.24));
+                haze.addColorStop(0.62, colorWithAlpha(color, 0.13));
+                haze.addColorStop(1, colorWithAlpha(color, 0.02));
+                ctx.fillStyle = haze;
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = colorWithAlpha(color, 0.82);
+                ctx.setLineDash([12, 7]);
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = colorWithAlpha(color, 0.42);
+                for (let i = 0; i < 3; i += 1) {
+                    const arcRadius = radius * (0.52 + i * 0.15);
+                    const start = time * (0.32 + i * 0.08) + i * 1.75;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, arcRadius, start, start + Math.PI * 0.58);
+                    ctx.stroke();
+                }
                 ctx.restore();
             }
 
@@ -1700,6 +1785,7 @@
                 drawBackground();
                 const level = currentLevel();
                 for (const planet of level.planets) drawGravityField(planet);
+                for (const planet of level.planets) drawAtmosphere(planet);
                 drawTarget(level.target);
                 for (const planet of level.planets) drawPlanet(planet);
                 for (const hazard of level.hazards || []) drawHazard(hazard);
@@ -1828,6 +1914,9 @@
                         r: planet.r,
                         mass: planet.mass,
                         hotRadius: planet.hotRadius || null,
+                        atmosphereRadius: planet.atmosphereRadius || null,
+                        atmosphereDrag: planet.atmosphereDrag || null,
+                        atmosphereStrength: Number(atmosphereStrengthAt(state.ship.x, state.ship.y, planet).toFixed(3)),
                     })),
                     hazards: (level.hazards || []).map((hazard) => ({
                         label: hazard.label || "",
@@ -1842,6 +1931,11 @@
                         level: state.levelScore,
                         bestForLevel: state.highScores[state.levelIndex] || 0,
                         totalBest: totalHighScore(),
+                    },
+                    atmosphere: {
+                        currentStrength: Number(state.currentAtmosphereStrength.toFixed(3)),
+                        maxStrength: Number(state.maxAtmosphereStrength.toFixed(3)),
+                        time: Number(state.atmosphereTime.toFixed(2)),
                     },
                     drag: state.drag.active ? {
                         x: Number(state.drag.x.toFixed(1)),
