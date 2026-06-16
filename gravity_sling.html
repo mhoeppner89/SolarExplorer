@@ -54,10 +54,7 @@
             align-items: center;
             justify-content: center;
             padding:
-                max(0.35rem, env(safe-area-inset-top))
-                max(0.35rem, env(safe-area-inset-right))
-                max(0.35rem, env(safe-area-inset-bottom))
-                max(0.35rem, env(safe-area-inset-left));
+                max(0.35rem, env(safe-area-inset-top)) max(0.35rem, env(safe-area-inset-right)) max(0.35rem, env(safe-area-inset-bottom)) max(0.35rem, env(safe-area-inset-left));
         }
 
         .game-shell {
@@ -434,7 +431,8 @@
             }
         }
 
-        @media (max-width: 380px), (max-height: 680px) {
+        @media (max-width: 380px),
+        (max-height: 680px) {
             .hud {
                 gap: 0.28rem;
                 padding: 0.36rem;
@@ -522,7 +520,8 @@
                     </div>
                     <div class="cluster">
                         <div class="chip"><span>Mission</span><strong id="levelLabel">1</strong></div>
-                        <div class="chip score-chip"><span>Punkte</span><strong><span id="scoreLabel">0</span>/<span id="bestLabel">0</span></strong></div>
+                        <div class="chip score-chip"><span>Punkte</span><strong><span id="scoreLabel">0</span>/<span
+                                    id="bestLabel">0</span></strong></div>
                         <div class="chip status-chip"><span>Status</span><strong id="stateLabel">Bereit</strong></div>
                         <div class="chip"><span>Zeit</span><strong id="timeLabel">0.0s</strong></div>
                         <div class="chip speed-chip">
@@ -532,8 +531,10 @@
                         </div>
                     </div>
                     <div class="actions">
-                        <a class="button" href="index.html" title="Zurück zur Spielstation" aria-label="Zurück zur Spielstation">←</a>
-                        <button id="restartButton" title="Mission neu starten" aria-label="Mission neu starten">↻</button>
+                        <a class="button" href="index.html" title="Zurück zur Spielstation"
+                            aria-label="Zurück zur Spielstation">←</a>
+                        <button id="restartButton" title="Mission neu starten"
+                            aria-label="Mission neu starten">↻</button>
                     </div>
                 </div>
                 <div id="message" class="message">
@@ -578,7 +579,7 @@
 
             const levels = [
                 {
-                    name: "Direkter Flug",
+                    name: "Direkter Flug", // level 1
                     launch: { x: 142, y: 800 },
                     target: { x: 406, y: 214, r: 40 },
                     planets: [],
@@ -588,7 +589,7 @@
                     hint: "Ziehen, zielen, loslassen. Ohne Schwerkraft fliegt die Sonde geradeaus - aber nicht durch den Brocken.",
                 },
                 {
-                    name: "Erste Ablenkung",
+                    name: "Erste Ablenkung", // level 2
                     launch: { x: 142, y: 800 },
                     target: { x: 410, y: 240, r: 54 },
                     planets: [
@@ -601,11 +602,11 @@
                     hint: "Ziehe mittelstark nach links unten. Merkur zieht die Bahn zwischen den Brocken ins Ziel.",
                 },
                 {
-                    name: "Atmosphären-Fenster",
+                    name: "Atmosphären-Fenster", // level 3
                     launch: { x: 106, y: 720 },
                     target: { x: 422, y: 275, r: 34 },
                     planets: [
-                        { label: "Mars", x: 274, y: 454, r: 36, mass: 0.76, softening: 96, color: "#ff8e68", ring: false, atmosphereRadius: 86, atmosphereDrag: 0.72, atmosphereColor: "#ffb07e" },
+                        { label: "Mars", x: 274, y: 384, r: 36, mass: 0.76, softening: 96, color: "#ff8e68", ring: false, atmosphereRadius: 86, atmosphereDrag: 0.72, atmosphereColor: "#ffb07e" },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 354, y: 592, r: 28, color: "#9c8b7a" },
@@ -615,7 +616,7 @@
                     hint: "Die helle Atmosphärenzone bremst die Sonde. Streife Mars knapp, statt nur vorbei zu schießen.",
                 },
                 {
-                    name: "Sonnen-Schwung",
+                    name: "Sonnen-Schwung", // level 4
                     launch: { x: 128, y: 820 },
                     target: { x: 408, y: 168, r: 34 },
                     planets: [
@@ -629,12 +630,12 @@
                     hint: "Nah an der Sonne wird die Sonde schnell. Der freie Korridor liegt knapp am Feld vorbei.",
                 },
                 {
-                    name: "Doppelpass",
+                    name: "Doppelpass", // level 5
                     launch: { x: 108, y: 730 },
                     target: { x: 420, y: 235, r: 34 },
                     planets: [
-                        { label: "Venus", x: 228, y: 430, r: 40, mass: 0.62, softening: 104, color: "#f2c166", ring: false },
-                        { label: "Mars", x: 346, y: 604, r: 35, mass: 0.58, softening: 100, color: "#ff8e68", ring: false },
+                        { label: "Venus", x: 448, y: 330, r: 40, mass: 0.62, softening: 104, color: "#f2c166", ring: false },
+                        { label: "Mars", x: 246, y: 604, r: 35, mass: 0.58, softening: 100, color: "#ff8e68", ring: false },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 156, y: 588, r: 22, color: "#9c8b7a" },
@@ -645,40 +646,45 @@
                     hint: "Zwei Körper formen die Flugbahn nacheinander. Triff die Lücke zwischen Venus und Mars.",
                 },
                 {
-                    name: "Saturn-Lücke",
+                    name: "Saturn-Lücke", // level 6
                     launch: { x: 126, y: 790 },
                     target: { x: 408, y: 380, r: 35 },
                     planets: [
-                        { label: "Saturn", x: 280, y: 532, r: 58, mass: 0.78, softening: 124, color: "#e2c987", ring: true },
+                        {
+                            label: "Saturn", x: 280, y: 282, r: 58, mass: 0.98, softening: 124, color: "#e2c987", ring: true,
+                            atmosphereRadius: 86, atmosphereDrag: 0.92, atmosphereColor: "#ffb07e"
+                        },
                     ],
                     hazards: [
                         { label: "Ringbrocken", x: 378, y: 514, r: 20, color: "#c5b08d" },
                         { label: "Ringbrocken", x: 196, y: 568, r: 18, color: "#c5b08d" },
-                        { label: "Ringbrocken", x: 338, y: 650, r: 22, color: "#9c8b7a" },
+                        { label: "Ringbrocken", x: 318, y: 590, r: 22, color: "#9c8b7a" },
                         { label: "Ringbrocken", x: 438, y: 462, r: 20, color: "#8d817c" },
-                        { label: "Ringbrocken", x: 148, y: 428, r: 22, color: "#9c8b7a" },
+                        { label: "Ringbrocken", x: 488, y: 428, r: 22, color: "#9c8b7a" },
                     ],
                     hint: "Saturn zieht stark. Die kleinen Brocken markieren die gefährliche Ringzone.",
                 },
                 {
-                    name: "Äußere Bahn",
+                    name: "Äußere Bahn", // level 7
                     launch: { x: 100, y: 700 },
                     target: { x: 428, y: 260, r: 34 },
                     planets: [
-                        { label: "Jupiter", x: 236, y: 536, r: 64, mass: 0.9, softening: 136, color: "#d79d55", ring: false },
-                        { label: "Neptun", x: 368, y: 358, r: 43, mass: 0.58, softening: 114, color: "#709cff", ring: false },
+                        { label: "Jupiter", x: 236, y: 536, r: 64, mass: 0.99, softening: 136, color: "#d79d55", ring: false },
+                        { label: "Neptun", x: 384, y: 358, r: 38, mass: 0.48, softening: 94, color: "#709cff", ring: false },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 166, y: 612, r: 24, color: "#9c8b7a" },
                         { label: "Asteroid", x: 322, y: 662, r: 22, color: "#8d817c" },
                         { label: "Asteroid", x: 448, y: 508, r: 23, color: "#9c8b7a" },
                         { label: "Asteroid", x: 268, y: 372, r: 20, color: "#8d817c" },
-                        { label: "Asteroid", x: 120, y: 344, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 105, y: 544, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 55, y: 574, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 15, y: 644, r: 22, color: "#9c8b7a" }
                     ],
                     hint: "Jupiter macht den großen Schwung, Neptun korrigiert am Ende. Die Außenbahn ist zugestellt.",
                 },
                 {
-                    name: "Einfangen bei Pluto",
+                    name: "Einfangen bei Pluto", // level 8
                     launch: { x: 128, y: 815 },
                     target: { x: 408, y: 250, r: 45, maxSpeed: 360 },
                     planets: [
@@ -686,36 +692,38 @@
                         { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.34, softening: 86, color: "#c6d5eb", ring: false, atmosphereRadius: 70, atmosphereDrag: 0.42, atmosphereColor: "#b8ecff" },
                     ],
                     hazards: [
-                        { label: "Asteroid", x: 168, y: 680, r: 23, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 498, y: 680, r: 23, color: "#9c8b7a" },
                         { label: "Asteroid", x: 382, y: 660, r: 22, color: "#8d817c" },
                         { label: "Asteroid", x: 136, y: 456, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 106, y: 406, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 56, y: 376, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 356, y: 432, r: 21, color: "#8d817c" },
-                        { label: "Asteroid", x: 292, y: 238, r: 20, color: "#9c8b7a" },
                         { label: "Asteroid", x: 454, y: 344, r: 20, color: "#8d817c" },
+                        { label: "Asteroid", x: 414, y: 358, r: 20, color: "#8d817c" },
                     ],
                     hint: "Treffen reicht nicht: Streife Plutos helle Atmosphäre, um vor dem Ziel Tempo abzubauen.",
                 },
                 {
-                    name: "Drei-Körper-Kanal",
+                    name: "Drei-Körper-Kanal", // level 9
                     launch: { x: 104, y: 805 },
                     target: { x: 420, y: 190, r: 35 },
                     planets: [
-                        { label: "Jupiter", x: 218, y: 620, r: 58, mass: 0.86, softening: 138, color: "#d79d55", ring: false },
-                        { label: "Erde", x: 358, y: 442, r: 48, mass: 0.68, softening: 122, color: "#62a7ff", ring: false, atmosphereRadius: 96, atmosphereDrag: 0.34, atmosphereColor: "#75e8ff" },
-                        { label: "Mond", x: 218, y: 288, r: 30, mass: 0.44, softening: 96, color: "#d7deea", ring: false },
+                        { label: "Jupiter", x: 218, y: 620, r: 58, mass: 1.26, softening: 138, color: "#d79d55", ring: false },
+                        { label: "Mond", x: 238, y: 308, r: 30, mass: 0.64, softening: 96, color: "#d7deea", ring: false },
+                        { label: "Mond", x: 418, y: 358, r: 20, mass: 0.14, softening: 36, color: "#d7deea", ring: false },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 324, y: 652, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 174, y: 430, r: 24, color: "#8d817c" },
                         { label: "Asteroid", x: 412, y: 566, r: 21, color: "#9c8b7a" },
-                        { label: "Asteroid", x: 284, y: 488, r: 20, color: "#8d817c" },
+                        { label: "Asteroid", x: 284, y: 288, r: 20, color: "#8d817c" },
                         { label: "Asteroid", x: 136, y: 616, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 338, y: 304, r: 20, color: "#8d817c" },
                     ],
                     hint: "Die erste Masse zieht dich hoch, die Erde bremst im hellen Atmosphärenring. Kleine Korrekturen reichen.",
                 },
                 {
-                    name: "Finaler Sonnenbogen",
+                    name: "Finaler Sonnenbogen", // level 10
                     launch: { x: 120, y: 830 },
                     target: { x: 396, y: 154, r: 33, maxSpeed: 380 },
                     planets: [
@@ -726,7 +734,9 @@
                     hazards: [
                         { label: "Asteroid", x: 184, y: 520, r: 23, color: "#9c8b7a" },
                         { label: "Asteroid", x: 320, y: 264, r: 21, color: "#8f8280" },
-                        { label: "Asteroid", x: 168, y: 704, r: 23, color: "#8d817c" },
+                        { label: "Asteroid", x: 108, y: 724, r: 23, color: "#8d817c" },
+                        { label: "Asteroid", x: 54, y: 748, r: 23, color: "#8d817c" },
+                        { label: "Asteroid", x: 12, y: 784, r: 23, color: "#8d817c" },
                         { label: "Asteroid", x: 382, y: 620, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 452, y: 438, r: 20, color: "#8d817c" },
                         { label: "Asteroid", x: 242, y: 386, r: 20, color: "#9c8b7a" },
@@ -735,9 +745,9 @@
                     hint: "Der Sonnenbogen gibt Schwung, Saturns Atmosphäre bremst. Komme sauber bei Pluto an.",
                 },
                 {
-                    name: "Orbit-Schleuse",
+                    name: "Orbit-Schleuse", // level 11
                     launch: { x: 116, y: 815 },
-                    target: { x: 420, y: 760, r: 38, maxSpeed: 85 },
+                    target: { x: 420, y: 760, r: 38, maxSpeed: 120 },
                     planets: [
                         { label: "Jupiter", x: 270, y: 545, r: 66, mass: 1.35, softening: 118, color: "#d79d55", ring: false, atmosphereRadius: 118, atmosphereDrag: 0.18, atmosphereColor: "#ffd189" },
                     ],
@@ -745,7 +755,7 @@
                         { label: "Asteroiden", x: 198, y: 805, r: 29, color: "#9c8b7a" },
                         { label: "Asteroiden", x: 272, y: 790, r: 29, color: "#8d817c" },
                         { label: "Asteroiden", x: 344, y: 774, r: 28, color: "#9c8b7a" },
-                        { label: "Asteroiden", x: 392, y: 728, r: 25, color: "#8d817c" },
+                        { label: "Asteroiden", x: 362, y: 718, r: 25, color: "#8d817c" },
                         { label: "Asteroiden", x: 154, y: 630, r: 22, color: "#9c8b7a" },
                         { label: "Asteroiden", x: 176, y: 438, r: 24, color: "#8d817c" },
                         { label: "Asteroiden", x: 352, y: 386, r: 24, color: "#9c8b7a" },
@@ -797,7 +807,7 @@
             }
 
             const state = {
-                levelIndex: 0,
+                levelIndex: 10,
                 mode: "ready",
                 ship: { x: 0, y: 0, vx: 0, vy: 0, r: SHIP_RADIUS },
                 drag: { active: false, x: 0, y: 0 },
