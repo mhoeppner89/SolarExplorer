@@ -482,7 +482,7 @@
             const FIXED_DT = 1 / 60;
             const TIME_LIMIT = 20;
             const FLY_MARGIN = 180;
-            const GRAVITY_SCALE = 1450000;
+            const GRAVITY_SCALE = 2900000;
 
             const canvas = document.getElementById("game");
             const ctx = canvas.getContext("2d");
@@ -505,8 +505,10 @@
                     launch: { x: 142, y: 800 },
                     target: { x: 406, y: 214, r: 40 },
                     planets: [],
-                    hazards: [],
-                    hint: "Ziehen, zielen, loslassen. Ohne Schwerkraft fliegt die Sonde geradeaus.",
+                    hazards: [
+                        { label: "Asteroid", x: 330, y: 505, r: 22, color: "#9c8b7a" },
+                    ],
+                    hint: "Ziehen, zielen, loslassen. Ohne Schwerkraft fliegt die Sonde geradeaus - aber nicht durch den Brocken.",
                 },
                 {
                     name: "Erste Ablenkung",
@@ -515,8 +517,11 @@
                     planets: [
                         { label: "Erde", x: 300, y: 600, r: 60, mass: 0.95, softening: 168, color: "#62a7ff", ring: false },
                     ],
-                    hazards: [],
-                    hint: "Ziehe mittelstark nach links unten. Die Erde zieht die Bahn jetzt deutlich ins Ziel.",
+                    hazards: [
+                        { label: "Asteroid", x: 214, y: 700, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 382, y: 482, r: 24, color: "#8d817c" },
+                    ],
+                    hint: "Ziehe mittelstark nach links unten. Die Erde zieht die Bahn zwischen den Brocken ins Ziel.",
                 },
                 {
                     name: "Mond-Fenster",
@@ -527,6 +532,8 @@
                     ],
                     hazards: [
                         { label: "Asteroid", x: 354, y: 592, r: 28, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 190, y: 492, r: 22, color: "#8d817c" },
+                        { label: "Asteroid", x: 430, y: 438, r: 20, color: "#9c8b7a" },
                     ],
                     hint: "Der Mond zieht schwächer, aber genau genug für einen kleinen Kursknick.",
                 },
@@ -535,10 +542,14 @@
                     launch: { x: 128, y: 820 },
                     target: { x: 408, y: 168, r: 34 },
                     planets: [
-                        { label: "Sonne", x: 270, y: 510, r: 68, mass: 1.05, softening: 138, color: "#ffd36b", ring: false, hotRadius: 98 },
+                        { label: "Sonne", x: 270, y: 510, r: 68, mass: 1.05, softening: 138, color: "#ffd36b", ring: false, hotRadius: 88 },
                     ],
-                    hazards: [],
-                    hint: "Nah an der Sonne wird die Sonde schnell. Zu nah wird es heiß.",
+                    hazards: [
+                        { label: "Asteroid", x: 140, y: 600, r: 22, color: "#8d817c" },
+                        { label: "Asteroid", x: 404, y: 620, r: 23, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 326, y: 338, r: 21, color: "#8d817c" },
+                    ],
+                    hint: "Nah an der Sonne wird die Sonde schnell. Der freie Korridor liegt knapp am Feld vorbei.",
                 },
                 {
                     name: "Doppelpass",
@@ -548,8 +559,13 @@
                         { label: "Venus", x: 228, y: 430, r: 40, mass: 0.62, softening: 104, color: "#f2c166", ring: false },
                         { label: "Mars", x: 346, y: 604, r: 35, mass: 0.58, softening: 100, color: "#ff8e68", ring: false },
                     ],
-                    hazards: [],
-                    hint: "Zwei Körper formen die Flugbahn nacheinander. Der zweite Pass entscheidet.",
+                    hazards: [
+                        { label: "Asteroid", x: 156, y: 588, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 294, y: 520, r: 20, color: "#8d817c" },
+                        { label: "Asteroid", x: 412, y: 462, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 318, y: 300, r: 21, color: "#8d817c" },
+                    ],
+                    hint: "Zwei Körper formen die Flugbahn nacheinander. Triff die Lücke zwischen Venus und Mars.",
                 },
                 {
                     name: "Saturn-Lücke",
@@ -561,6 +577,9 @@
                     hazards: [
                         { label: "Ringbrocken", x: 378, y: 514, r: 20, color: "#c5b08d" },
                         { label: "Ringbrocken", x: 196, y: 568, r: 18, color: "#c5b08d" },
+                        { label: "Ringbrocken", x: 338, y: 650, r: 22, color: "#9c8b7a" },
+                        { label: "Ringbrocken", x: 438, y: 462, r: 20, color: "#8d817c" },
+                        { label: "Ringbrocken", x: 148, y: 428, r: 22, color: "#9c8b7a" },
                     ],
                     hint: "Saturn zieht stark. Die kleinen Brocken markieren die gefährliche Ringzone.",
                 },
@@ -572,19 +591,32 @@
                         { label: "Jupiter", x: 236, y: 536, r: 64, mass: 0.9, softening: 136, color: "#d79d55", ring: false },
                         { label: "Neptun", x: 368, y: 358, r: 43, mass: 0.58, softening: 114, color: "#709cff", ring: false },
                     ],
-                    hazards: [],
-                    hint: "Jupiter macht den großen Schwung, Neptun korrigiert am Ende.",
+                    hazards: [
+                        { label: "Asteroid", x: 166, y: 612, r: 24, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 322, y: 662, r: 22, color: "#8d817c" },
+                        { label: "Asteroid", x: 448, y: 508, r: 23, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 268, y: 372, r: 20, color: "#8d817c" },
+                        { label: "Asteroid", x: 120, y: 344, r: 22, color: "#9c8b7a" },
+                    ],
+                    hint: "Jupiter macht den großen Schwung, Neptun korrigiert am Ende. Die Außenbahn ist zugestellt.",
                 },
                 {
                     name: "Einfangen bei Pluto",
                     launch: { x: 128, y: 815 },
-                    target: { x: 408, y: 250, r: 39, maxSpeed: 290 },
+                    target: { x: 408, y: 250, r: 45, maxSpeed: 290 },
                     planets: [
                         { label: "Sonne", x: 268, y: 560, r: 62, mass: 0.92, softening: 128, color: "#ffd36b", ring: false, hotRadius: 90 },
                         { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.34, softening: 86, color: "#c6d5eb", ring: false },
                     ],
-                    hazards: [],
-                    hint: "Treffen reicht nicht: Bei Pluto muss die Sonde langsam genug ankommen.",
+                    hazards: [
+                        { label: "Asteroid", x: 168, y: 680, r: 23, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 382, y: 660, r: 22, color: "#8d817c" },
+                        { label: "Asteroid", x: 136, y: 456, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 356, y: 432, r: 21, color: "#8d817c" },
+                        { label: "Asteroid", x: 292, y: 238, r: 20, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 454, y: 344, r: 20, color: "#8d817c" },
+                    ],
+                    hint: "Treffen reicht nicht: Bei Pluto muss die Sonde langsam genug ankommen. Nutze den engen Sonnenbogen.",
                 },
                 {
                     name: "Drei-Körper-Kanal",
@@ -598,6 +630,10 @@
                     hazards: [
                         { label: "Asteroid", x: 324, y: 652, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 174, y: 430, r: 24, color: "#8d817c" },
+                        { label: "Asteroid", x: 412, y: 566, r: 21, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 284, y: 488, r: 20, color: "#8d817c" },
+                        { label: "Asteroid", x: 136, y: 616, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 338, y: 304, r: 20, color: "#8d817c" },
                     ],
                     hint: "Die erste Masse zieht dich hoch, die zweite lenkt dich quer. Kleine Korrekturen reichen.",
                 },
@@ -613,13 +649,18 @@
                     hazards: [
                         { label: "Asteroid", x: 184, y: 520, r: 23, color: "#9c8b7a" },
                         { label: "Asteroid", x: 320, y: 264, r: 21, color: "#8f8280" },
+                        { label: "Asteroid", x: 168, y: 704, r: 23, color: "#8d817c" },
+                        { label: "Asteroid", x: 382, y: 620, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 452, y: 438, r: 20, color: "#8d817c" },
+                        { label: "Asteroid", x: 242, y: 386, r: 20, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 438, y: 220, r: 19, color: "#8d817c" },
                     ],
                     hint: "Der Sonnenbogen gibt Schwung, Saturn bremst. Komme sauber und nicht zu schnell bei Pluto an.",
                 },
                 {
                     name: "Orbit-Schleuse",
                     launch: { x: 116, y: 815 },
-                    target: { x: 420, y: 760, r: 38, maxSpeed: 60 },
+                    target: { x: 420, y: 760, r: 38, maxSpeed: 80 },
                     planets: [
                         { label: "Jupiter", x: 270, y: 545, r: 66, mass: 1.35, softening: 118, color: "#d79d55", ring: false },
                     ],
@@ -635,7 +676,7 @@
                         { label: "Asteroiden", x: 316, y: 846, r: 27, color: "#9c8b7a" },
                         { label: "Asteroiden", x: 390, y: 810, r: 24, color: "#8d817c" },
                     ],
-                    hint: "Der direkte Weg ist dicht. Ziehe kurz nach rechts unten und lass Jupiter die Sonde langsam außen herum tragen.",
+                    hint: "Der direkte Weg ist dicht. Ziehe nur ein Stück nach rechts und lass Jupiter die Sonde langsam außen herum tragen.",
                 },
             ];
 
@@ -905,7 +946,7 @@
                 };
                 const points = [];
                 let outcome = null;
-                const predictionSteps = state.levelIndex >= 10 ? 1080 : 420;
+                const predictionSteps = state.levelIndex >= 8 ? 1080 : 900;
                 for (let i = 0; i < predictionSteps; i += 1) {
                     applyGravity(sim, level, FIXED_DT);
                     if (i % 5 === 0) points.push({ x: sim.x, y: sim.y });
@@ -1491,8 +1532,17 @@
                 for (const planet of level.planets) {
                     ctx.fillText(planet.label || "Schwerkraft", planet.x - 22, planet.y + planet.r + 22);
                 }
-                for (const hazard of level.hazards || []) {
-                    ctx.fillText(hazard.label || "Gefahr", hazard.x - 22, hazard.y + hazard.r + 20);
+                const hazards = level.hazards || [];
+                if (hazards.length <= 3) {
+                    for (const hazard of hazards) {
+                        ctx.fillText(hazard.label || "Gefahr", hazard.x - 22, hazard.y + hazard.r + 20);
+                    }
+                } else {
+                    const center = hazards.reduce((acc, hazard) => ({
+                        x: acc.x + hazard.x / hazards.length,
+                        y: acc.y + hazard.y / hazards.length,
+                    }), { x: 0, y: 0 });
+                    ctx.fillText("Trümmerfeld", center.x - 42, center.y + 24);
                 }
                 ctx.restore();
             }
