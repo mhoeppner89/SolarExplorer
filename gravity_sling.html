@@ -62,10 +62,11 @@
 
         .game-shell {
             position: relative;
-            width: calc(100vw - 0.7rem);
-            max-width: 90rem;
+            width: min(calc(100vw - 0.7rem), 34rem);
+            height: auto;
+            max-width: calc(100vw - 0.7rem);
             max-height: calc(100svh - 0.7rem);
-            aspect-ratio: 16 / 9;
+            aspect-ratio: 9 / 16;
             border: 2px solid rgba(75, 205, 255, 0.38);
             border-radius: 1.1rem;
             overflow: hidden;
@@ -114,14 +115,14 @@
         }
 
         .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: clamp(0.45rem, 1vw, 0.8rem);
-            min-height: 3.8rem;
-            padding: 0.48rem 0.62rem;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: start;
+            gap: 0.34rem;
+            min-height: 3.1rem;
+            padding: 0.4rem;
             border: 2px solid rgba(62, 203, 255, 0.34);
-            border-radius: 0.95rem;
+            border-radius: 0.82rem;
             background:
                 linear-gradient(180deg, rgba(10, 57, 92, 0.92), rgba(4, 25, 54, 0.88)),
                 rgba(3, 13, 32, 0.9);
@@ -132,20 +133,22 @@
         }
 
         .cluster {
-            display: flex;
-            align-items: center;
+            grid-column: 2;
+            display: grid;
+            grid-template-columns: repeat(2, max-content);
+            align-items: start;
             justify-content: center;
-            gap: 0.38rem;
-            flex-wrap: wrap;
+            gap: 0.25rem;
             min-width: 0;
         }
 
         .brand {
+            grid-column: 1;
             display: inline-flex;
             align-items: center;
             gap: 0.46rem;
             min-width: max-content;
-            padding: 0.1rem 0.28rem 0.1rem 0;
+            padding: 0;
             font-family: "Copperplate", "Avenir Next Condensed", "Trebuchet MS", sans-serif;
             font-size: clamp(1.15rem, 2.8vw, 2.15rem);
             line-height: 1;
@@ -154,13 +157,17 @@
             text-shadow: 0 3px 0 rgba(0, 0, 0, 0.26);
         }
 
+        .brand span:not(.brand-mark) {
+            display: none;
+        }
+
         .brand-mark {
-            width: 2.55rem;
-            min-width: 2.55rem;
+            width: 2.75rem;
+            min-width: 2.75rem;
             aspect-ratio: 1 / 1;
             display: grid;
             place-items: center;
-            border-radius: 0.78rem;
+            border-radius: 0.72rem;
             border: 2px solid rgba(125, 232, 255, 0.48);
             background:
                 radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.3), transparent 32%),
@@ -189,37 +196,43 @@
         }
 
         .chip {
-            min-height: 2.25rem;
+            min-height: 1.85rem;
             display: inline-flex;
             align-items: baseline;
-            gap: 0.34rem;
-            padding: 0.36rem 0.62rem;
-            border-radius: 0.68rem;
+            gap: 0.24rem;
+            padding: 0.28rem 0.42rem;
+            border-width: 1px;
+            border-radius: 0.56rem;
             backdrop-filter: blur(10px);
             white-space: nowrap;
         }
 
         .chip span {
             color: var(--muted);
-            font-size: 0.64rem;
-            letter-spacing: 0.1em;
+            font-size: 0.56rem;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
         }
 
         .chip strong {
-            font-size: clamp(0.9rem, 1.45vw, 1.16rem);
+            font-size: 0.9rem;
             line-height: 1;
         }
 
+        .status-chip {
+            display: none;
+        }
+
         .speed-chip {
-            min-width: 10rem;
+            min-width: 0;
             display: grid;
-            grid-template-columns: auto minmax(4.3rem, 1fr) auto;
+            grid-template-columns: auto auto;
             align-items: center;
             gap: 0.48rem;
         }
 
         .speed-meter {
+            display: none;
             height: 0.52rem;
             border-radius: 999px;
             border: 1px solid rgba(136, 218, 255, 0.34);
@@ -246,15 +259,16 @@
         .message {
             align-self: end;
             justify-self: center;
-            max-width: min(25rem, 58vw);
-            margin: 0 0 0.2rem;
-            padding: 0.56rem 0.68rem;
+            max-width: calc(100% - 1rem);
+            margin: 0 0 0.1rem;
+            padding: 0.46rem 0.54rem;
             border: 2px solid rgba(98, 214, 255, 0.24);
-            border-radius: 0.82rem;
+            border-radius: 0.68rem;
             background:
                 linear-gradient(180deg, rgba(12, 55, 88, 0.88), rgba(6, 26, 58, 0.8)),
                 var(--panel-strong);
             color: var(--ink);
+            font-size: 0.88rem;
             text-align: left;
             line-height: 1.2;
             box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
@@ -270,7 +284,7 @@
         }
 
         .message.has-cta {
-            margin-bottom: clamp(4.35rem, 7vw, 5.15rem);
+            margin-bottom: 4.55rem;
         }
 
         .hud.is-aiming .message,
@@ -280,9 +294,11 @@
         }
 
         .actions {
+            grid-column: 3;
             pointer-events: auto;
-            display: flex;
-            gap: 0.4rem;
+            display: grid;
+            grid-template-columns: repeat(2, 2.75rem);
+            gap: 0.25rem;
             justify-content: flex-end;
         }
 
@@ -342,139 +358,7 @@
             font-size: 0.88em;
         }
 
-        @media (orientation: portrait) {
-            .game-shell {
-                width: calc(100vw - 0.7rem);
-                max-width: calc(100vw - 0.7rem);
-                height: auto;
-                max-height: calc(100svh - 0.7rem);
-                aspect-ratio: 9 / 16;
-                border-radius: 1rem;
-            }
-
-            .hud {
-                padding: 0.46rem;
-                gap: 0.4rem;
-            }
-
-            .topbar {
-                display: grid;
-                grid-template-columns: auto minmax(0, 1fr) auto;
-                align-items: start;
-                min-height: 3.1rem;
-                padding: 0.4rem;
-                gap: 0.34rem;
-                border-radius: 0.82rem;
-            }
-
-            .brand {
-                grid-column: 1;
-                padding: 0;
-            }
-
-            .brand span:not(.brand-mark) {
-                display: none;
-            }
-
-            .brand-mark {
-                width: 2.75rem;
-                min-width: 2.75rem;
-                border-radius: 0.72rem;
-            }
-
-            .cluster {
-                grid-column: 2;
-                display: grid;
-                grid-template-columns: repeat(2, max-content);
-                justify-content: center;
-                gap: 0.25rem;
-            }
-
-            .chip {
-                min-height: 1.85rem;
-                padding: 0.28rem 0.42rem;
-                border-width: 1px;
-                border-radius: 0.56rem;
-                gap: 0.24rem;
-            }
-
-            .chip span {
-                font-size: 0.56rem;
-                letter-spacing: 0.08em;
-            }
-
-            .chip strong {
-                font-size: 0.9rem;
-            }
-
-            .status-chip {
-                display: none;
-            }
-
-            .speed-chip {
-                min-width: 0;
-                grid-template-columns: auto auto;
-            }
-
-            .speed-meter {
-                display: none;
-            }
-
-            .speed-readout {
-                min-width: 1.3rem;
-            }
-
-            .actions {
-                grid-column: 3;
-                display: grid;
-                grid-template-columns: repeat(2, 2.75rem);
-                gap: 0.25rem;
-            }
-
-            button,
-            .button {
-                min-width: 2.75rem;
-                min-height: 2.75rem;
-                padding: 0.2rem 0.35rem;
-            }
-
-            .message {
-                justify-self: center;
-                max-width: calc(100% - 1rem);
-                margin-bottom: 0.1rem;
-                padding: 0.46rem 0.54rem;
-                font-size: 0.88rem;
-                border-radius: 0.68rem;
-            }
-
-            .message.has-cta {
-                margin-bottom: 4.55rem;
-            }
-
-            #nextButton {
-                bottom: 1rem;
-                min-width: 8.4rem;
-            }
-        }
-
-        @media (max-width: 520px) {
-            .game-shell {
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-                aspect-ratio: 9 / 16;
-            }
-        }
-
-        @media (min-aspect-ratio: 16 / 9) and (orientation: landscape) {
-            .game-shell {
-                width: auto;
-                height: calc(100svh - 0.7rem);
-            }
-        }
-
-
-        @media (max-height: 430px) and (orientation: landscape) {
+        @media (max-height: 430px) {
             .hud {
                 padding: 0.34rem;
             }
@@ -488,7 +372,6 @@
             }
 
             .cluster {
-                flex-wrap: nowrap;
                 justify-content: center;
                 overflow: hidden;
             }
@@ -502,12 +385,17 @@
                 min-width: 2.1rem;
             }
 
+            .cluster .chip:nth-child(n+3) {
+                display: none;
+            }
+
             .chip {
                 min-height: 1.7rem;
                 padding: 0.22rem 0.44rem;
             }
 
             .chip span {
+                display: none;
                 font-size: 0.52rem;
             }
 
@@ -528,6 +416,17 @@
                 display: none;
             }
 
+            .actions {
+                grid-template-columns: repeat(2, 2.25rem);
+            }
+
+            button,
+            .button {
+                min-width: 2.25rem;
+                min-height: 2.25rem;
+                padding: 0.15rem 0.25rem;
+            }
+
             .message {
                 max-width: min(22rem, 54vw);
                 padding: 0.4rem 0.5rem;
@@ -540,7 +439,7 @@
 <body>
     <main class="stage">
         <section class="game-shell" aria-label="Gravity Sling Spiel">
-            <canvas id="game" width="960" height="540"></canvas>
+            <canvas id="game" width="540" height="960"></canvas>
             <div class="hud" aria-hidden="true">
                 <div class="topbar">
                     <div class="brand" aria-label="Gravity Sling">
@@ -576,18 +475,14 @@
         (() => {
             "use strict";
 
-            const VIEW_SIZES = {
-                landscape: { width: 960, height: 540 },
-                portrait: { width: 540, height: 960 },
-            };
-            const WORLD = { ...VIEW_SIZES.landscape };
+            const WORLD = { width: 540, height: 960 };
             const SHIP_RADIUS = 10;
             const MAX_DRAG = 118;
             const LAUNCH_POWER = 3.35;
             const FIXED_DT = 1 / 60;
             const TIME_LIMIT = 20;
             const FLY_MARGIN = 180;
-            const GRAVITY_SCALE = 340000;
+            const GRAVITY_SCALE = 1450000;
 
             const canvas = document.getElementById("game");
             const ctx = canvas.getContext("2d");
@@ -607,162 +502,119 @@
             const levels = [
                 {
                     name: "Direkter Flug",
-                    launch: { x: 116, y: 430 },
-                    target: { x: 812, y: 158, r: 34 },
+                    launch: { x: 142, y: 800 },
+                    target: { x: 406, y: 214, r: 40 },
                     planets: [],
                     hazards: [],
                     hint: "Ziehen, zielen, loslassen. Ohne Schwerkraft fliegt die Sonde geradeaus.",
                 },
                 {
                     name: "Erste Ablenkung",
-                    launch: { x: 118, y: 420 },
-                    target: { x: 830, y: 170, r: 42 },
+                    launch: { x: 142, y: 800 },
+                    target: { x: 410, y: 240, r: 54 },
                     planets: [
-                        { label: "Erde", x: 492, y: 300, r: 52, mass: 2, softening: 100, color: "#62a7ff", ring: false },
+                        { label: "Erde", x: 300, y: 600, r: 60, mass: 0.95, softening: 168, color: "#62a7ff", ring: false },
                     ],
                     hazards: [],
-                    hint: "Ziehe mittelstark nach links unten. Die Erde biegt die Bahn sichtbar ins Ziel.",
+                    hint: "Ziehe mittelstark nach links unten. Die Erde zieht die Bahn jetzt deutlich ins Ziel.",
                 },
                 {
                     name: "Mond-Fenster",
-                    launch: { x: 96, y: 290 },
-                    target: { x: 848, y: 286, r: 31 },
+                    launch: { x: 106, y: 720 },
+                    target: { x: 422, y: 275, r: 34 },
                     planets: [
-                        { label: "Mond", x: 450, y: 210, r: 30, mass: 0.72, softening: 80, color: "#d7deea", ring: false },
+                        { label: "Mond", x: 274, y: 454, r: 34, mass: 0.76, softening: 92, color: "#d7deea", ring: false },
                     ],
                     hazards: [
-                        { label: "Asteroid", x: 610, y: 372, r: 28, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 354, y: 592, r: 28, color: "#9c8b7a" },
                     ],
                     hint: "Der Mond zieht schwächer, aber genau genug für einen kleinen Kursknick.",
                 },
                 {
                     name: "Sonnen-Schwung",
-                    launch: { x: 116, y: 460 },
-                    target: { x: 838, y: 126, r: 31 },
+                    launch: { x: 128, y: 820 },
+                    target: { x: 408, y: 168, r: 34 },
                     planets: [
-                        { label: "Sonne", x: 476, y: 286, r: 64, mass: 1.9, softening: 112, color: "#ffd36b", ring: false, hotRadius: 94 },
+                        { label: "Sonne", x: 270, y: 510, r: 68, mass: 1.05, softening: 138, color: "#ffd36b", ring: false, hotRadius: 98 },
                     ],
                     hazards: [],
                     hint: "Nah an der Sonne wird die Sonde schnell. Zu nah wird es heiß.",
                 },
                 {
                     name: "Doppelpass",
-                    launch: { x: 108, y: 122 },
-                    target: { x: 836, y: 420, r: 32 },
+                    launch: { x: 108, y: 730 },
+                    target: { x: 420, y: 235, r: 34 },
                     planets: [
-                        { label: "Venus", x: 356, y: 216, r: 38, mass: 0.92, softening: 86, color: "#f2c166", ring: false },
-                        { label: "Mars", x: 626, y: 344, r: 34, mass: 0.8, softening: 82, color: "#ff8e68", ring: false },
+                        { label: "Venus", x: 228, y: 430, r: 40, mass: 0.62, softening: 104, color: "#f2c166", ring: false },
+                        { label: "Mars", x: 346, y: 604, r: 35, mass: 0.58, softening: 100, color: "#ff8e68", ring: false },
                     ],
                     hazards: [],
                     hint: "Zwei Körper formen die Flugbahn nacheinander. Der zweite Pass entscheidet.",
                 },
                 {
                     name: "Saturn-Lücke",
-                    launch: { x: 110, y: 430 },
-                    target: { x: 838, y: 438, r: 32 },
+                    launch: { x: 126, y: 790 },
+                    target: { x: 408, y: 380, r: 35 },
                     planets: [
-                        { label: "Saturn", x: 506, y: 284, r: 56, mass: 1.22, softening: 104, color: "#e2c987", ring: true },
+                        { label: "Saturn", x: 280, y: 532, r: 58, mass: 0.78, softening: 124, color: "#e2c987", ring: true },
                     ],
                     hazards: [
-                        { label: "Ringbrocken", x: 622, y: 270, r: 20, color: "#c5b08d" },
-                        { label: "Ringbrocken", x: 408, y: 314, r: 18, color: "#c5b08d" },
+                        { label: "Ringbrocken", x: 378, y: 514, r: 20, color: "#c5b08d" },
+                        { label: "Ringbrocken", x: 196, y: 568, r: 18, color: "#c5b08d" },
                     ],
                     hint: "Saturn zieht stark. Die kleinen Brocken markieren die gefährliche Ringzone.",
                 },
                 {
                     name: "Äußere Bahn",
-                    launch: { x: 96, y: 282 },
-                    target: { x: 856, y: 286, r: 31 },
+                    launch: { x: 100, y: 700 },
+                    target: { x: 428, y: 260, r: 34 },
                     planets: [
-                        { label: "Jupiter", x: 334, y: 302, r: 62, mass: 1.55, softening: 115, color: "#d79d55", ring: false },
-                        { label: "Neptun", x: 674, y: 170, r: 42, mass: 0.9, softening: 92, color: "#709cff", ring: false },
+                        { label: "Jupiter", x: 236, y: 536, r: 64, mass: 0.9, softening: 136, color: "#d79d55", ring: false },
+                        { label: "Neptun", x: 368, y: 358, r: 43, mass: 0.58, softening: 114, color: "#709cff", ring: false },
                     ],
                     hazards: [],
                     hint: "Jupiter macht den großen Schwung, Neptun korrigiert am Ende.",
                 },
                 {
                     name: "Einfangen bei Pluto",
-                    launch: { x: 104, y: 452 },
-                    target: { x: 812, y: 190, r: 38, maxSpeed: 270 },
+                    launch: { x: 128, y: 815 },
+                    target: { x: 408, y: 250, r: 39, maxSpeed: 290 },
                     planets: [
-                        { label: "Sonne", x: 436, y: 304, r: 58, mass: 1.55, softening: 108, color: "#ffd36b", ring: false, hotRadius: 86 },
-                        { label: "Pluto", x: 812, y: 190, r: 24, mass: 0.48, softening: 74, color: "#c6d5eb", ring: false },
+                        { label: "Sonne", x: 268, y: 560, r: 62, mass: 0.92, softening: 128, color: "#ffd36b", ring: false, hotRadius: 90 },
+                        { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.34, softening: 86, color: "#c6d5eb", ring: false },
                     ],
                     hazards: [],
                     hint: "Treffen reicht nicht: Bei Pluto muss die Sonde langsam genug ankommen.",
                 },
-            ];
-
-            const portraitLevels = [
                 {
-                    launch: { x: 142, y: 800 },
-                    target: { x: 406, y: 214, r: 40 },
-                    planets: [],
-                    hazards: [],
-                },
-                {
-                    launch: { x: 142, y: 800 },
-                    target: { x: 410, y: 240, r: 54 },
+                    name: "Drei-Körper-Kanal",
+                    launch: { x: 104, y: 805 },
+                    target: { x: 420, y: 190, r: 35 },
                     planets: [
-                        { label: "Erde", x: 300, y: 600, r: 60, mass: 0.75, softening: 180, color: "#62a7ff", ring: false },
-                    ],
-                    hazards: [],
-                },
-                {
-                    launch: { x: 106, y: 720 },
-                    target: { x: 422, y: 275, r: 34 },
-                    planets: [
-                        { label: "Mond", x: 274, y: 454, r: 34, mass: 0.68, softening: 86, color: "#d7deea", ring: false },
+                        { label: "Jupiter", x: 218, y: 620, r: 58, mass: 0.86, softening: 138, color: "#d79d55", ring: false },
+                        { label: "Erde", x: 358, y: 442, r: 48, mass: 0.68, softening: 122, color: "#62a7ff", ring: false },
+                        { label: "Mond", x: 218, y: 288, r: 30, mass: 0.44, softening: 96, color: "#d7deea", ring: false },
                     ],
                     hazards: [
-                        { label: "Asteroid", x: 354, y: 592, r: 28, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 324, y: 652, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 174, y: 430, r: 24, color: "#8d817c" },
                     ],
+                    hint: "Die erste Masse zieht dich hoch, die zweite lenkt dich quer. Kleine Korrekturen reichen.",
                 },
                 {
-                    launch: { x: 128, y: 820 },
-                    target: { x: 408, y: 168, r: 34 },
+                    name: "Finaler Sonnenbogen",
+                    launch: { x: 120, y: 830 },
+                    target: { x: 396, y: 154, r: 33, maxSpeed: 300 },
                     planets: [
-                        { label: "Sonne", x: 270, y: 510, r: 68, mass: 1.75, softening: 126, color: "#ffd36b", ring: false, hotRadius: 98 },
-                    ],
-                    hazards: [],
-                },
-                {
-                    launch: { x: 108, y: 730 },
-                    target: { x: 420, y: 235, r: 34 },
-                    planets: [
-                        { label: "Venus", x: 228, y: 430, r: 40, mass: 0.92, softening: 88, color: "#f2c166", ring: false },
-                        { label: "Mars", x: 346, y: 604, r: 35, mass: 0.82, softening: 84, color: "#ff8e68", ring: false },
-                    ],
-                    hazards: [],
-                },
-                {
-                    launch: { x: 126, y: 790 },
-                    target: { x: 408, y: 380, r: 35 },
-                    planets: [
-                        { label: "Saturn", x: 280, y: 532, r: 58, mass: 1.16, softening: 110, color: "#e2c987", ring: true },
+                        { label: "Sonne", x: 272, y: 585, r: 66, mass: 1.04, softening: 136, color: "#ffd36b", ring: false, hotRadius: 96 },
+                        { label: "Saturn", x: 396, y: 372, r: 50, mass: 0.72, softening: 124, color: "#e2c987", ring: true },
+                        { label: "Pluto", x: 396, y: 154, r: 23, mass: 0.32, softening: 88, color: "#c6d5eb", ring: false },
                     ],
                     hazards: [
-                        { label: "Ringbrocken", x: 378, y: 514, r: 20, color: "#c5b08d" },
-                        { label: "Ringbrocken", x: 196, y: 568, r: 18, color: "#c5b08d" },
+                        { label: "Asteroid", x: 184, y: 520, r: 23, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 320, y: 264, r: 21, color: "#8f8280" },
                     ],
-                },
-                {
-                    launch: { x: 100, y: 700 },
-                    target: { x: 428, y: 260, r: 34 },
-                    planets: [
-                        { label: "Jupiter", x: 236, y: 536, r: 64, mass: 1.48, softening: 118, color: "#d79d55", ring: false },
-                        { label: "Neptun", x: 368, y: 358, r: 43, mass: 0.88, softening: 94, color: "#709cff", ring: false },
-                    ],
-                    hazards: [],
-                },
-                {
-                    launch: { x: 128, y: 815 },
-                    target: { x: 408, y: 250, r: 39, maxSpeed: 270 },
-                    planets: [
-                        { label: "Sonne", x: 268, y: 560, r: 62, mass: 1.5, softening: 112, color: "#ffd36b", ring: false, hotRadius: 90 },
-                        { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.48, softening: 74, color: "#c6d5eb", ring: false },
-                    ],
-                    hazards: [],
+                    hint: "Der Sonnenbogen gibt Schwung, Saturn bremst. Komme sauber und nicht zu schnell bei Pluto an.",
                 },
             ];
 
@@ -799,26 +651,11 @@
                 message: "",
                 lastOutcome: "none",
                 accumulator: 0,
-                viewMode: "landscape",
+                viewMode: "portrait",
             };
 
             function currentLevel() {
-                const base = levels[state.levelIndex];
-                const layout = state.viewMode === "portrait" ? portraitLevels[state.levelIndex] : null;
-                if (!layout) return base;
-                return {
-                    ...base,
-                    launch: { ...layout.launch },
-                    target: { ...base.target, ...layout.target },
-                    planets: (layout.planets || []).map((planet, index) => ({
-                        ...(base.planets[index] || {}),
-                        ...planet,
-                    })),
-                    hazards: (layout.hazards || []).map((hazard, index) => ({
-                        ...((base.hazards || [])[index] || {}),
-                        ...hazard,
-                    })),
-                };
+                return levels[state.levelIndex];
             }
 
             function resetLevel(keepMessage = false) {
@@ -1059,7 +896,7 @@
             function drawDistantBody(body, time) {
                 const x = body.nx * WORLD.width;
                 const y = body.ny * WORLD.height;
-                const r = body.r * (state.viewMode === "portrait" ? 0.86 : 1);
+                const r = body.r * 0.86;
                 ctx.save();
                 ctx.globalAlpha = body.kind === "asteroid" ? 0.52 : 0.66;
                 ctx.translate(x, y);
@@ -1143,7 +980,7 @@
 
                 ctx.save();
                 ctx.globalAlpha = 0.34;
-                ctx.lineWidth = state.viewMode === "portrait" ? 18 : 24;
+                ctx.lineWidth = 18;
                 for (let band = 0; band < 3; band += 1) {
                     ctx.strokeStyle = band === 0 ? "rgba(36, 210, 255, 0.18)" : band === 1 ? "rgba(165, 95, 255, 0.13)" : "rgba(74, 255, 170, 0.11)";
                     ctx.beginPath();
@@ -1549,7 +1386,7 @@
                 ctx.translate(state.ship.x, state.ship.y);
                 const angle = state.mode === "flying" ? Math.atan2(state.ship.vy, state.ship.vx) : -0.35;
                 ctx.rotate(angle);
-                ctx.scale(state.viewMode === "portrait" ? 1.42 : 1.26, state.viewMode === "portrait" ? 1.42 : 1.26);
+                ctx.scale(1.42, 1.42);
 
                 if (state.mode === "flying" || state.drag.active) {
                     const flame = state.mode === "flying" ? 1 : 0.65;
@@ -1677,20 +1514,38 @@
                 ui.message.classList.toggle("has-cta", state.mode === "won");
             }
 
+            function fitShellToViewport() {
+                const shell = canvas.parentElement;
+                const stage = document.querySelector(".stage");
+                const stageStyle = getComputedStyle(stage);
+                const paddingX = parseFloat(stageStyle.paddingLeft) + parseFloat(stageStyle.paddingRight);
+                const paddingY = parseFloat(stageStyle.paddingTop) + parseFloat(stageStyle.paddingBottom);
+                const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+                const availableWidth = Math.max(180, window.innerWidth - paddingX);
+                const availableHeight = Math.max(260, viewportHeight - paddingY);
+                const maxShellWidth = Math.min(544, availableWidth);
+                let shellWidth = maxShellWidth;
+                let shellHeight = shellWidth * (WORLD.height / WORLD.width);
+
+                if (shellHeight > availableHeight) {
+                    shellHeight = availableHeight;
+                    shellWidth = shellHeight * (WORLD.width / WORLD.height);
+                }
+
+                shell.style.width = `${Math.floor(shellWidth)}px`;
+                shell.style.height = `${Math.floor(shellHeight)}px`;
+            }
+
             function resizeCanvas() {
+                fitShellToViewport();
+                state.viewMode = "portrait";
                 const shell = canvas.parentElement;
                 const rect = shell.getBoundingClientRect();
-                const nextMode = rect.height > rect.width * 1.18 ? "portrait" : "landscape";
-                const viewChanged = nextMode !== state.viewMode;
-                state.viewMode = nextMode;
-                WORLD.width = VIEW_SIZES[nextMode].width;
-                WORLD.height = VIEW_SIZES[nextMode].height;
                 const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
                 canvas.width = Math.round(rect.width * dpr);
                 canvas.height = Math.round(rect.height * dpr);
                 ctx.setTransform(canvas.width / WORLD.width, 0, 0, canvas.height / WORLD.height, 0, 0);
-                if (viewChanged) resetLevel(true);
-                else render();
+                render();
             }
 
             function frame(now) {
@@ -1790,6 +1645,7 @@
             ui.next.addEventListener("click", () => nextLevel());
             window.addEventListener("keydown", handleKey);
             window.addEventListener("resize", resizeCanvas);
+            window.visualViewport?.addEventListener("resize", resizeCanvas);
             document.addEventListener("fullscreenchange", resizeCanvas);
 
             resetLevel();
