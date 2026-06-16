@@ -557,6 +557,7 @@
             const MAX_LAUNCH_SPEED = MAX_DRAG * LAUNCH_POWER;
             const FIXED_DT = 1 / 60;
             const TIME_LIMIT = 30;
+            const PREDICTION_TIME_RATIO = 0.10;
             const FLY_MARGIN = 180;
             const GRAVITY_SCALE = 2900000;
             const SCORE_STORAGE_KEY = "gravity-sling-high-scores-v1";
@@ -658,7 +659,7 @@
                     hazards: [
                         { label: "Ringbrocken", x: 378, y: 514, r: 20, color: "#c5b08d" },
                         { label: "Ringbrocken", x: 196, y: 568, r: 18, color: "#c5b08d" },
-                        { label: "Ringbrocken", x: 318, y: 590, r: 22, color: "#9c8b7a" },
+                        { label: "Ringbrocken", x: 288, y: 590, r: 32, color: "#9c8b7a" },
                         { label: "Ringbrocken", x: 438, y: 462, r: 20, color: "#8d817c" },
                         { label: "Ringbrocken", x: 488, y: 428, r: 22, color: "#9c8b7a" },
                     ],
@@ -728,7 +729,7 @@
                     target: { x: 396, y: 154, r: 33, maxSpeed: 380 },
                     planets: [
                         { label: "Sonne", x: 272, y: 585, r: 66, mass: 1.04, softening: 136, color: "#ffd36b", ring: false, hotRadius: 96 },
-                        { label: "Saturn", x: 396, y: 372, r: 50, mass: 0.72, softening: 124, color: "#e2c987", ring: true, atmosphereRadius: 96, atmosphereDrag: 0.38, atmosphereColor: "#ffe0a5" },
+                        { label: "Saturn", x: 396, y: 372, r: 50, mass: 0.72, softening: 124, color: "#e2c987", ring: true, atmosphereRadius: 106, atmosphereDrag: 0.38, atmosphereColor: "#ffe0a5" },
                         { label: "Pluto", x: 396, y: 154, r: 23, mass: 0.32, softening: 88, color: "#c6d5eb", ring: false, atmosphereRadius: 58, atmosphereDrag: 0.26, atmosphereColor: "#b8ecff" },
                     ],
                     hazards: [
@@ -747,7 +748,7 @@
                 {
                     name: "Orbit-Schleuse", // level 11
                     launch: { x: 116, y: 815 },
-                    target: { x: 420, y: 760, r: 38, maxSpeed: 120 },
+                    target: { x: 420, y: 710, r: 38, maxSpeed: 120 },
                     planets: [
                         { label: "Jupiter", x: 270, y: 545, r: 66, mass: 1.35, softening: 118, color: "#d79d55", ring: false, atmosphereRadius: 118, atmosphereDrag: 0.18, atmosphereColor: "#ffd189" },
                     ],
@@ -761,7 +762,7 @@
                         { label: "Asteroiden", x: 352, y: 386, r: 24, color: "#9c8b7a" },
                         { label: "Asteroiden", x: 236, y: 858, r: 27, color: "#8d817c" },
                         { label: "Asteroiden", x: 316, y: 846, r: 27, color: "#9c8b7a" },
-                        { label: "Asteroiden", x: 390, y: 810, r: 24, color: "#8d817c" },
+                        { label: "Asteroiden", x: 410, y: 810, r: 41, color: "#8d817c" },
                     ],
                     hint: "Der direkte Weg ist dicht. Ziehe kurz nach rechts und lass Jupiters Atmosphäre den langen Bogen zähmen.",
                 },
@@ -1043,6 +1044,8 @@
                     updateUi();
                     return;
                 }
+                state.ship.x = launch.x;
+                state.ship.y = launch.y;
                 state.ship.vx = dx * LAUNCH_POWER;
                 state.ship.vy = dy * LAUNCH_POWER;
                 state.launchSpeed = pull * LAUNCH_POWER;
@@ -1070,8 +1073,6 @@
                 const clamped = clampDrag(point);
                 state.drag.x = clamped.x;
                 state.drag.y = clamped.y;
-                state.ship.x = clamped.x;
-                state.ship.y = clamped.y;
                 canvas.setPointerCapture(event.pointerId);
                 updateUi();
                 render();
@@ -1082,8 +1083,6 @@
                 const clamped = clampDrag(screenToWorld(event));
                 state.drag.x = clamped.x;
                 state.drag.y = clamped.y;
-                state.ship.x = clamped.x;
-                state.ship.y = clamped.y;
                 render();
             }
 
@@ -1140,7 +1139,7 @@
                 };
                 const points = [];
                 let outcome = null;
-                const predictionSteps = Math.ceil(TIME_LIMIT / FIXED_DT);
+                const predictionSteps = Math.ceil((TIME_LIMIT * PREDICTION_TIME_RATIO) / FIXED_DT);
                 for (let i = 0; i < predictionSteps; i += 1) {
                     applyGravity(sim, level, FIXED_DT);
                     if (i % 5 === 0) points.push({ x: sim.x, y: sim.y });
@@ -1606,16 +1605,16 @@
                 ctx.save();
                 drawLaunchOrigin(launch);
                 if (state.drag.active) {
-                    const aimX = launch.x + (launch.x - state.ship.x);
-                    const aimY = launch.y + (launch.y - state.ship.y);
-                    const pull = length(launch.x - state.ship.x, launch.y - state.ship.y);
+                    const aimX = launch.x + (launch.x - state.drag.x);
+                    const aimY = launch.y + (launch.y - state.drag.y);
+                    const pull = length(launch.x - state.drag.x, launch.y - state.drag.y);
 
                     const pullRatio = pull / MAX_DRAG;
                     ctx.strokeStyle = "rgba(255, 255, 255, 0.48)";
                     ctx.lineWidth = 7;
                     ctx.beginPath();
                     ctx.moveTo(launch.x, launch.y);
-                    ctx.lineTo(state.ship.x, state.ship.y);
+                    ctx.lineTo(state.drag.x, state.drag.y);
                     ctx.stroke();
 
                     ctx.strokeStyle = "rgba(119, 244, 255, 0.96)";
@@ -1639,7 +1638,7 @@
                     ctx.fillStyle = "rgba(247, 251, 255, 0.86)";
                     ctx.font = "700 13px Avenir Next Condensed, Trebuchet MS, sans-serif";
                     ctx.textAlign = "center";
-                    ctx.fillText(`${Math.round(pullRatio * 100)}%`, state.ship.x, state.ship.y - 24);
+                    ctx.fillText(`${Math.round(pullRatio * 100)}%`, state.drag.x, state.drag.y - 24);
                 }
                 ctx.restore();
             }
