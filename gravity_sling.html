@@ -522,7 +522,7 @@
                     </div>
                     <div class="cluster">
                         <div class="chip"><span>Mission</span><strong id="levelLabel">1</strong></div>
-                        <div class="chip"><span>Starts</span><strong id="shotLabel">0</strong></div>
+                        <div class="chip score-chip"><span>Punkte</span><strong><span id="scoreLabel">0</span>/<span id="bestLabel">0</span></strong></div>
                         <div class="chip status-chip"><span>Status</span><strong id="stateLabel">Bereit</strong></div>
                         <div class="chip"><span>Zeit</span><strong id="timeLabel">0.0s</strong></div>
                         <div class="chip speed-chip">
@@ -552,11 +552,13 @@
             const WORLD = { width: 540, height: 960 };
             const SHIP_RADIUS = 10;
             const MAX_DRAG = 118;
-            const LAUNCH_POWER = 3.35;
+            const LAUNCH_POWER = 1.675;
+            const MAX_LAUNCH_SPEED = MAX_DRAG * LAUNCH_POWER;
             const FIXED_DT = 1 / 60;
-            const TIME_LIMIT = 20;
+            const TIME_LIMIT = 30;
             const FLY_MARGIN = 180;
             const GRAVITY_SCALE = 2900000;
+            const SCORE_STORAGE_KEY = "gravity-sling-high-scores-v1";
 
             const canvas = document.getElementById("game");
             const ctx = canvas.getContext("2d");
@@ -564,7 +566,8 @@
                 hud: document.querySelector(".hud"),
                 level: document.getElementById("levelLabel"),
                 state: document.getElementById("stateLabel"),
-                shots: document.getElementById("shotLabel"),
+                score: document.getElementById("scoreLabel"),
+                best: document.getElementById("bestLabel"),
                 speed: document.getElementById("speedLabel"),
                 speedFill: document.getElementById("speedFill"),
                 time: document.getElementById("timeLabel"),
@@ -677,7 +680,7 @@
                 {
                     name: "Einfangen bei Pluto",
                     launch: { x: 128, y: 815 },
-                    target: { x: 408, y: 250, r: 45, maxSpeed: 290 },
+                    target: { x: 408, y: 250, r: 45, maxSpeed: 360 },
                     planets: [
                         { label: "Sonne", x: 268, y: 560, r: 62, mass: 0.92, softening: 128, color: "#ffd36b", ring: false, hotRadius: 90 },
                         { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.34, softening: 86, color: "#c6d5eb", ring: false },
@@ -714,7 +717,7 @@
                 {
                     name: "Finaler Sonnenbogen",
                     launch: { x: 120, y: 830 },
-                    target: { x: 396, y: 154, r: 33, maxSpeed: 300 },
+                    target: { x: 396, y: 154, r: 33, maxSpeed: 380 },
                     planets: [
                         { label: "Sonne", x: 272, y: 585, r: 66, mass: 1.04, softening: 136, color: "#ffd36b", ring: false, hotRadius: 96 },
                         { label: "Saturn", x: 396, y: 372, r: 50, mass: 0.72, softening: 124, color: "#e2c987", ring: true },
@@ -734,7 +737,7 @@
                 {
                     name: "Orbit-Schleuse",
                     launch: { x: 116, y: 815 },
-                    target: { x: 420, y: 760, r: 38, maxSpeed: 80 },
+                    target: { x: 420, y: 760, r: 38, maxSpeed: 85 },
                     planets: [
                         { label: "Jupiter", x: 270, y: 545, r: 66, mass: 1.35, softening: 118, color: "#d79d55", ring: false },
                     ],
@@ -776,6 +779,23 @@
                 { nx: 0.9, ny: 0.36, r: 20, color: "#69606a", kind: "asteroid" },
             ];
 
+            function loadHighScores() {
+                try {
+                    const parsed = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || "[]");
+                    return levels.map((_, index) => Math.max(0, Number(parsed[index]) || 0));
+                } catch {
+                    return levels.map(() => 0);
+                }
+            }
+
+            function saveHighScores() {
+                try {
+                    localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(state.highScores));
+                } catch {
+                    // Storage can be unavailable in private contexts; scoring still works for the session.
+                }
+            }
+
             const state = {
                 levelIndex: 0,
                 mode: "ready",
@@ -783,6 +803,9 @@
                 drag: { active: false, x: 0, y: 0 },
                 trail: [],
                 shots: 0,
+                launchSpeed: 0,
+                levelScore: 0,
+                highScores: loadHighScores(),
                 elapsed: 0,
                 message: "",
                 lastOutcome: "none",
@@ -804,6 +827,8 @@
                 state.drag.active = false;
                 state.trail = [];
                 state.shots = 0;
+                state.launchSpeed = 0;
+                state.levelScore = 0;
                 state.elapsed = 0;
                 state.lastOutcome = "none";
                 state.message = keepMessage ? state.message : level.hint;
@@ -823,6 +848,34 @@
 
             function clamp(value, min, max) {
                 return Math.max(min, Math.min(max, value));
+            }
+
+            function totalHighScore() {
+                return state.highScores.reduce((sum, score) => sum + score, 0);
+            }
+
+            function scoreForLaunchSpeed(launchSpeed, levelIndex) {
+                const speedRatio = clamp(launchSpeed / MAX_LAUNCH_SPEED, 0, 1);
+                const efficiency = Math.pow(1 - speedRatio, 1.35);
+                const levelBonus = (levelIndex + 1) * 100;
+                return Math.round(levelBonus + 1200 * efficiency);
+            }
+
+            function recordLevelScore() {
+                const score = scoreForLaunchSpeed(state.launchSpeed, state.levelIndex);
+                state.levelScore = score;
+                const previousBest = state.highScores[state.levelIndex] || 0;
+                const isNewBest = score > previousBest;
+                if (isNewBest) {
+                    state.highScores[state.levelIndex] = score;
+                    saveHighScores();
+                }
+                return {
+                    score,
+                    best: state.highScores[state.levelIndex] || score,
+                    isNewBest,
+                    totalBest: totalHighScore(),
+                };
             }
 
             function clampDrag(point) {
@@ -936,12 +989,15 @@
                 if (pull < 12) {
                     state.ship.x = launch.x;
                     state.ship.y = launch.y;
+                    state.launchSpeed = 0;
                     state.message = currentLevel().hint;
                     updateUi();
                     return;
                 }
                 state.ship.vx = dx * LAUNCH_POWER;
                 state.ship.vy = dy * LAUNCH_POWER;
+                state.launchSpeed = pull * LAUNCH_POWER;
+                state.levelScore = 0;
                 state.mode = "flying";
                 state.elapsed = 0;
                 state.shots += 1;
@@ -1001,6 +1057,13 @@
 
                 const outcome = checkProbeOutcome(state.ship, level, state.elapsed);
                 if (outcome) {
+                    if (outcome.outcome === "target_reached") {
+                        const score = recordLevelScore();
+                        const bestText = score.isNewBest ? " Neuer Bestwert!" : ` Best: ${score.best}.`;
+                        outcome.message = state.levelIndex === levels.length - 1
+                            ? `+${score.score} Punkte.${bestText} Alle Missionen geschafft.`
+                            : `+${score.score} Punkte.${bestText} Bereit für den nächsten Kurs?`;
+                    }
                     setMode(outcome.mode, outcome.message, outcome.outcome);
                     return;
                 }
@@ -1020,7 +1083,7 @@
                 };
                 const points = [];
                 let outcome = null;
-                const predictionSteps = state.levelIndex >= 8 ? 1080 : 900;
+                const predictionSteps = Math.ceil(TIME_LIMIT / FIXED_DT);
                 for (let i = 0; i < predictionSteps; i += 1) {
                     applyGravity(sim, level, FIXED_DT);
                     if (i % 5 === 0) points.push({ x: sim.x, y: sim.y });
@@ -1628,7 +1691,12 @@
                 ctx.restore();
             }
 
+            function setWorldTransform() {
+                ctx.setTransform(canvas.width / WORLD.width, 0, 0, canvas.height / WORLD.height, 0, 0);
+            }
+
             function render() {
+                setWorldTransform();
                 drawBackground();
                 const level = currentLevel();
                 for (const planet of level.planets) drawGravityField(planet);
@@ -1643,7 +1711,8 @@
 
             function updateUi() {
                 ui.level.textContent = `${state.levelIndex + 1}/${levels.length}`;
-                ui.shots.textContent = String(state.shots);
+                ui.score.textContent = String(state.levelScore);
+                ui.best.textContent = String(state.highScores[state.levelIndex] || 0);
                 ui.speed.textContent = String(Math.round(shipSpeed()));
                 ui.speedFill.style.width = `${clamp(shipSpeed() / 520, 0, 1) * 100}%`;
                 ui.time.textContent = `${state.elapsed.toFixed(1)}s`;
@@ -1697,7 +1766,7 @@
                 const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
                 canvas.width = Math.round(rect.width * dpr);
                 canvas.height = Math.round(rect.height * dpr);
-                ctx.setTransform(canvas.width / WORLD.width, 0, 0, canvas.height / WORLD.height, 0, 0);
+                setWorldTransform();
                 render();
             }
 
@@ -1767,6 +1836,13 @@
                         r: hazard.r,
                     })),
                     speed: Number(shipSpeed().toFixed(1)),
+                    launchSpeed: Number(state.launchSpeed.toFixed(1)),
+                    maxLaunchSpeed: Number(MAX_LAUNCH_SPEED.toFixed(1)),
+                    score: {
+                        level: state.levelScore,
+                        bestForLevel: state.highScores[state.levelIndex] || 0,
+                        totalBest: totalHighScore(),
+                    },
                     drag: state.drag.active ? {
                         x: Number(state.drag.x.toFixed(1)),
                         y: Number(state.drag.y.toFixed(1)),
