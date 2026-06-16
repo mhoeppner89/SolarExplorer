@@ -616,6 +616,27 @@
                     ],
                     hint: "Der Sonnenbogen gibt Schwung, Saturn bremst. Komme sauber und nicht zu schnell bei Pluto an.",
                 },
+                {
+                    name: "Orbit-Schleuse",
+                    launch: { x: 116, y: 815 },
+                    target: { x: 420, y: 760, r: 38, maxSpeed: 60 },
+                    planets: [
+                        { label: "Jupiter", x: 270, y: 545, r: 66, mass: 1.35, softening: 118, color: "#d79d55", ring: false },
+                    ],
+                    hazards: [
+                        { label: "Asteroiden", x: 198, y: 805, r: 29, color: "#9c8b7a" },
+                        { label: "Asteroiden", x: 272, y: 790, r: 29, color: "#8d817c" },
+                        { label: "Asteroiden", x: 344, y: 774, r: 28, color: "#9c8b7a" },
+                        { label: "Asteroiden", x: 392, y: 728, r: 25, color: "#8d817c" },
+                        { label: "Asteroiden", x: 154, y: 630, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroiden", x: 176, y: 438, r: 24, color: "#8d817c" },
+                        { label: "Asteroiden", x: 352, y: 386, r: 24, color: "#9c8b7a" },
+                        { label: "Asteroiden", x: 236, y: 858, r: 27, color: "#8d817c" },
+                        { label: "Asteroiden", x: 316, y: 846, r: 27, color: "#9c8b7a" },
+                        { label: "Asteroiden", x: 390, y: 810, r: 24, color: "#8d817c" },
+                    ],
+                    hint: "Der direkte Weg ist dicht. Ziehe kurz nach rechts unten und lass Jupiter die Sonde langsam außen herum tragen.",
+                },
             ];
 
             const stars = Array.from({ length: 190 }, (_, i) => ({
@@ -884,7 +905,8 @@
                 };
                 const points = [];
                 let outcome = null;
-                for (let i = 0; i < 420; i += 1) {
+                const predictionSteps = state.levelIndex >= 10 ? 1080 : 420;
+                for (let i = 0; i < predictionSteps; i += 1) {
                     applyGravity(sim, level, FIXED_DT);
                     if (i % 5 === 0) points.push({ x: sim.x, y: sim.y });
                     outcome = checkProbeOutcome(sim, level, i * FIXED_DT);
