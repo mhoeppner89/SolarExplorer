@@ -120,17 +120,6 @@
             animation: gentle-pulse 2s infinite ease-in-out;
         }
 
-        /* New classes for Title Shrink and UI */
-        #main-title-panel {
-            transition: all 0.5s ease;
-        }
-
-        .title-minimized {
-            transform: scale(0.6) origin-top-left;
-            opacity: 0.8;
-            padding: 0.5rem !important;
-        }
-
         .ai-chat-bubble {
             background: rgba(139, 92, 246, 0.2);
             border: 1px solid rgba(139, 92, 246, 0.4);
@@ -143,7 +132,7 @@
         .fact-card-stage {
             position: relative;
             perspective: 1200px;
-            min-height: 368px;
+            min-height: clamp(260px, 48vh, 368px);
             overflow: hidden;
         }
 
@@ -261,6 +250,74 @@
             background: #facc15;
             transform: scale(1.35);
         }
+
+        #info-panel {
+            max-height: calc(100vh - 5.25rem);
+        }
+
+        @supports (height: 100svh) {
+            #info-panel {
+                max-height: min(88vh, calc(100svh - 5.25rem));
+            }
+        }
+
+        @media (max-width: 640px) {
+            #ui-layer {
+                padding: 0.75rem !important;
+            }
+
+            .fact-card-stage {
+                min-height: clamp(228px, 43svh, 300px);
+            }
+
+            .fact-card-panel {
+                padding: 0.75rem;
+            }
+
+            .fact-card-panel img {
+                width: min(100%, 9.75rem) !important;
+                margin-bottom: 0.5rem;
+            }
+
+            #info-panel {
+                max-height: calc(100vh - 4.75rem);
+            }
+
+            #info-emoji {
+                font-size: 2.55rem;
+            }
+
+            #info-title {
+                font-size: 1.55rem;
+            }
+
+            #tutorial-hint {
+                top: 4.75rem !important;
+                padding: 0 0.75rem;
+            }
+
+            #tutorial-hint span {
+                max-width: min(100%, 20rem);
+                padding: 0.65rem 0.85rem;
+                font-size: 0.8rem;
+                line-height: 1.15;
+            }
+        }
+
+        @media (max-width: 360px) and (max-height: 640px) {
+            .fact-card-stage {
+                min-height: 260px;
+            }
+
+            .fact-card-panel img {
+                width: min(100%, 8rem) !important;
+            }
+
+            .fact-card-panel p {
+                font-size: 0.82rem;
+                line-height: 1.42;
+            }
+        }
     </style>
 </head>
 
@@ -270,30 +327,20 @@
     <div id="canvas-container"></div>
 
     <!-- UI Overlay -->
-    <div id="ui-layer" class="p-4 md:p-6">
+    <div id="ui-layer" class="p-3 md:p-6">
 
         <!-- Header & Controls -->
-        <div class="flex justify-between items-start gap-3">
-            <div class="flex items-start gap-3">
-                <a href="index.html"
+        <div class="flex justify-between items-start gap-2">
+            <div class="flex items-start gap-2">
+                <a href="index.html" onclick="leaveExplorer()"
                     class="glass-panel interactive-ui rounded-full px-3 py-2 text-xs md:text-sm font-bold text-blue-100 hover:text-white border-b-4 border-blue-500 transition"
                     aria-label="Back to game station">← Games</a>
-                <div id="main-title-panel"
-                    class="glass-panel interactive-ui rounded-3xl p-4 flex flex-col items-center border-b-4 border-purple-500 origin-top-left">
-                    <h1 id="main-title-text"
-                        class="text-2xl md:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-center drop-shadow-md transition-all duration-500">
-                        Solar Explorer
-                    </h1>
-                    <p id="main-title-sub"
-                        class="text-sm md:text-base text-gray-300 font-bold mt-1 transition-all duration-500">Discover the
-                        Solar System!</p>
-                </div>
             </div>
 
             <!-- Time Controls -->
             <div
-                class="glass-panel interactive-ui rounded-full px-4 py-2 flex items-center gap-3 border-b-4 border-blue-500">
-                <span class="text-xs font-bold uppercase tracking-wider text-blue-300">Orbit Speed</span>
+                class="glass-panel interactive-ui rounded-full px-2 sm:px-4 py-2 flex items-center gap-2 sm:gap-3 border-b-4 border-blue-500 shrink-0">
+                <span class="hidden sm:inline text-xs font-bold uppercase tracking-wider text-blue-300">Orbit Speed</span>
                 <button onclick="setSpeed(0)"
                     class="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex justify-center items-center transition"
                     title="Pause">⏸️</button>
@@ -311,14 +358,14 @@
 
             <!-- Planet Info Panel (Hidden by default) -->
             <div id="info-panel"
-                class="glass-panel interactive-ui rounded-3xl p-6 w-full md:w-96 border-l-4 border-yellow-400 hidden transform transition-all duration-300 translate-y-10 opacity-0 relative max-h-[88vh] flex flex-col">
+                class="glass-panel interactive-ui rounded-2xl md:rounded-3xl p-4 md:p-6 w-full max-w-[22rem] md:w-96 border-l-4 border-yellow-400 hidden transform transition-all duration-300 translate-y-10 opacity-0 relative flex flex-col">
                 <button onclick="closeInfoPanel()"
                     class="absolute -top-3 -right-3 w-10 h-10 bg-red-500 hover:bg-red-400 rounded-full flex justify-center items-center text-xl font-bold border-2 border-white shadow-lg transition z-20">✖</button>
 
                 <div class="mb-3 flex items-center justify-center gap-3">
-                    <span id="info-emoji" class="text-5xl leading-none drop-shadow-lg shrink-0">🌍</span>
+                    <span id="info-emoji" class="text-4xl md:text-5xl leading-none drop-shadow-lg shrink-0">🌍</span>
                     <div class="flex items-center flex-wrap justify-center gap-2">
-                        <h2 id="info-title" class="text-3xl leading-tight text-yellow-300">Earth</h2>
+                        <h2 id="info-title" class="text-2xl md:text-3xl leading-tight text-yellow-300">Earth</h2>
                         <span id="info-type"
                             class="bg-blue-600 text-xs px-3 py-1 rounded-full uppercase tracking-widest font-bold inline-block">Planet</span>
                     </div>
@@ -367,7 +414,7 @@
 
         <!-- Mobile Hint -->
         <div id="tutorial-hint"
-            class="interactive-ui text-center w-full absolute top-32 left-0 pointer-events-none transition-opacity duration-1000">
+            class="interactive-ui text-center w-full absolute top-20 md:top-32 left-0 pointer-events-none transition-opacity duration-1000">
             <span
                 class="bg-yellow-400 text-yellow-900 font-bold px-6 py-3 rounded-full shadow-lg animate-gentle-pulse inline-block kid-font">
                 👆 Tap or Click on a planet to explore! &nbsp; 🔄 Drag to look around.

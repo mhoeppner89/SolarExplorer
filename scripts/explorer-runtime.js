@@ -81,23 +81,51 @@
         return new Set(getAllBodies().map(body => body.id));
     }
 
-    function loadVisitedBodies() {
+    function clearSavedVisitedBodies() {
         try {
-            const saved = JSON.parse(localStorage.getItem(explorerCopy.storageKey) || '[]');
-            const validIds = getValidBodyIds();
-            visitedBodies = new Set(Array.isArray(saved) ? saved.filter(id => validIds.has(id)) : []);
-            hasTriggeredWinCelebration = visitedBodies.size === validIds.size;
-        } catch (error) {
-            visitedBodies = new Set();
-        }
-    }
-
-    function saveVisitedBodies() {
-        try {
-            localStorage.setItem(explorerCopy.storageKey, JSON.stringify([...visitedBodies]));
+            localStorage.removeItem(explorerCopy.storageKey);
         } catch (error) {
             // Storage can be unavailable in private or restricted browser contexts.
         }
+    }
+
+    function loadVisitedBodies() {
+        clearSavedVisitedBodies();
+        visitedBodies = new Set();
+        hasTriggeredWinCelebration = false;
+    }
+
+    function saveVisitedBodies() {
+        clearSavedVisitedBodies();
+    }
+
+    const passportButtonBaseClasses = 'w-7 h-7 md:w-12 md:h-12 bg-gray-800 border border-gray-600 md:border-2 rounded-lg md:rounded-xl flex items-center justify-center text-sm md:text-2xl transition-all duration-500 opacity-50 grayscale cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-300';
+
+    function resetPassportButton(el, data) {
+        el.className = passportButtonBaseClasses;
+        el.innerHTML = '?';
+        el.title = explorerCopy.passportLockedTitle;
+        el.setAttribute('aria-label', `${explorerCopy.selectBodyLabel}: ${data.name}`);
+    }
+
+    function resetAchievements(updateUi = false) {
+        visitedBodies = new Set();
+        hasTriggeredWinCelebration = false;
+        clearSavedVisitedBodies();
+
+        if (!updateUi) return;
+
+        getAllBodies().forEach(data => {
+            const el = document.getElementById(`passport-${data.id}`);
+            if (el) {
+                resetPassportButton(el, data);
+            }
+        });
+        updatePassportUI(false);
+    }
+
+    function leaveExplorer() {
+        resetAchievements(false);
     }
 
     function getSelectedBodyData() {
@@ -143,10 +171,97 @@
         return new THREE.Color(hex);
     }
 
+    function createSunTexture(data) {
+        const cacheKey = `${data.id}:solar-plasma`;
+        if (textureCache.has(cacheKey)) {
+            return textureCache.get(cacheKey);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        const baseGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        baseGradient.addColorStop(0, '#fff3a6');
+        baseGradient.addColorStop(0.22, '#ffc34c');
+        baseGradient.addColorStop(0.5, '#ff8a22');
+        baseGradient.addColorStop(0.78, '#ffd166');
+        baseGradient.addColorStop(1, '#fff0a0');
+        ctx.fillStyle = baseGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 850; i += 1) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const radius = 3 + Math.random() * 18;
+            const color = Math.random() > 0.45 ? '255,239,153' : '255,111,31';
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            gradient.addColorStop(0, `rgba(${color}, ${0.2 + Math.random() * 0.35})`);
+            gradient.addColorStop(1, `rgba(${color}, 0)`);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.lineCap = 'round';
+        for (let i = 0; i < 26; i += 1) {
+            const y = (i / 25) * canvas.height + Math.sin(i * 1.7) * 8;
+            ctx.strokeStyle = i % 3 === 0 ? 'rgba(255, 248, 184, 0.34)' : 'rgba(255, 95, 26, 0.22)';
+            ctx.lineWidth = 2 + Math.random() * 5;
+            ctx.beginPath();
+            ctx.moveTo(-20, y);
+            for (let x = 0; x <= canvas.width + 40; x += 64) {
+                ctx.lineTo(x, y + Math.sin(x * 0.028 + i) * (9 + Math.random() * 8));
+            }
+            ctx.stroke();
+        }
+
+        ctx.globalCompositeOperation = 'source-over';
+        for (let i = 0; i < 14; i += 1) {
+            ctx.fillStyle = `rgba(115, 31, 14, ${0.16 + Math.random() * 0.16})`;
+            ctx.beginPath();
+            ctx.ellipse(
+                Math.random() * canvas.width,
+                24 + Math.random() * (canvas.height - 48),
+                6 + Math.random() * 17,
+                2 + Math.random() * 7,
+                Math.random() * Math.PI,
+                0,
+                Math.PI * 2
+            );
+            ctx.fill();
+        }
+
+        ctx.globalCompositeOperation = 'lighter';
+        const limbGlow = ctx.createRadialGradient(canvas.width * 0.5, canvas.height * 0.5, 0, canvas.width * 0.5, canvas.height * 0.5, canvas.width * 0.7);
+        limbGlow.addColorStop(0, 'rgba(255, 180, 42, 0)');
+        limbGlow.addColorStop(0.72, 'rgba(255, 245, 190, 0.08)');
+        limbGlow.addColorStop(1, 'rgba(255, 245, 190, 0.22)');
+        ctx.fillStyle = limbGlow;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        const texture = new THREE.CanvasTexture(canvas);
+        if ('sRGBEncoding' in THREE) {
+            texture.encoding = THREE.sRGBEncoding;
+        }
+        texture.needsUpdate = true;
+        textureCache.set(cacheKey, texture);
+        return texture;
+    }
+
     function createBodyTexture(data, preset) {
         const cacheKey = `${data.id}:${preset.bands ? 'bands' : 'noise'}`;
         if (textureCache.has(cacheKey)) {
             return textureCache.get(cacheKey);
+        }
+
+        if (data.type === 'Star') {
+            return createSunTexture(data);
         }
 
         const canvas = document.createElement('canvas');
@@ -220,10 +335,12 @@
         const preset = bodyVisualPresets[data.id] || {};
 
         if (data.type === 'Star') {
-            return new THREE.MeshBasicMaterial({
-                color: preset.color || data.color,
-                map: createBodyTexture(data, { ...preset, bands: [0xffd978, 0xffab33, 0xffecaa, 0xf77d22] })
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                map: createBodyTexture(data, preset)
             });
+            material.toneMapped = false;
+            return material;
         }
 
         const material = new THREE.MeshStandardMaterial({
@@ -258,25 +375,52 @@
         mesh.add(atmosphere);
     }
 
+    function createSunGlowTexture() {
+        const cacheKey = 'sun:radial-glow';
+        if (textureCache.has(cacheKey)) {
+            return textureCache.get(cacheKey);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        const glow = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+        glow.addColorStop(0, 'rgba(255, 255, 235, 0.95)');
+        glow.addColorStop(0.15, 'rgba(255, 238, 154, 0.55)');
+        glow.addColorStop(0.34, 'rgba(255, 159, 48, 0.24)');
+        glow.addColorStop(0.68, 'rgba(255, 95, 24, 0.08)');
+        glow.addColorStop(1, 'rgba(255, 95, 24, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        if ('sRGBEncoding' in THREE) {
+            texture.encoding = THREE.sRGBEncoding;
+        }
+        texture.needsUpdate = true;
+        textureCache.set(cacheKey, texture);
+        return texture;
+    }
+
     function addSunGlow(mesh, data) {
         const layers = [
-            { scale: 1.35, color: 0xffcf6a, opacity: 0.24 },
-            { scale: 1.8, color: 0xff9f36, opacity: 0.12 },
-            { scale: 2.4, color: 0xffdf9a, opacity: 0.06 }
+            { scale: 3.15, color: 0xfff0b0, opacity: 0.62 },
+            { scale: 5.25, color: 0xff8f2c, opacity: 0.3 }
         ];
+        const glowTexture = createSunGlowTexture();
 
         layers.forEach(layer => {
-            const glow = new THREE.Mesh(
-                new THREE.SphereGeometry(data.radius * layer.scale, 48, 48),
-                new THREE.MeshBasicMaterial({
-                    color: layer.color,
-                    transparent: true,
-                    opacity: layer.opacity,
-                    side: THREE.BackSide,
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending
-                })
-            );
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: glowTexture,
+                color: layer.color,
+                transparent: true,
+                opacity: layer.opacity,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+                fog: false
+            }));
+            glow.scale.set(data.radius * layer.scale, data.radius * layer.scale, 1);
             glow.userData.baseOpacity = layer.opacity;
             mesh.add(glow);
             visualState.sunGlowLayers.push(glow);
@@ -350,6 +494,12 @@
         // Event Listeners
         window.addEventListener('resize', onWindowResize);
         window.addEventListener('keydown', handleGlobalKeydown);
+        window.addEventListener('pagehide', () => resetAchievements(false));
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                resetAchievements(true);
+            }
+        });
     
         // Differentiate between dragging to rotate and clicking to select
         renderer.domElement.addEventListener('pointerdown', (e) => {
@@ -634,15 +784,21 @@
         isIntroComplete = true;
 
         const titlePanel = document.getElementById('main-title-panel');
-        titlePanel.classList.remove('p-4');
-        titlePanel.classList.add('p-2');
+        if (titlePanel) {
+            titlePanel.classList.remove('p-4');
+            titlePanel.classList.add('p-2');
+        }
 
         const titleText = document.getElementById('main-title-text');
-        titleText.classList.remove('text-2xl', 'md:text-4xl');
-        titleText.classList.add('text-xl');
+        if (titleText) {
+            titleText.classList.remove('text-2xl', 'md:text-4xl');
+            titleText.classList.add('text-xl');
+        }
 
         const titleSub = document.getElementById('main-title-sub');
-        titleSub.style.display = 'none';
+        if (titleSub) {
+            titleSub.style.display = 'none';
+        }
 
         const hint = document.getElementById('tutorial-hint');
         if (hint) hint.style.opacity = '0';
@@ -896,10 +1052,7 @@
             const el = document.createElement('button');
             el.id = `passport-${data.id}`;
             el.type = 'button';
-            el.className = 'w-7 h-7 md:w-12 md:h-12 bg-gray-800 border border-gray-600 md:border-2 rounded-lg md:rounded-xl flex items-center justify-center text-sm md:text-2xl transition-all duration-500 opacity-50 grayscale cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-300';
-            el.innerHTML = '?';
-            el.title = explorerCopy.passportLockedTitle;
-            el.setAttribute('aria-label', `${explorerCopy.selectBodyLabel}: ${data.name}`);
+            resetPassportButton(el, data);
             el.addEventListener('click', () => selectBodyById(data.id));
             grid.appendChild(el);
         });
@@ -976,17 +1129,24 @@
 
         visualState.sunGlowLayers.forEach((glow, index) => {
             glow.material.opacity = glow.userData.baseOpacity + Math.sin(visualState.clock * 1.8 + index) * glow.userData.baseOpacity * 0.22;
-            glow.rotation.y += 0.0015 + index * 0.0007;
+            if ('rotation' in glow.material) {
+                glow.material.rotation += 0.0015 + index * 0.0007;
+            } else {
+                glow.rotation.y += 0.0015 + index * 0.0007;
+            }
         });
 
         // Update orbits and rotations
         bodies.forEach(b => {
             // Determine speed correctly depending on if it's a moon or planet
             const speed = b.isMoon ? b.speed : (b.data ? b.data.speed : 0);
+            const sunPulse = b.data && b.data.type === 'Star'
+                ? 1 + Math.sin(visualState.clock * 1.35) * 0.012
+                : 1;
             const selectedScale = selectedBody && selectedBody.mesh === b.mesh
                 ? 1 + Math.sin(visualState.clock * 3.2) * 0.035
                 : 1;
-            b.mesh.scale.setScalar(selectedScale);
+            b.mesh.scale.setScalar(sunPulse * selectedScale);
             if (b.mesh.material && 'emissiveIntensity' in b.mesh.material) {
                 const baseEmissive = b.mesh.material.userData.baseEmissiveIntensity || 0;
                 b.mesh.material.emissiveIntensity = selectedBody && selectedBody.mesh === b.mesh
@@ -1056,6 +1216,7 @@
     Object.assign(window, {
         changeFactCard,
         closeInfoPanel,
+        leaveExplorer,
         resetCamera,
         selectBodyById,
         setSpeed,

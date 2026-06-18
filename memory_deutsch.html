@@ -734,21 +734,21 @@
 
     <script>
         const sourceBodies = [
-            { id: "sun", name: "Sonne", image: "images/sun1.png" },
-            { id: "mercury", name: "Merkur", image: "images/mercury1.png" },
-            { id: "venus", name: "Venus", image: "images/venus1.png" },
-            { id: "earth", name: "Erde", image: "images/earth1.png" },
-            { id: "moon", name: "Mond", image: "images/moon1.png" },
-            { id: "mars", name: "Mars", image: "images/mars1.png" },
-            { id: "jupiter", name: "Jupiter", image: "images/jupiter1.png" },
-            { id: "saturn", name: "Saturn", image: "images/saturn1.png" },
-            { id: "uranus", name: "Uranus", image: "images/uranus1.png" },
-            { id: "neptun", name: "Neptun", image: "images/neptun1.png" },
-            { id: "ceres", name: "Ceres", image: "images/ceres1.png" },
-            { id: "pluto", name: "Pluto", image: "images/pluto1.png" },
-            { id: "eris", name: "Eris", image: "images/eris1.png" },
-            { id: "haumea", name: "Haumea", image: "images/haumea1.png" },
-            { id: "makemake", name: "Makemake", image: "images/makemake1.png" }
+            { id: "sun", name: "Sonne", images: ["images/sun1.png", "images/sun2.png", "images/sun3.png", "images/sun4.png", "images/sun5.png"] },
+            { id: "mercury", name: "Merkur", images: ["images/mercury1.png", "images/mercury2.png", "images/mercury3.png", "images/mercury4.png", "images/mercury5.png"] },
+            { id: "venus", name: "Venus", images: ["images/venus1.png", "images/venus2.png", "images/venus3.png", "images/venus4.png", "images/venus5.png"] },
+            { id: "earth", name: "Erde", images: ["images/earth1.png", "images/earth2.png", "images/earth3.png", "images/earth4.png", "images/earth5.png"] },
+            { id: "moon", name: "Mond", images: ["images/moon1.png", "images/moon2.png", "images/moon3.png"] },
+            { id: "mars", name: "Mars", images: ["images/mars1.png", "images/mars2.png", "images/mars3.png", "images/mars4.png", "images/mars5.png"] },
+            { id: "jupiter", name: "Jupiter", images: ["images/jupiter1.png", "images/jupiter2.png", "images/jupiter3.png", "images/jupiter4.png", "images/jupiter5.png"] },
+            { id: "saturn", name: "Saturn", images: ["images/saturn1.png", "images/saturn2.png", "images/saturn3.png", "images/saturn4.png", "images/saturn5.png"] },
+            { id: "uranus", name: "Uranus", images: ["images/uranus1.png", "images/uranus2.png", "images/uranus3.png", "images/uranus4.png", "images/uranus5.png"] },
+            { id: "neptun", name: "Neptun", images: ["images/neptun1.png", "images/neptun2.png", "images/neptun3.png", "images/neptun4.png", "images/neptun5.png"] },
+            { id: "ceres", name: "Ceres", images: ["images/ceres1.png", "images/ceres2.png", "images/ceres3.png"] },
+            { id: "pluto", name: "Pluto", images: ["images/pluto1.png", "images/pluto2.png", "images/pluto3.png"] },
+            { id: "eris", name: "Eris", images: ["images/eris1.png", "images/eris2.png", "images/eris3.png"] },
+            { id: "haumea", name: "Haumea", images: ["images/haumea1.png", "images/haumea2.png", "images/haumea3.png"] },
+            { id: "makemake", name: "Makemake", images: ["images/makemake1.png", "images/makemake2.png", "images/makemake3.png"] }
         ];
 
         const preferredGridOptions = [
@@ -866,11 +866,20 @@
             return array;
         }
 
+        function pickRandomImage(body) {
+            return body.images[Math.floor(Math.random() * body.images.length)];
+        }
+
         function buildDeck() {
             const deck = [];
             sourceBodies.forEach((body) => {
-                deck.push({ ...body, cardId: `card-${state.nextCardId += 1}` });
-                deck.push({ ...body, cardId: `card-${state.nextCardId += 1}` });
+                const cardBody = {
+                    id: body.id,
+                    name: body.name,
+                    image: pickRandomImage(body)
+                };
+                deck.push({ ...cardBody, cardId: `card-${state.nextCardId += 1}` });
+                deck.push({ ...cardBody, cardId: `card-${state.nextCardId += 1}` });
             });
             return shuffle(deck).map((card) => ({
                 ...card,
@@ -1019,6 +1028,7 @@
                     index,
                     pair: card.id,
                     label: card.name,
+                    image: card.image,
                     revealed: card.isRevealed,
                     matched: card.isMatched
                 }))

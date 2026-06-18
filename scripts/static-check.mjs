@@ -105,8 +105,8 @@ if (!runtime.includes("window.render_game_to_text")) {
   fail("Explorer runtime does not expose window.render_game_to_text.");
 }
 
-if (!runtime.includes("localStorage.setItem")) {
-  fail("Explorer runtime does not persist passport progress.");
+if (!runtime.includes("pagehide") || !runtime.includes("clearSavedVisitedBodies")) {
+  fail("Explorer runtime does not reset passport progress when leaving.");
 }
 
 if (!germanExplorer.includes("scripts/explorer-runtime.js") || !englishExplorer.includes("scripts/explorer-runtime.js")) {
