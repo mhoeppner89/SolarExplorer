@@ -38,6 +38,11 @@ const FIXED_DT = numberConst("FIXED_DT");
 const TIME_LIMIT = numberConst("TIME_LIMIT");
 const FLY_MARGIN = numberConst("FLY_MARGIN");
 const GRAVITY_SCALE = numberConst("GRAVITY_SCALE");
+const HEAT_LIMIT = numberConst("HEAT_LIMIT");
+const SUN_HEAT_GAIN_RATE = numberConst("SUN_HEAT_GAIN_RATE");
+const HEAT_COOL_RATE = numberConst("HEAT_COOL_RATE");
+const SHADOW_COOL_RATE = numberConst("SHADOW_COOL_RATE");
+const DEFAULT_HEAT_RADIUS_MULTIPLIER = numberConst("DEFAULT_HEAT_RADIUS_MULTIPLIER");
 const SOURCE_PREDICTION_TIME_RATIO = numberConst("PREDICTION_TIME_RATIO");
 const SCREENSHOT_PREDICTION_TIME_RATIO = process.env.GRAVITY_SOLUTION_PREDICTION_RATIO === undefined
   ? SOURCE_PREDICTION_TIME_RATIO
@@ -67,6 +72,94 @@ function atmosphereStrengthAt(x, y, planet) {
   const innerEdge = planet.r + SHIP_RADIUS;
   const width = Math.max(1, planet.atmosphereRadius - innerEdge);
   return Math.pow(clamp((planet.atmosphereRadius - distance) / width, 0, 1), 1.35);
+}
+
+function isHeatSource(planet) {
+  return Boolean(planet.heatRadius || planet.hotRadius || planet.label === "Sonne");
+}
+
+function heatRadiusFor(planet) {
+  if (!isHeatSource(planet)) return 0;
+  return planet.heatRadius || Math.max(planet.r * 2.8, (planet.hotRadius || planet.r * 2.2) * DEFAULT_HEAT_RADIUS_MULTIPLIER);
+}
+
+function heatRateFor(planet) {
+  return planet.heatRate || SUN_HEAT_GAIN_RATE;
+}
+
+function heatOccluders(level, source) {
+  return [
+    ...level.planets.filter((body) => body !== source),
+    ...(level.hazards || []),
+  ];
+}
+
+function isCoveredFromHeatSource(x, y, source, level) {
+  const rayX = x - source.x;
+  const rayY = y - source.y;
+  const rayLengthSq = rayX * rayX + rayY * rayY;
+  if (rayLengthSq <= 1) return false;
+
+  for (const body of heatOccluders(level, source)) {
+    const bodyX = body.x - source.x;
+    const bodyY = body.y - source.y;
+    const t = (bodyX * rayX + bodyY * rayY) / rayLengthSq;
+    if (t <= 0 || t >= 1) continue;
+    const closestX = source.x + rayX * t;
+    const closestY = source.y + rayY * t;
+    const coverRadius = body.coverRadius || body.r + SHIP_RADIUS * 0.8;
+    if (length(body.x - closestX, body.y - closestY) <= coverRadius) return true;
+  }
+
+  return false;
+}
+
+function thermalAt(x, y, level) {
+  let strongest = {
+    exposure: 0,
+    heatRate: 0,
+    rawExposure: 0,
+    inShadow: false,
+    sourceLabel: "",
+  };
+
+  for (const source of level.planets) {
+    const heatRadius = heatRadiusFor(source);
+    if (!heatRadius) continue;
+    const distance = length(x - source.x, y - source.y);
+    if (distance >= heatRadius) continue;
+    const innerEdge = source.r + SHIP_RADIUS;
+    const width = Math.max(1, heatRadius - innerEdge);
+    const rawExposure = Math.pow(clamp((heatRadius - distance) / width, 0, 1), 1.2);
+    const inShadow = isCoveredFromHeatSource(x, y, source, level);
+    const heatRate = inShadow ? 0 : rawExposure * heatRateFor(source);
+    if (heatRate > strongest.heatRate || (!strongest.heatRate && rawExposure > strongest.rawExposure)) {
+      strongest = {
+        exposure: inShadow ? 0 : rawExposure,
+        heatRate,
+        rawExposure,
+        inShadow,
+        sourceLabel: source.label || "Sonne",
+      };
+    }
+  }
+
+  return strongest;
+}
+
+function updateProbeHeat(probe, level, dt) {
+  const thermal = thermalAt(probe.x, probe.y, level);
+  const currentHeat = probe.heat || 0;
+  if (thermal.heatRate > 0) {
+    probe.heat = clamp(currentHeat + thermal.heatRate * dt, 0, HEAT_LIMIT);
+  } else {
+    const coolingRate = thermal.inShadow ? SHADOW_COOL_RATE : HEAT_COOL_RATE;
+    probe.heat = clamp(currentHeat - coolingRate * dt, 0, HEAT_LIMIT);
+  }
+  return {
+    ...thermal,
+    heat: probe.heat,
+  };
 }
 
 function gravityAt(x, y, level) {
@@ -110,9 +203,6 @@ function checkProbeOutcome(probe, level, elapsed) {
     if (length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.r) {
       return "planet_collision";
     }
-    if (planet.hotRadius && length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.hotRadius) {
-      return "hot_zone";
-    }
   }
 
   for (const hazard of level.hazards || []) {
@@ -120,6 +210,8 @@ function checkProbeOutcome(probe, level, elapsed) {
       return "hazard_collision";
     }
   }
+
+  if ((probe.heat || 0) >= HEAT_LIMIT) return "overheated";
 
   const target = level.target;
   if (length(probe.x - target.x, probe.y - target.y) <= SHIP_RADIUS + target.r) {
@@ -151,9 +243,14 @@ function simulate(level, pullX, pullY) {
     y: level.launch.y,
     vx: pullX * LAUNCH_POWER,
     vy: pullY * LAUNCH_POWER,
+    heat: 0,
   };
   let atmosphereTime = 0;
   let maxAtmosphereStrength = 0;
+  let heatTime = 0;
+  let maxHeat = 0;
+  let maxHeatExposure = 0;
+  let shadowTime = 0;
   let minTargetDistance = Infinity;
   const steps = Math.ceil(TIME_LIMIT / FIXED_DT);
 
@@ -161,6 +258,11 @@ function simulate(level, pullX, pullY) {
     const atmosphere = applyGravity(probe, level, FIXED_DT);
     atmosphereTime += atmosphere.atmosphereTime;
     maxAtmosphereStrength = Math.max(maxAtmosphereStrength, atmosphere.maxAtmosphereStrength);
+    const thermal = updateProbeHeat(probe, level, FIXED_DT);
+    if (thermal.heatRate > 0) heatTime += FIXED_DT;
+    if (thermal.inShadow) shadowTime += FIXED_DT;
+    maxHeat = Math.max(maxHeat, probe.heat);
+    maxHeatExposure = Math.max(maxHeatExposure, thermal.exposure);
     minTargetDistance = Math.min(minTargetDistance, length(probe.x - level.target.x, probe.y - level.target.y));
 
     const outcome = checkProbeOutcome(probe, level, i * FIXED_DT);
@@ -173,6 +275,10 @@ function simulate(level, pullX, pullY) {
         arrivalSpeed: length(probe.vx, probe.vy),
         atmosphereTime,
         maxAtmosphereStrength,
+        heatTime,
+        maxHeat,
+        maxHeatExposure,
+        shadowTime,
         minTargetDistance,
       };
     }
@@ -186,6 +292,10 @@ function simulate(level, pullX, pullY) {
     arrivalSpeed: length(probe.vx, probe.vy),
     atmosphereTime,
     maxAtmosphereStrength,
+    heatTime,
+    maxHeat,
+    maxHeatExposure,
+    shadowTime,
     minTargetDistance,
   };
 }
@@ -343,6 +453,7 @@ async function renderSolutionScreenshots(solutions) {
       speed: replay.speed,
       score: replay.score.level,
       atmosphere: replay.atmosphere,
+      heat: replay.heat,
     };
     if (solution.browserReplay.outcome !== "target_reached") {
       throw new Error(`Browser replay failed for mission ${solution.level}: ${solution.name} (${solution.browserReplay.outcome})`);
@@ -382,6 +493,10 @@ function writeOutputs(solutions) {
       sourcePredictionTimeRatio: SOURCE_PREDICTION_TIME_RATIO,
       screenshotPredictionTimeRatio: SCREENSHOT_PREDICTION_TIME_RATIO,
       gravityScale: GRAVITY_SCALE,
+      heatLimit: HEAT_LIMIT,
+      sunHeatGainRate: SUN_HEAT_GAIN_RATE,
+      heatCoolRate: HEAT_COOL_RATE,
+      shadowCoolRate: SHADOW_COOL_RATE,
     },
     solutions,
   };
@@ -413,6 +528,7 @@ function writeOutputs(solutions) {
       `- Launch speed: \`${fmt(solution.launchSpeed)}\``,
       `- Arrival: \`${solution.outcome}\` at \`${fmt(solution.elapsed, 2)}s\`, speed \`${fmt(solution.arrivalSpeed)}\``,
       `- Atmosphere time: \`${fmt(solution.atmosphereTime, 2)}s\`; max strength \`${fmt(solution.maxAtmosphereStrength, 3)}\``,
+      `- Heat: peak \`${fmt((solution.maxHeat || 0) * 100, 0)}%\`; exposed \`${fmt(solution.heatTime || 0, 2)}s\`; shadow \`${fmt(solution.shadowTime || 0, 2)}s\``,
       `- Browser replay: \`${solution.browserReplay.outcome}\`, score \`${solution.browserReplay.score}\`, speed \`${fmt(solution.browserReplay.speed)}\``,
       "",
     );

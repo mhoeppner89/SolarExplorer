@@ -107,100 +107,50 @@
             z-index: 2;
             display: grid;
             grid-template-rows: auto minmax(0, 1fr) auto;
-            gap: clamp(0.42rem, 1vw, 0.75rem);
-            padding: clamp(0.48rem, 1.15vw, 0.8rem);
+            gap: clamp(0.34rem, 1vw, 0.66rem);
+            padding: clamp(0.46rem, 1.1vw, 0.72rem);
         }
 
         .topbar {
             display: grid;
-            grid-template-columns: auto minmax(0, 1fr) auto;
+            grid-template-columns: minmax(0, 1fr) auto;
             align-items: start;
-            gap: 0.34rem;
-            min-height: 3.1rem;
-            padding: 0.4rem;
-            border: 2px solid rgba(62, 203, 255, 0.34);
-            border-radius: 0.82rem;
-            background:
-                linear-gradient(180deg, rgba(10, 57, 92, 0.92), rgba(4, 25, 54, 0.88)),
-                rgba(3, 13, 32, 0.9);
-            box-shadow:
-                inset 0 2px 0 rgba(255, 255, 255, 0.11),
-                inset 0 -12px 28px rgba(0, 0, 0, 0.18),
-                0 14px 28px rgba(0, 0, 0, 0.28);
+            gap: 0.4rem;
+            min-height: 0;
+            padding: 0;
         }
 
         .cluster {
-            grid-column: 2;
-            display: grid;
-            grid-template-columns: repeat(2, max-content);
-            align-items: start;
-            justify-content: center;
-            gap: 0.25rem;
-            min-width: 0;
-        }
-
-        .brand {
             grid-column: 1;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.46rem;
-            min-width: max-content;
-            padding: 0;
-            font-family: "Copperplate", "Avenir Next Condensed", "Trebuchet MS", sans-serif;
-            font-size: clamp(1.15rem, 2.8vw, 2.15rem);
-            line-height: 1;
-            font-weight: 900;
-            letter-spacing: 0.01em;
-            text-shadow: 0 3px 0 rgba(0, 0, 0, 0.26);
-        }
-
-        .brand span:not(.brand-mark) {
-            display: none;
-        }
-
-        .brand-mark {
-            width: 2.75rem;
-            min-width: 2.75rem;
-            aspect-ratio: 1 / 1;
-            display: grid;
-            place-items: center;
-            border-radius: 0.72rem;
-            border: 2px solid rgba(125, 232, 255, 0.48);
-            background:
-                radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.3), transparent 32%),
-                linear-gradient(180deg, rgba(18, 123, 150, 0.9), rgba(5, 55, 88, 0.95));
-            box-shadow:
-                inset 0 2px 0 rgba(255, 255, 255, 0.18),
-                0 0 18px rgba(40, 224, 255, 0.18);
-            font-size: 1.15rem;
-        }
-
-        .brand-accent {
-            color: #05f1df;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            justify-content: flex-start;
+            gap: 0.28rem;
+            min-width: 0;
         }
 
         .chip,
         button,
         .button {
-            border: 2px solid rgba(98, 214, 255, 0.28);
+            border: 1px solid rgba(109, 220, 255, 0.32);
             color: var(--ink);
             background:
-                linear-gradient(180deg, rgba(28, 116, 151, 0.55), rgba(5, 38, 72, 0.85)),
+                linear-gradient(180deg, rgba(18, 86, 125, 0.74), rgba(5, 25, 55, 0.76)),
                 var(--panel);
             box-shadow:
-                inset 0 2px 0 rgba(255, 255, 255, 0.12),
-                0 7px 16px rgba(0, 0, 0, 0.18);
+                inset 0 1px 0 rgba(255, 255, 255, 0.13),
+                0 8px 18px rgba(0, 0, 0, 0.22);
+            backdrop-filter: blur(12px);
         }
 
         .chip {
-            min-height: 1.85rem;
+            min-height: 2rem;
             display: inline-flex;
             align-items: baseline;
-            gap: 0.24rem;
-            padding: 0.28rem 0.42rem;
-            border-width: 1px;
-            border-radius: 0.56rem;
-            backdrop-filter: blur(10px);
+            gap: 0.3rem;
+            padding: 0.32rem 0.5rem;
+            border-radius: 0.5rem;
             white-space: nowrap;
         }
 
@@ -222,16 +172,20 @@
 
         .mission-chip {
             align-items: center;
-            gap: 0.2rem;
-            padding: 0.16rem 0.22rem;
+            gap: 0.24rem;
+            padding: 0.18rem 0.28rem;
+            border-color: rgba(117, 232, 92, 0.46);
+            background:
+                linear-gradient(180deg, rgba(24, 103, 108, 0.82), rgba(7, 37, 61, 0.78)),
+                rgba(3, 19, 36, 0.82);
         }
 
         .mission-nav-button {
-            width: 1.42rem;
-            min-width: 1.42rem;
-            min-height: 1.42rem;
+            width: 1.56rem;
+            min-width: 1.56rem;
+            min-height: 1.56rem;
             padding: 0;
-            border-radius: 0.42rem;
+            border-radius: 999px;
             font-size: 1.12rem;
             line-height: 1;
             pointer-events: auto;
@@ -277,31 +231,75 @@
             text-align: right;
         }
 
+        .thermal-chip {
+            min-width: 0;
+            display: grid;
+            grid-template-columns: auto auto;
+            align-items: center;
+            gap: 0.42rem;
+        }
+
+        .thermal-meter {
+            display: block;
+            width: 2.85rem;
+            height: 0.52rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 205, 128, 0.38);
+            background: rgba(34, 14, 25, 0.78);
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.38);
+        }
+
+        .thermal-meter__fill {
+            display: block;
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #56dcff, #ffd85a, #ff563d);
+            box-shadow: 0 0 12px rgba(255, 124, 61, 0.45);
+            transition: width 0.16s linear;
+        }
+
+        .thermal-readout {
+            min-width: 2.1rem;
+            text-align: right;
+        }
+
+        .thermal-chip.is-critical {
+            border-color: rgba(255, 107, 74, 0.68);
+            box-shadow:
+                inset 0 2px 0 rgba(255, 255, 255, 0.12),
+                0 0 18px rgba(255, 77, 50, 0.28);
+        }
+
         .message {
             align-self: end;
-            justify-self: center;
-            max-width: calc(100% - 1rem);
-            margin: 0 0 0.1rem;
-            padding: 0.46rem 0.54rem;
-            border: 2px solid rgba(98, 214, 255, 0.24);
-            border-radius: 0.68rem;
+            justify-self: start;
+            max-width: min(26rem, calc(100% - 1rem));
+            margin: 0 0 0.12rem;
+            padding: 0.5rem 0.62rem;
+            border: 1px solid rgba(98, 214, 255, 0.28);
+            border-left: 3px solid rgba(117, 232, 92, 0.76);
+            border-radius: 0.5rem;
             background:
-                linear-gradient(180deg, rgba(12, 55, 88, 0.88), rgba(6, 26, 58, 0.8)),
-                var(--panel-strong);
+                linear-gradient(180deg, rgba(8, 36, 66, 0.84), rgba(4, 18, 42, 0.78)),
+                rgba(3, 12, 28, 0.86);
             color: var(--ink);
-            font-size: 0.88rem;
+            font-size: 0.82rem;
             text-align: left;
-            line-height: 1.2;
-            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
-            backdrop-filter: blur(10px);
+            line-height: 1.22;
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
+            backdrop-filter: blur(12px);
             transition: opacity 0.16s ease, transform 0.16s ease;
         }
 
         .message strong {
             display: block;
-            margin-bottom: 0.14rem;
-            color: var(--gold);
-            letter-spacing: 0.04em;
+            margin-bottom: 0.12rem;
+            color: #8ffb7a;
+            font-size: 0.7rem;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
         }
 
         .message.has-cta {
@@ -341,23 +339,23 @@
         }
 
         .actions {
-            grid-column: 3;
+            grid-column: 2;
             pointer-events: auto;
             display: grid;
-            grid-template-columns: repeat(2, 2.75rem);
-            gap: 0.25rem;
+            grid-template-columns: repeat(2, 2.42rem);
+            gap: 0.22rem;
             justify-content: flex-end;
         }
 
         button,
         .button {
-            min-width: 2.75rem;
-            min-height: 2.75rem;
+            min-width: 2.42rem;
+            min-height: 2.42rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border-radius: 999px;
-            padding: 0.44rem 0.74rem;
+            padding: 0.34rem 0.58rem;
             text-decoration: none;
             font: inherit;
             font-weight: 800;
@@ -411,28 +409,17 @@
             }
 
             .topbar {
-                display: grid;
-                grid-template-columns: auto minmax(0, 1fr) auto;
+                grid-template-columns: minmax(0, 1fr) auto;
                 align-items: center;
-                min-height: 2.9rem;
-                padding: 0.34rem 0.44rem;
+                gap: 0.24rem;
             }
 
             .cluster {
-                justify-content: center;
+                justify-content: flex-start;
                 overflow: hidden;
             }
 
-            .brand {
-                font-size: 1rem;
-            }
-
-            .brand-mark {
-                width: 2.1rem;
-                min-width: 2.1rem;
-            }
-
-            .cluster .chip:nth-child(n+3) {
+            .cluster .chip:nth-child(n+2) {
                 display: none;
             }
 
@@ -518,17 +505,12 @@
                 grid-template-columns: minmax(0, 1fr) auto;
                 align-items: center;
                 gap: 0.22rem;
-                padding: 0.24rem;
-            }
-
-            .brand {
-                display: none;
             }
 
             .cluster {
                 grid-column: 1;
+                display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                justify-content: stretch;
                 gap: 0.14rem;
             }
 
@@ -565,10 +547,6 @@
             <canvas id="game" width="540" height="960"></canvas>
             <div class="hud" aria-hidden="true">
                 <div class="topbar">
-                    <div class="brand" aria-label="Gravity Sling">
-                        <span class="brand-mark">✦</span>
-                        <span>Gravity <span class="brand-accent">Sling</span></span>
-                    </div>
                     <div class="cluster">
                         <div class="chip mission-chip">
                             <button id="prevSolvedButton" class="mission-nav-button" title="Vorherige gelöste Mission"
@@ -585,6 +563,11 @@
                             <span>Tempo</span>
                             <span class="speed-meter"><span id="speedFill" class="speed-meter__fill"></span></span>
                             <strong id="speedLabel" class="speed-readout">0</strong>
+                        </div>
+                        <div id="thermalChip" class="chip thermal-chip">
+                            <span>Hitze</span>
+                            <span class="thermal-meter"><span id="heatFill" class="thermal-meter__fill"></span></span>
+                            <strong id="heatLabel" class="thermal-readout">0%</strong>
                         </div>
                     </div>
                     <div class="actions">
@@ -619,6 +602,11 @@
             const PREDICTION_TIME_RATIO = 0.10;
             const FLY_MARGIN = 180;
             const GRAVITY_SCALE = 2900000;
+            const HEAT_LIMIT = 1;
+            const SUN_HEAT_GAIN_RATE = 0.42;
+            const HEAT_COOL_RATE = 0.18;
+            const SHADOW_COOL_RATE = 0.34;
+            const DEFAULT_HEAT_RADIUS_MULTIPLIER = 2.35;
             const SCORE_STORAGE_KEY = "gravity-sling-high-scores-v1";
 
             const canvas = document.getElementById("game");
@@ -631,6 +619,9 @@
                 best: document.getElementById("bestLabel"),
                 speed: document.getElementById("speedLabel"),
                 speedFill: document.getElementById("speedFill"),
+                heat: document.getElementById("heatLabel"),
+                heatFill: document.getElementById("heatFill"),
+                thermalChip: document.getElementById("thermalChip"),
                 time: document.getElementById("timeLabel"),
                 message: document.getElementById("message"),
                 restart: document.getElementById("restartButton"),
@@ -682,14 +673,14 @@
                     launch: { x: 128, y: 820 },
                     target: { x: 408, y: 168, r: 34 },
                     planets: [
-                        { label: "Sonne", x: 270, y: 510, r: 68, mass: 1.05, softening: 138, color: "#ffd36b", ring: false, hotRadius: 88 },
+                        { label: "Sonne", x: 270, y: 510, r: 68, mass: 1.05, softening: 138, color: "#ffd36b", ring: false, heatRadius: 210, heatRate: 0.48 },
                     ],
                     hazards: [
                         { label: "Asteroid", x: 140, y: 600, r: 22, color: "#8d817c" },
                         { label: "Asteroid", x: 404, y: 620, r: 23, color: "#9c8b7a" },
                         { label: "Asteroid", x: 326, y: 338, r: 21, color: "#8d817c" },
                     ],
-                    hint: "Nah an der Sonne wird die Sonde schnell. Der freie Korridor liegt knapp am Feld vorbei.",
+                    hint: "Nah an der Sonne wird die Sonde schnell und heiß. Nutze den Schwung, aber bleib nicht zu lange im Glühen.",
                 },
                 {
                     name: "Doppelpass", // level 5
@@ -750,7 +741,7 @@
                     launch: { x: 128, y: 815 },
                     target: { x: 408, y: 250, r: 45, maxSpeed: 360 },
                     planets: [
-                        { label: "Sonne", x: 268, y: 560, r: 62, mass: 0.92, softening: 128, color: "#ffd36b", ring: false, hotRadius: 90 },
+                        { label: "Sonne", x: 268, y: 560, r: 62, mass: 0.92, softening: 128, color: "#ffd36b", ring: false, heatRadius: 215, heatRate: 0.42 },
                         { label: "Pluto", x: 408, y: 250, r: 24, mass: 0.34, softening: 86, color: "#c6d5eb", ring: false, atmosphereRadius: 70, atmosphereDrag: 0.42, atmosphereColor: "#b8ecff" },
                     ],
                     hazards: [
@@ -763,7 +754,7 @@
                         { label: "Asteroid", x: 454, y: 344, r: 20, color: "#8d817c" },
                         { label: "Asteroid", x: 414, y: 358, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Treffen reicht nicht: Streife Plutos helle Atmosphäre, um vor dem Ziel Tempo abzubauen.",
+                    hint: "Treffen reicht nicht: Streife Plutos Atmosphäre zum Bremsen und komm aus der Sonnenhitze wieder heraus.",
                 },
                 {
                     name: "Drei-Körper-Kanal", // level 9
@@ -789,7 +780,7 @@
                     launch: { x: 120, y: 830 },
                     target: { x: 396, y: 154, r: 33, maxSpeed: 380 },
                     planets: [
-                        { label: "Sonne", x: 252, y: 695, r: 66, mass: 1.04, softening: 136, color: "#ffd36b", ring: false, hotRadius: 96 },
+                        { label: "Sonne", x: 252, y: 695, r: 66, mass: 1.04, softening: 136, color: "#ffd36b", ring: false, heatRadius: 390, heatRate: 0.26 },
                         { label: "Saturn", x: 396, y: 372, r: 50, mass: 0.72, softening: 124, color: "#e2c987", ring: true, atmosphereRadius: 106, atmosphereDrag: 0.38, atmosphereColor: "#ffe0a5" },
                         { label: "Pluto", x: 396, y: 154, r: 23, mass: 0.32, softening: 88, color: "#c6d5eb", ring: false, atmosphereRadius: 58, atmosphereDrag: 0.26, atmosphereColor: "#b8ecff" },
                     ],
@@ -802,9 +793,9 @@
                         { label: "Asteroid", x: 482, y: 620, r: 27, color: "#9c8b7a" },
                         { label: "Asteroid", x: 452, y: 438, r: 20, color: "#8d817c" },
                         { label: "Asteroid", x: 242, y: 386, r: 20, color: "#9c8b7a" },
-                        { label: "Asteroid", x: 438, y: 220, r: 19, color: "#8d817c" },
+                        { label: "Asteroid", x: 392, y: 236, r: 22, color: "#8d817c" },
                     ],
-                    hint: "Der Sonnenbogen gibt Schwung, Saturns Atmosphäre bremst. Komme sauber bei Pluto an.",
+                    hint: "Der Sonnenbogen gibt Schwung, aber Schatten hinter den Brocken verschafft Abkühlung. Komme sauber bei Pluto an.",
                 },
                 {
                     name: "Orbit-Schleuse", // level 11
@@ -832,7 +823,7 @@
                     launch: { x: 110, y: 824 },
                     target: { x: 432, y: 196, r: 33, maxSpeed: 260 },
                     planets: [
-                        { label: "Sonne", x: 238, y: 532, r: 60, mass: 1.18, softening: 126, color: "#ffd36b", ring: false, hotRadius: 86 },
+                        { label: "Sonne", x: 238, y: 532, r: 60, mass: 1.18, softening: 126, color: "#ffd36b", ring: false, heatRadius: 215, heatRate: 0.54 },
                         { label: "Mars", x: 394, y: 298, r: 36, mass: 0.62, softening: 92, color: "#ff8e68", ring: false, atmosphereRadius: 104, atmosphereDrag: 0.7, atmosphereColor: "#ffb07e" },
                     ],
                     hazards: [
@@ -848,7 +839,7 @@
                         { label: "Komet", x: 560, y: 250, r: 12, color: "#8d817c" },
                         { label: "Komet", x: 72, y: 438, r: 22, color: "#9c8b7a" },
                     ],
-                    hint: "Nutze die Sonne nur als Schwunggeber: knapp vorbei, nicht hinein. Mars' Atmosphäre nimmt oben das Tempo aus der Kurve.",
+                    hint: "Nutze die Sonne als riskanten Schwunggeber. Mars kann Schatten und Atmosphäre liefern, bevor oben das Tempo aus der Kurve geht.",
                 },
                 {
                     name: "Bremskorridor", // level 13
@@ -914,7 +905,7 @@
                     hazards: [
                         { label: "Barriere", x: 176, y: 882, r: 33, color: "#9c8b7a" },
                         { label: "Barriere", x: 252, y: 818, r: 32, color: "#8d817c" },
-                        { label: "Barriere", x: 326, y: 792, r: 18, color: "#9c8b7a" },
+                        { label: "Barriere", x: 342, y: 846, r: 25, color: "#9c8b7a" },
                         { label: "Barriere", x: 118, y: 922, r: 34, color: "#8d817c" },
                         { label: "Barriere", x: 220, y: 928, r: 35, color: "#9c8b7a" },
                         { label: "Barriere", x: 322, y: 900, r: 33, color: "#8d817c" },
@@ -923,10 +914,10 @@
                         { label: "Barriere", x: 476, y: 648, r: 24, color: "#9c8b7a" },
                         { label: "Barriere", x: 128, y: 650, r: 23, color: "#8d817c" },
                         { label: "Barriere", x: 36, y: 500, r: 16, color: "#9c8b7a" },
-                        { label: "Barriere", x: 370, y: 400, r: 14, color: "#8d817c" },
+                        { label: "Barriere", x: 292, y: 432, r: 12, color: "#8d817c" },
                         { label: "Barriere", x: 142, y: 372, r: 22, color: "#8d817c" },
-                        { label: "Barriere", x: 492, y: 236, r: 8, color: "#9c8b7a" },
-                        { label: "Barriere", x: 640, y: 190, r: 8, color: "#8d817c" },
+                        { label: "Barriere", x: 548, y: 146, r: 12, color: "#9c8b7a" },
+                        { label: "Barriere", x: 516, y: 118, r: 12, color: "#8d817c" },
                         { label: "Barriere", x: 186, y: 190, r: 21, color: "#9c8b7a" },
                         { label: "Barriere", x: 330, y: 152, r: 20, color: "#8d817c" },
                     ],
@@ -976,7 +967,7 @@
             const state = {
                 levelIndex: 0,
                 mode: "ready",
-                ship: { x: 0, y: 0, vx: 0, vy: 0, r: SHIP_RADIUS },
+                ship: { x: 0, y: 0, vx: 0, vy: 0, r: SHIP_RADIUS, heat: 0 },
                 drag: { active: false, x: 0, y: 0 },
                 trail: [],
                 shots: 0,
@@ -986,6 +977,11 @@
                 atmosphereTime: 0,
                 currentAtmosphereStrength: 0,
                 maxAtmosphereStrength: 0,
+                heatTime: 0,
+                currentHeatExposure: 0,
+                maxHeat: 0,
+                heatInShadow: false,
+                heatSource: "",
                 elapsed: 0,
                 message: "",
                 lastOutcome: "none",
@@ -1025,6 +1021,7 @@
                 state.ship.y = level.launch.y;
                 state.ship.vx = 0;
                 state.ship.vy = 0;
+                state.ship.heat = 0;
                 state.drag.active = false;
                 state.trail = [];
                 state.shots = 0;
@@ -1033,6 +1030,11 @@
                 state.atmosphereTime = 0;
                 state.currentAtmosphereStrength = 0;
                 state.maxAtmosphereStrength = 0;
+                state.heatTime = 0;
+                state.currentHeatExposure = 0;
+                state.maxHeat = 0;
+                state.heatInShadow = false;
+                state.heatSource = "";
                 state.elapsed = 0;
                 state.lastOutcome = "none";
                 state.message = keepMessage ? state.message : level.hint;
@@ -1150,6 +1152,97 @@
                 return Math.pow(clamp((planet.atmosphereRadius - distance) / width, 0, 1), 1.35);
             }
 
+            function isHeatSource(planet) {
+                return Boolean(planet.heatRadius || planet.hotRadius || planet.label === "Sonne");
+            }
+
+            function heatRadiusFor(planet) {
+                if (!isHeatSource(planet)) return 0;
+                return planet.heatRadius || Math.max(planet.r * 2.8, (planet.hotRadius || planet.r * 2.2) * DEFAULT_HEAT_RADIUS_MULTIPLIER);
+            }
+
+            function heatRateFor(planet) {
+                return planet.heatRate || SUN_HEAT_GAIN_RATE;
+            }
+
+            function heatOccluders(level, source) {
+                return [
+                    ...level.planets.filter((body) => body !== source),
+                    ...(level.hazards || []),
+                ];
+            }
+
+            function isCoveredFromHeatSource(x, y, source, level) {
+                const rayX = x - source.x;
+                const rayY = y - source.y;
+                const rayLengthSq = rayX * rayX + rayY * rayY;
+                if (rayLengthSq <= 1) return false;
+
+                for (const body of heatOccluders(level, source)) {
+                    const bodyX = body.x - source.x;
+                    const bodyY = body.y - source.y;
+                    const t = (bodyX * rayX + bodyY * rayY) / rayLengthSq;
+                    if (t <= 0 || t >= 1) continue;
+                    const closestX = source.x + rayX * t;
+                    const closestY = source.y + rayY * t;
+                    const coverRadius = body.coverRadius || body.r + SHIP_RADIUS * 0.8;
+                    if (length(body.x - closestX, body.y - closestY) <= coverRadius) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            function thermalAt(x, y, level) {
+                let strongest = {
+                    exposure: 0,
+                    heatRate: 0,
+                    rawExposure: 0,
+                    inShadow: false,
+                    sourceLabel: "",
+                };
+
+                for (const source of level.planets) {
+                    const heatRadius = heatRadiusFor(source);
+                    if (!heatRadius) continue;
+                    const distance = length(x - source.x, y - source.y);
+                    if (distance >= heatRadius) continue;
+                    const innerEdge = source.r + SHIP_RADIUS;
+                    const width = Math.max(1, heatRadius - innerEdge);
+                    const rawExposure = Math.pow(clamp((heatRadius - distance) / width, 0, 1), 1.2);
+                    const inShadow = isCoveredFromHeatSource(x, y, source, level);
+                    const heatRate = inShadow ? 0 : rawExposure * heatRateFor(source);
+
+                    if (heatRate > strongest.heatRate || (!strongest.heatRate && rawExposure > strongest.rawExposure)) {
+                        strongest = {
+                            exposure: inShadow ? 0 : rawExposure,
+                            heatRate,
+                            rawExposure,
+                            inShadow,
+                            sourceLabel: source.label || "Sonne",
+                        };
+                    }
+                }
+
+                return strongest;
+            }
+
+            function updateProbeHeat(probe, level, dt) {
+                const thermal = thermalAt(probe.x, probe.y, level);
+                const currentHeat = probe.heat || 0;
+                if (thermal.heatRate > 0) {
+                    probe.heat = clamp(currentHeat + thermal.heatRate * dt, 0, HEAT_LIMIT);
+                } else {
+                    const coolingRate = thermal.inShadow ? SHADOW_COOL_RATE : HEAT_COOL_RATE;
+                    probe.heat = clamp(currentHeat - coolingRate * dt, 0, HEAT_LIMIT);
+                }
+                return {
+                    ...thermal,
+                    heat: probe.heat,
+                };
+            }
+
             function gravityAt(x, y, level) {
                 let ax = 0;
                 let ay = 0;
@@ -1189,17 +1282,16 @@
                     if (length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.r) {
                         return { mode: "crashed", message: "Zu nah dran. Beim nächsten Start etwas mehr Abstand halten.", outcome: "planet_collision" };
                     }
-
-                    if (planet.hotRadius &&
-                        length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.hotRadius) {
-                        return { mode: "crashed", message: "Die Sonde ist in die Hitzezone geraten.", outcome: "hot_zone" };
-                    }
                 }
 
                 for (const hazard of level.hazards || []) {
                     if (length(probe.x - hazard.x, probe.y - hazard.y) <= SHIP_RADIUS + hazard.r) {
                         return { mode: "crashed", message: "Kollision mit Trümmern. Neue Flugbahn?", outcome: "hazard_collision" };
                     }
+                }
+
+                if ((probe.heat || 0) >= HEAT_LIMIT) {
+                    return { mode: "crashed", message: "Überhitzt. Suche Schatten oder verlasse die Sonnennähe früher.", outcome: "overheated" };
                 }
 
                 const target = level.target;
@@ -1252,6 +1344,12 @@
                 state.atmosphereTime = 0;
                 state.currentAtmosphereStrength = 0;
                 state.maxAtmosphereStrength = 0;
+                state.ship.heat = 0;
+                state.heatTime = 0;
+                state.currentHeatExposure = 0;
+                state.maxHeat = 0;
+                state.heatInShadow = false;
+                state.heatSource = "";
                 state.mode = "flying";
                 state.elapsed = 0;
                 state.shots += 1;
@@ -1303,6 +1401,12 @@
                     state.atmosphereTime += dt;
                     state.maxAtmosphereStrength = Math.max(state.maxAtmosphereStrength, environment.atmosphereStrength);
                 }
+                const thermal = updateProbeHeat(state.ship, level, dt);
+                state.currentHeatExposure = thermal.exposure;
+                state.heatInShadow = thermal.inShadow;
+                state.heatSource = thermal.sourceLabel;
+                state.maxHeat = Math.max(state.maxHeat, state.ship.heat);
+                if (thermal.heatRate > 0) state.heatTime += dt;
 
                 if (state.trail.length === 0 ||
                     length(state.ship.x - state.trail[state.trail.length - 1].x, state.ship.y - state.trail[state.trail.length - 1].y) > 6) {
@@ -1335,12 +1439,14 @@
                     y: launch.y,
                     vx: (launch.x - state.drag.x) * LAUNCH_POWER,
                     vy: (launch.y - state.drag.y) * LAUNCH_POWER,
+                    heat: 0,
                 };
                 const points = [];
                 let outcome = null;
                 const predictionSteps = Math.ceil((TIME_LIMIT * PREDICTION_TIME_RATIO) / FIXED_DT);
                 for (let i = 0; i < predictionSteps; i += 1) {
                     applyGravity(sim, level, FIXED_DT);
+                    updateProbeHeat(sim, level, FIXED_DT);
                     if (i % 5 === 0) points.push({ x: sim.x, y: sim.y });
                     outcome = checkProbeOutcome(sim, level, i * FIXED_DT);
                     if (outcome) break;
@@ -1547,18 +1653,72 @@
                 ctx.restore();
             }
 
-            function drawPlanet(planet) {
+            function drawHeatField(source, level) {
+                const heatRadius = heatRadiusFor(source);
+                if (!heatRadius) return;
+                const time = performance.now() / 1000;
+                const pulse = 1 + Math.sin(time * 1.6 + source.x * 0.01) * 0.018;
+                const radius = heatRadius * pulse;
+
                 ctx.save();
-                if (planet.hotRadius) {
-                    ctx.fillStyle = "rgba(255, 134, 120, 0.1)";
-                    ctx.strokeStyle = "rgba(255, 134, 120, 0.34)";
-                    ctx.lineWidth = 2;
+                const glow = ctx.createRadialGradient(source.x, source.y, source.r * 0.9, source.x, source.y, radius);
+                glow.addColorStop(0, "rgba(255, 213, 92, 0.28)");
+                glow.addColorStop(0.42, "rgba(255, 125, 64, 0.13)");
+                glow.addColorStop(1, "rgba(255, 74, 54, 0.018)");
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(source.x, source.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = "rgba(255, 180, 90, 0.38)";
+                ctx.lineWidth = 2;
+                ctx.setLineDash([9, 13]);
+                ctx.beginPath();
+                ctx.arc(source.x, source.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                for (const body of heatOccluders(level, source)) {
+                    const dx = body.x - source.x;
+                    const dy = body.y - source.y;
+                    const distance = length(dx, dy);
+                    if (distance <= 1 || distance > radius + body.r) continue;
+                    const ux = dx / distance;
+                    const uy = dy / distance;
+                    const px = -uy;
+                    const py = ux;
+                    const nearWidth = body.r + 12;
+                    const farDistance = Math.max(80, radius - distance + 70);
+                    const farWidth = nearWidth + farDistance * 0.34;
+                    const nearX = body.x;
+                    const nearY = body.y;
+                    const farX = body.x + ux * farDistance;
+                    const farY = body.y + uy * farDistance;
+
+                    ctx.fillStyle = "rgba(5, 18, 38, 0.34)";
                     ctx.beginPath();
-                    ctx.arc(planet.x, planet.y, planet.hotRadius, 0, Math.PI * 2);
+                    ctx.moveTo(nearX + px * nearWidth, nearY + py * nearWidth);
+                    ctx.lineTo(farX + px * farWidth, farY + py * farWidth);
+                    ctx.lineTo(farX - px * farWidth, farY - py * farWidth);
+                    ctx.lineTo(nearX - px * nearWidth, nearY - py * nearWidth);
+                    ctx.closePath();
                     ctx.fill();
+
+                    ctx.strokeStyle = "rgba(116, 230, 255, 0.16)";
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(nearX + px * nearWidth, nearY + py * nearWidth);
+                    ctx.lineTo(farX + px * farWidth, farY + py * farWidth);
+                    ctx.moveTo(nearX - px * nearWidth, nearY - py * nearWidth);
+                    ctx.lineTo(farX - px * farWidth, farY - py * farWidth);
                     ctx.stroke();
                 }
 
+                ctx.restore();
+            }
+
+            function drawPlanet(planet) {
+                ctx.save();
                 if (planet.ring) {
                     ctx.translate(planet.x, planet.y);
                     ctx.rotate(-0.28);
@@ -1888,6 +2048,19 @@
                 ctx.rotate(angle);
                 ctx.scale(1.42, 1.42);
 
+                const heatRatio = clamp((state.ship.heat || 0) / HEAT_LIMIT, 0, 1);
+                if (heatRatio > 0.05) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.28 + heatRatio * 0.45;
+                    ctx.fillStyle = heatRatio > 0.72 ? "#ff563d" : "#ffb84a";
+                    ctx.shadowColor = ctx.fillStyle;
+                    ctx.shadowBlur = 18 + heatRatio * 18;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 18 + heatRatio * 9, 12 + heatRatio * 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
                 if (state.mode === "flying" || state.drag.active) {
                     const flame = state.mode === "flying" ? 1 : 0.65;
                     ctx.fillStyle = "rgba(255, 132, 28, 0.88)";
@@ -1962,7 +2135,6 @@
                 ctx.save();
                 ctx.fillStyle = "rgba(247, 251, 255, 0.78)";
                 ctx.font = "700 18px Avenir Next Condensed, Trebuchet MS, sans-serif";
-                ctx.fillText(level.name, 28, 82);
                 ctx.fillStyle = "rgba(168, 189, 216, 0.72)";
                 ctx.font = "14px Avenir Next Condensed, Trebuchet MS, sans-serif";
                 ctx.fillText("Ziel", level.target.x - 12, level.target.y - level.target.r - 14);
@@ -1992,6 +2164,7 @@
                 setWorldTransform();
                 drawBackground();
                 const level = currentLevel();
+                for (const planet of level.planets) drawHeatField(planet, level);
                 for (const planet of level.planets) drawGravityField(planet);
                 for (const planet of level.planets) drawAtmosphere(planet);
                 drawTarget(level.target);
@@ -2009,6 +2182,10 @@
                 ui.best.textContent = String(state.highScores[state.levelIndex] || 0);
                 ui.speed.textContent = String(Math.round(shipSpeed()));
                 ui.speedFill.style.width = `${clamp(shipSpeed() / 520, 0, 1) * 100}%`;
+                const heatRatio = clamp((state.ship.heat || 0) / HEAT_LIMIT, 0, 1);
+                ui.heat.textContent = `${Math.round(heatRatio * 100)}%`;
+                ui.heatFill.style.width = `${heatRatio * 100}%`;
+                ui.thermalChip.classList.toggle("is-critical", heatRatio >= 0.72);
                 ui.time.textContent = `${timeRemaining().toFixed(1)}s`;
                 const previousSolvedIndex = findSolvedMission(-1);
                 const nextSolvedIndex = findSolvedMission(1);
@@ -2033,7 +2210,7 @@
                 ui.state.textContent = labels[state.mode] || state.mode;
                 ui.hud.classList.toggle("is-aiming", state.drag.active);
                 ui.hud.classList.toggle("is-active-flight", state.mode === "flying");
-                const title = state.mode === "ready" ? "Gravity Sling" :
+                const title = state.mode === "ready" ? currentLevel().name :
                     state.mode === "won" ? "Mission geschafft" :
                         state.mode === "flying" ? "Sonde unterwegs" : "Nochmal versuchen";
                 const retryButton = isFailureMode(state.mode)
@@ -2113,6 +2290,7 @@
                 const previousSolvedIndex = findSolvedMission(-1);
                 const nextSolvedIndex = findSolvedMission(1);
                 const navigationBlocked = state.mode === "flying" || state.drag.active;
+                const thermal = thermalAt(state.ship.x, state.ship.y, level);
                 const payload = {
                     coordinates: `world units; origin top-left; x right; y down; canvas world ${WORLD.width}x${WORLD.height}`,
                     mode: state.mode,
@@ -2142,7 +2320,9 @@
                         y: planet.y,
                         r: planet.r,
                         mass: planet.mass,
-                        hotRadius: planet.hotRadius || null,
+                        heatSource: isHeatSource(planet),
+                        heatRadius: heatRadiusFor(planet) || null,
+                        heatRate: isHeatSource(planet) ? heatRateFor(planet) : null,
                         atmosphereRadius: planet.atmosphereRadius || null,
                         atmosphereDrag: planet.atmosphereDrag || null,
                         atmosphereStrength: Number(atmosphereStrengthAt(state.ship.x, state.ship.y, planet).toFixed(3)),
@@ -2174,6 +2354,15 @@
                         currentStrength: Number(state.currentAtmosphereStrength.toFixed(3)),
                         maxStrength: Number(state.maxAtmosphereStrength.toFixed(3)),
                         time: Number(state.atmosphereTime.toFixed(2)),
+                    },
+                    heat: {
+                        level: Number((state.ship.heat || 0).toFixed(3)),
+                        percent: Math.round(clamp((state.ship.heat || 0) / HEAT_LIMIT, 0, 1) * 100),
+                        peak: Number(state.maxHeat.toFixed(3)),
+                        exposure: Number((state.mode === "flying" ? state.currentHeatExposure : thermal.exposure).toFixed(3)),
+                        inShadow: state.mode === "flying" ? state.heatInShadow : thermal.inShadow,
+                        source: state.mode === "flying" ? state.heatSource : thermal.sourceLabel,
+                        time: Number(state.heatTime.toFixed(2)),
                     },
                     drag: state.drag.active ? {
                         x: Number(state.drag.x.toFixed(1)),
