@@ -220,6 +220,30 @@
             display: none;
         }
 
+        .mission-chip {
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.16rem 0.22rem;
+        }
+
+        .mission-nav-button {
+            width: 1.42rem;
+            min-width: 1.42rem;
+            min-height: 1.42rem;
+            padding: 0;
+            border-radius: 0.42rem;
+            font-size: 1.12rem;
+            line-height: 1;
+            pointer-events: auto;
+        }
+
+        .mission-nav-button:disabled {
+            opacity: 0.38;
+            cursor: default;
+            filter: saturate(0.6);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
         .speed-chip {
             min-width: 0;
             display: grid;
@@ -282,6 +306,32 @@
 
         .message.has-cta {
             margin-bottom: 4.55rem;
+        }
+
+        .message.has-retry {
+            pointer-events: auto;
+        }
+
+        .message-restart {
+            width: 100%;
+            min-height: 2.55rem;
+            margin-top: 0.46rem;
+            border-radius: 0.78rem;
+            border-color: rgba(255, 231, 138, 0.78);
+            background: linear-gradient(180deg, #ffd55a, #ff983b);
+            color: #162139;
+            font-size: 0.98rem;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+            letter-spacing: 0.02em;
+            gap: 0.36rem;
+            box-shadow:
+                inset 0 3px 0 rgba(255, 255, 255, 0.26),
+                0 12px 24px rgba(255, 125, 58, 0.24);
+        }
+
+        .message-restart::before {
+            content: "↻";
+            font-size: 1.08em;
         }
 
         .hud.is-aiming .message,
@@ -455,7 +505,8 @@
                 margin: 0 0.32rem 0 0;
             }
 
-            .message.has-cta {
+            .message.has-cta,
+            .message.has-retry {
                 max-height: none;
                 margin-bottom: 4.2rem;
                 opacity: 1;
@@ -519,11 +570,17 @@
                         <span>Gravity <span class="brand-accent">Sling</span></span>
                     </div>
                     <div class="cluster">
-                        <div class="chip"><span>Mission</span><strong id="levelLabel">1</strong></div>
+                        <div class="chip mission-chip">
+                            <button id="prevSolvedButton" class="mission-nav-button" title="Vorherige gelöste Mission"
+                                aria-label="Vorherige gelöste Mission">‹</button>
+                            <span>Mission</span><strong id="levelLabel">1</strong>
+                            <button id="nextSolvedButton" class="mission-nav-button" title="Nächste gelöste Mission"
+                                aria-label="Nächste gelöste Mission">›</button>
+                        </div>
                         <div class="chip score-chip"><span>Punkte</span><strong><span id="scoreLabel">0</span>/<span
                                     id="bestLabel">0</span></strong></div>
                         <div class="chip status-chip"><span>Status</span><strong id="stateLabel">Bereit</strong></div>
-                        <div class="chip"><span>Zeit</span><strong id="timeLabel">0.0s</strong></div>
+                        <div class="chip"><span>Restzeit</span><strong id="timeLabel">10.0s</strong></div>
                         <div class="chip speed-chip">
                             <span>Tempo</span>
                             <span class="speed-meter"><span id="speedFill" class="speed-meter__fill"></span></span>
@@ -556,8 +613,10 @@
             const LAUNCH_POWER = 1.675;
             const MAX_LAUNCH_SPEED = MAX_DRAG * LAUNCH_POWER;
             const FIXED_DT = 1 / 60;
+            const FLIGHT_PLAYBACK_SPEED = 3;
             const TIME_LIMIT = 30;
-            const PREDICTION_TIME_RATIO = 0.20;
+            const REAL_TIME_LIMIT = TIME_LIMIT / FLIGHT_PLAYBACK_SPEED;
+            const PREDICTION_TIME_RATIO = 0.10;
             const FLY_MARGIN = 180;
             const GRAVITY_SCALE = 2900000;
             const SCORE_STORAGE_KEY = "gravity-sling-high-scores-v1";
@@ -575,6 +634,8 @@
                 time: document.getElementById("timeLabel"),
                 message: document.getElementById("message"),
                 restart: document.getElementById("restartButton"),
+                prevSolved: document.getElementById("prevSolvedButton"),
+                nextSolved: document.getElementById("nextSolvedButton"),
                 next: document.getElementById("nextButton"),
             };
 
@@ -592,12 +653,12 @@
                 {
                     name: "Erste Ablenkung", // level 2
                     launch: { x: 142, y: 800 },
-                    target: { x: 410, y: 240, r: 54 },
+                    target: { x: 410, y: 240, r: 60 },
                     planets: [
                         { label: "Merkur", x: 300, y: 600, r: 54, mass: 0.95, softening: 168, color: "#b9aba0", ring: false },
                     ],
                     hazards: [
-                        { label: "Asteroid", x: 214, y: 700, r: 22, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 188, y: 686, r: 20, color: "#9c8b7a" },
                         { label: "Asteroid", x: 382, y: 482, r: 24, color: "#8d817c" },
                     ],
                     hint: "Ziehe mittelstark nach links unten. Merkur zieht die Bahn zwischen den Brocken ins Ziel.",
@@ -610,7 +671,7 @@
                         { label: "Mars", x: 274, y: 384, r: 36, mass: 0.76, softening: 96, color: "#ff8e68", ring: false, atmosphereRadius: 86, atmosphereDrag: 0.72, atmosphereColor: "#ffb07e" },
                     ],
                     hazards: [
-                        { label: "Asteroid", x: 354, y: 592, r: 28, color: "#9c8b7a" },
+                        { label: "Asteroid", x: 386, y: 618, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 190, y: 492, r: 22, color: "#8d817c" },
                         { label: "Asteroid", x: 430, y: 438, r: 20, color: "#9c8b7a" },
                     ],
@@ -734,7 +795,7 @@
                     ],
                     hazards: [
                         { label: "Asteroid", x: 184, y: 520, r: 23, color: "#9c8b7a" },
-                        { label: "Asteroid", x: 320, y: 264, r: 21, color: "#8f8280" },
+                        { label: "Asteroid", x: 304, y: 238, r: 18, color: "#8f8280" },
                         { label: "Asteroid", x: 108, y: 724, r: 23, color: "#8d817c" },
                         { label: "Asteroid", x: 54, y: 748, r: 23, color: "#8d817c" },
                         { label: "Asteroid", x: 12, y: 784, r: 23, color: "#8d817c" },
@@ -783,8 +844,8 @@
                         { label: "Komet", x: 322, y: 478, r: 22, color: "#8d817c" },
                         { label: "Komet", x: 454, y: 402, r: 22, color: "#9c8b7a" },
                         { label: "Komet", x: 246, y: 314, r: 21, color: "#8d817c" },
-                        { label: "Komet", x: 526, y: 236, r: 20, color: "#9c8b7a" },
-                        { label: "Komet", x: 492, y: 268, r: 21, color: "#8d817c" },
+                        { label: "Komet", x: 574, y: 206, r: 12, color: "#9c8b7a" },
+                        { label: "Komet", x: 560, y: 250, r: 12, color: "#8d817c" },
                         { label: "Komet", x: 72, y: 438, r: 22, color: "#9c8b7a" },
                     ],
                     hint: "Nutze die Sonne nur als Schwunggeber: knapp vorbei, nicht hinein. Mars' Atmosphäre nimmt oben das Tempo aus der Kurve.",
@@ -803,12 +864,12 @@
                         { label: "Trümmer", x: 258, y: 768, r: 25, color: "#9c8b7a" },
                         { label: "Trümmer", x: 354, y: 752, r: 24, color: "#8d817c" },
                         { label: "Trümmer", x: 430, y: 688, r: 24, color: "#9c8b7a" },
-                        { label: "Trümmer", x: 184, y: 594, r: 22, color: "#9c8b7a" },
+                        { label: "Trümmer", x: 134, y: 568, r: 16, color: "#9c8b7a" },
                         { label: "Trümmer", x: 438, y: 526, r: 22, color: "#8d817c" },
                         { label: "Trümmer", x: 252, y: 458, r: 22, color: "#9c8b7a" },
                         { label: "Trümmer", x: 122, y: 390, r: 22, color: "#8d817c" },
                         { label: "Trümmer", x: 302, y: 338, r: 20, color: "#9c8b7a" },
-                        { label: "Trümmer", x: 490, y: 342, r: 21, color: "#8d817c" },
+                        { label: "Trümmer", x: 536, y: 314, r: 15, color: "#8d817c" },
                         { label: "Trümmer", x: 360, y: 210, r: 20, color: "#9c8b7a" },
                         { label: "Trümmer", x: 222, y: 222, r: 20, color: "#8d817c" },
                     ],
@@ -846,26 +907,30 @@
                     launch: { x: 112, y: 824 },
                     target: { x: 420, y: 760, r: 34, maxSpeed: 125 },
                     planets: [
-                        { label: "Jupiter", x: 360, y: 520, r: 62, mass: 1.5, softening: 122, color: "#d79d55", ring: false, atmosphereRadius: 122, atmosphereDrag: 0.3, atmosphereColor: "#ffd189" },
-                        { label: "Saturn", x: 250, y: 276, r: 48, mass: 0.78, softening: 112, color: "#e2c987", ring: true, atmosphereRadius: 104, atmosphereDrag: 0.46, atmosphereColor: "#ffe0a5" },
+                        { label: "Jupiter", x: 360, y: 520, r: 50, mass: 1.5, softening: 122, color: "#d79d55", ring: false, atmosphereRadius: 122, atmosphereDrag: 0.3, atmosphereColor: "#ffd189" },
+                        { label: "Saturn", x: 250, y: 276, r: 44, mass: 0.78, softening: 112, color: "#e2c987", ring: true, atmosphereRadius: 104, atmosphereDrag: 0.46, atmosphereColor: "#ffe0a5" },
                         { label: "Pluto", x: 420, y: 760, r: 21, mass: 0.3, softening: 76, color: "#c6d5eb", ring: false, atmosphereRadius: 150, atmosphereDrag: 1.5, atmosphereColor: "#b8ecff" },
                     ],
                     hazards: [
-                        { label: "Barriere", x: 176, y: 882, r: 31, color: "#9c8b7a" },
+                        { label: "Barriere", x: 176, y: 882, r: 33, color: "#9c8b7a" },
                         { label: "Barriere", x: 252, y: 818, r: 32, color: "#8d817c" },
-                        { label: "Barriere", x: 326, y: 792, r: 31, color: "#9c8b7a" },
+                        { label: "Barriere", x: 326, y: 792, r: 18, color: "#9c8b7a" },
+                        { label: "Barriere", x: 118, y: 922, r: 34, color: "#8d817c" },
+                        { label: "Barriere", x: 220, y: 928, r: 35, color: "#9c8b7a" },
+                        { label: "Barriere", x: 322, y: 900, r: 33, color: "#8d817c" },
+                        { label: "Barriere", x: 414, y: 846, r: 31, color: "#9c8b7a" },
                         //{ label: "Barriere", x: 398, y: 716, r: 27, color: "#8d817c" },
                         { label: "Barriere", x: 476, y: 648, r: 24, color: "#9c8b7a" },
                         { label: "Barriere", x: 128, y: 650, r: 23, color: "#8d817c" },
-                        { label: "Barriere", x: 82, y: 536, r: 24, color: "#9c8b7a" },
-                        { label: "Barriere", x: 326, y: 440, r: 22, color: "#8d817c" },
+                        { label: "Barriere", x: 36, y: 500, r: 16, color: "#9c8b7a" },
+                        { label: "Barriere", x: 370, y: 400, r: 14, color: "#8d817c" },
                         { label: "Barriere", x: 142, y: 372, r: 22, color: "#8d817c" },
-                        { label: "Barriere", x: 356, y: 346, r: 21, color: "#9c8b7a" },
-                        { label: "Barriere", x: 498, y: 260, r: 21, color: "#8d817c" },
+                        { label: "Barriere", x: 492, y: 236, r: 8, color: "#9c8b7a" },
+                        { label: "Barriere", x: 640, y: 190, r: 8, color: "#8d817c" },
                         { label: "Barriere", x: 186, y: 190, r: 21, color: "#9c8b7a" },
                         { label: "Barriere", x: 330, y: 152, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Finale: erst Energie holen, dann zweimal bremsen. Ein kleiner Resonanzbogen um Jupiter bringt dich langsam zurück zum unteren Ziel.",
+                    hint: "Finale: Der Süden ist verriegelt. Ziehe nach links oben, nimm Saturns oberen Bogen mit und lass Jupiter dich langsam zurück zu Pluto kippen.",
                 },
             ];
 
@@ -930,6 +995,27 @@
 
             function currentLevel() {
                 return levels[state.levelIndex];
+            }
+
+            function isSolvedMission(index) {
+                return (state.highScores[index] || 0) > 0;
+            }
+
+            function findSolvedMission(direction) {
+                const step = direction < 0 ? -1 : 1;
+                for (let index = state.levelIndex + step; index >= 0 && index < levels.length; index += step) {
+                    if (isSolvedMission(index)) return index;
+                }
+                return null;
+            }
+
+            function goToSolvedMission(direction) {
+                if (state.mode === "flying" || state.drag.active) return;
+                const targetIndex = findSolvedMission(direction);
+                if (targetIndex === null) return;
+                state.levelIndex = targetIndex;
+                state.message = currentLevel().hint;
+                resetLevel(true);
             }
 
             function resetLevel(keepMessage = false) {
@@ -1037,6 +1123,18 @@
 
             function shipSpeed() {
                 return length(state.ship.vx, state.ship.vy);
+            }
+
+            function realElapsed() {
+                return state.elapsed / FLIGHT_PLAYBACK_SPEED;
+            }
+
+            function timeRemaining() {
+                return Math.max(0, REAL_TIME_LIMIT - realElapsed());
+            }
+
+            function isFailureMode(mode) {
+                return mode === "crashed" || mode === "timeout" || mode === "flyaway";
             }
 
             function softeningFor(planet) {
@@ -1911,7 +2009,18 @@
                 ui.best.textContent = String(state.highScores[state.levelIndex] || 0);
                 ui.speed.textContent = String(Math.round(shipSpeed()));
                 ui.speedFill.style.width = `${clamp(shipSpeed() / 520, 0, 1) * 100}%`;
-                ui.time.textContent = `${state.elapsed.toFixed(1)}s`;
+                ui.time.textContent = `${timeRemaining().toFixed(1)}s`;
+                const previousSolvedIndex = findSolvedMission(-1);
+                const nextSolvedIndex = findSolvedMission(1);
+                const navigationBlocked = state.mode === "flying" || state.drag.active;
+                ui.prevSolved.disabled = navigationBlocked || previousSolvedIndex === null;
+                ui.nextSolved.disabled = navigationBlocked || nextSolvedIndex === null;
+                ui.prevSolved.title = previousSolvedIndex === null
+                    ? "Keine frühere gelöste Mission"
+                    : `Zu Mission ${previousSolvedIndex + 1}`;
+                ui.nextSolved.title = nextSolvedIndex === null
+                    ? "Keine spätere gelöste Mission"
+                    : `Zu Mission ${nextSolvedIndex + 1}`;
 
                 const labels = {
                     ready: "Bereit",
@@ -1927,9 +2036,13 @@
                 const title = state.mode === "ready" ? "Gravity Sling" :
                     state.mode === "won" ? "Mission geschafft" :
                         state.mode === "flying" ? "Sonde unterwegs" : "Nochmal versuchen";
-                ui.message.innerHTML = `<strong>${title}</strong>${state.message}`;
+                const retryButton = isFailureMode(state.mode)
+                    ? `<button type="button" class="message-restart" data-message-restart>Mission neu starten</button>`
+                    : "";
+                ui.message.innerHTML = `<strong>${title}</strong>${state.message}${retryButton}`;
                 ui.next.classList.toggle("is-visible", state.mode === "won");
                 ui.message.classList.toggle("has-cta", state.mode === "won");
+                ui.message.classList.toggle("has-retry", isFailureMode(state.mode));
             }
 
             function fitShellToViewport() {
@@ -1970,7 +2083,8 @@
                 if (!frame.last) frame.last = now;
                 const delta = Math.min(0.05, (now - frame.last) / 1000);
                 frame.last = now;
-                state.accumulator += delta;
+                const playbackScale = state.mode === "flying" ? FLIGHT_PLAYBACK_SPEED : 1;
+                state.accumulator += delta * playbackScale;
                 while (state.accumulator >= FIXED_DT) {
                     step(FIXED_DT);
                     state.accumulator -= FIXED_DT;
@@ -1983,6 +2097,8 @@
                 const key = event.key.toLowerCase();
                 if (key === "r") resetLevel();
                 if (key === "n" && state.mode === "won") nextLevel();
+                if (key === "," || key === "arrowleft") goToSolvedMission(-1);
+                if (key === "." || key === "arrowright") goToSolvedMission(1);
                 if (key === "f") {
                     if (document.fullscreenElement) {
                         document.exitFullscreen();
@@ -1994,6 +2110,9 @@
 
             function renderGameToText() {
                 const level = currentLevel();
+                const previousSolvedIndex = findSolvedMission(-1);
+                const nextSolvedIndex = findSolvedMission(1);
+                const navigationBlocked = state.mode === "flying" || state.drag.active;
                 const payload = {
                     coordinates: `world units; origin top-left; x right; y down; canvas world ${WORLD.width}x${WORLD.height}`,
                     mode: state.mode,
@@ -2041,6 +2160,15 @@
                         level: state.levelScore,
                         bestForLevel: state.highScores[state.levelIndex] || 0,
                         totalBest: totalHighScore(),
+                        solvedLevels: state.highScores
+                            .map((score, index) => score > 0 ? index + 1 : null)
+                            .filter((levelNumber) => levelNumber !== null),
+                    },
+                    navigation: {
+                        previousSolved: previousSolvedIndex === null ? null : previousSolvedIndex + 1,
+                        nextSolved: nextSolvedIndex === null ? null : nextSolvedIndex + 1,
+                        previousDisabled: navigationBlocked || previousSolvedIndex === null,
+                        nextDisabled: navigationBlocked || nextSolvedIndex === null,
                     },
                     atmosphere: {
                         currentStrength: Number(state.currentAtmosphereStrength.toFixed(3)),
@@ -2053,7 +2181,12 @@
                     } : null,
                     shots: state.shots,
                     elapsed: Number(state.elapsed.toFixed(2)),
+                    realElapsed: Number(realElapsed().toFixed(2)),
+                    timeRemaining: Number(timeRemaining().toFixed(2)),
                     timeLimit: TIME_LIMIT,
+                    realTimeLimit: REAL_TIME_LIMIT,
+                    flightPlaybackSpeed: FLIGHT_PLAYBACK_SPEED,
+                    messageRestartVisible: isFailureMode(state.mode),
                     lastOutcome: state.lastOutcome,
                     message: state.message,
                 };
@@ -2075,6 +2208,11 @@
                 if (state.drag.active) resetLevel();
             });
             ui.restart.addEventListener("click", () => resetLevel());
+            ui.prevSolved.addEventListener("click", () => goToSolvedMission(-1));
+            ui.nextSolved.addEventListener("click", () => goToSolvedMission(1));
+            ui.message.addEventListener("click", (event) => {
+                if (event.target.closest("[data-message-restart]")) resetLevel();
+            });
             ui.next.addEventListener("click", () => nextLevel());
             window.addEventListener("keydown", handleKey);
             window.addEventListener("resize", resizeCanvas);

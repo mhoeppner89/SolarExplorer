@@ -306,6 +306,7 @@ async function renderSolutionScreenshots(solutions) {
   page.on("pageerror", (error) => errors.push(String(error)));
 
   for (const solution of solutions) {
+    console.log(`Rendering mission ${solution.level}/${solutions.length}: ${solution.name}`);
     await page.setContent(withPreviewLevel(solution.level - 1), { waitUntil: "load" });
     await page.waitForTimeout(600);
     await page.evaluate(() => {

@@ -1,6 +1,6 @@
 # Gravity Sling Optimal Solutions
 
-Generated from `gravity_sling.html` at `2026-06-17T08:59:58.622Z`.
+Generated from `gravity_sling.html` at `2026-06-23T08:47:56.835Z`.
 
 The solver ranks winning shots by the same score formula as the game, so lower launch speed wins when a route still reaches the target. Screenshots show the aiming state for the logged drag point.
 
@@ -24,15 +24,15 @@ Screenshot prediction ratio: `1` (source game ratio: `0.2`).
 
 ![Mission 2 solution](screenshots/level-02.png)
 
-- Score: `877`
-- Drag handle: `x 182.7, y 796.8`
-- From launch: 40.7 px right, 3.2 px up (35% power)
+- Score: `886`
+- Drag handle: `x 181.9, y 797.6`
+- From launch: 39.9 px right, 2.4 px up (34% power)
 - Launch point: `x 142.0, y 800.0`
-- Pull vector: `x -40.7, y 3.2`
-- Launch speed: `68.3`
-- Arrival: `target_reached` at `24.52s`, speed `41.1`
+- Pull vector: `x -39.9, y 2.4`
+- Launch speed: `67.0`
+- Arrival: `target_reached` at `24.10s`, speed `41.9`
 - Atmosphere time: `0.00s`; max strength `0.000`
-- Browser replay: `target_reached`, score `877`, speed `41.1`
+- Browser replay: `target_reached`, score `886`, speed `41.9`
 
 ## Mission 3: Atmosphären-Fenster
 
@@ -136,15 +136,15 @@ Screenshot prediction ratio: `1` (source game ratio: `0.2`).
 
 ![Mission 10 solution](screenshots/level-10.png)
 
-- Score: `1598`
-- Drag handle: `x 84.8, y 797.9`
-- From launch: 35.2 px left, 32.1 px up (40% power)
+- Score: `1599`
+- Drag handle: `x 87.3, y 795.5`
+- From launch: 32.7 px left, 34.5 px up (40% power)
 - Launch point: `x 120.0, y 830.0`
-- Pull vector: `x 35.2, y 32.1`
-- Launch speed: `79.7`
-- Arrival: `target_reached` at `6.58s`, speed `125.8`
-- Atmosphere time: `1.38s`; max strength `0.630`
-- Browser replay: `target_reached`, score `1598`, speed `125.8`
+- Pull vector: `x 32.7, y 34.5`
+- Launch speed: `79.6`
+- Arrival: `target_reached` at `6.62s`, speed `138.6`
+- Atmosphere time: `1.18s`; max strength `0.472`
+- Browser replay: `target_reached`, score `1599`, speed `138.6`
 
 ## Mission 11: Orbit-Schleuse
 
@@ -164,29 +164,29 @@ Screenshot prediction ratio: `1` (source game ratio: `0.2`).
 
 ![Mission 12 solution](screenshots/level-12.png)
 
-- Score: `1976`
-- Drag handle: `x 141.4, y 832.8`
-- From launch: 31.4 px right, 8.8 px down (28% power)
+- Score: `1977`
+- Drag handle: `x 139.8, y 837.0`
+- From launch: 29.8 px right, 13.0 px down (28% power)
 - Launch point: `x 110.0, y 824.0`
-- Pull vector: `x -31.4, y -8.8`
-- Launch speed: `54.6`
-- Arrival: `target_reached` at `9.92s`, speed `89.4`
-- Atmosphere time: `0.87s`; max strength `0.269`
-- Browser replay: `target_reached`, score `1976`, speed `89.4`
+- Pull vector: `x -29.8, y -13.0`
+- Launch speed: `54.4`
+- Arrival: `target_reached` at `8.57s`, speed `76.4`
+- Atmosphere time: `1.03s`; max strength `0.394`
+- Browser replay: `target_reached`, score `1977`, speed `76.4`
 
 ## Mission 13: Bremskorridor
 
 ![Mission 13 solution](screenshots/level-13.png)
 
-- Score: `1978`
-- Drag handle: `x 158.6, y 817.1`
-- From launch: 40.6 px right, 2.9 px up (34% power)
+- Score: `2164`
+- Drag handle: `x 139.2, y 834.1`
+- From launch: 21.2 px right, 14.1 px down (22% power)
 - Launch point: `x 118.0, y 820.0`
-- Pull vector: `x -40.6, y 2.9`
-- Launch speed: `68.2`
-- Arrival: `target_reached` at `7.70s`, speed `95.4`
-- Atmosphere time: `1.50s`; max strength `0.617`
-- Browser replay: `target_reached`, score `1978`, speed `95.4`
+- Pull vector: `x -21.2, y -14.1`
+- Launch speed: `42.7`
+- Arrival: `target_reached` at `6.32s`, speed `109.2`
+- Atmosphere time: `1.60s`; max strength `0.998`
+- Browser replay: `target_reached`, score `2164`, speed `109.2`
 
 ## Mission 14: Mondstaffel
 
@@ -206,13 +206,13 @@ Screenshot prediction ratio: `1` (source game ratio: `0.2`).
 
 ![Mission 15 solution](screenshots/level-15.png)
 
-- Score: `2101`
-- Drag handle: `x 139.6, y 862.4`
-- From launch: 27.6 px right, 38.4 px down (40% power)
+- Score: `2139`
+- Drag handle: `x 149.1, y 847.6`
+- From launch: 37.1 px right, 23.6 px down (37% power)
 - Launch point: `x 112.0, y 824.0`
-- Pull vector: `x -27.6, y -38.4`
-- Launch speed: `79.2`
-- Arrival: `target_reached` at `15.23s`, speed `115.1`
-- Atmosphere time: `2.15s`; max strength `0.851`
-- Browser replay: `target_reached`, score `2101`, speed `115.1`
+- Pull vector: `x -37.1, y -23.6`
+- Launch speed: `73.7`
+- Arrival: `target_reached` at `15.12s`, speed `112.1`
+- Atmosphere time: `2.10s`; max strength `0.844`
+- Browser replay: `target_reached`, score `2139`, speed `112.1`
 
