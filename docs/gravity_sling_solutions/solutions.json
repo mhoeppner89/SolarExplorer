@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-23T20:02:56.891Z",
+  "generatedAt": "2026-06-23T20:53:40.013Z",
   "source": "gravity_sling.html",
   "method": "Deterministic physics search ranked by the in-game score formula; screenshots show the aiming drag for the chosen solution.",
   "constants": {
@@ -924,6 +924,311 @@
           "inShadow": false,
           "source": "",
           "time": 0
+        }
+      }
+    },
+    {
+      "level": 16,
+      "name": "Jupiter-Saturn-Weiche",
+      "score": 2194,
+      "powerPercent": 41,
+      "radius": 47.90000000000005,
+      "angleDeg": 16.69999999999997,
+      "pull": {
+        "x": 45.87969750309064,
+        "y": 13.764568900801198
+      },
+      "drag": {
+        "x": 58.12030249690936,
+        "y": 810.2354310991988
+      },
+      "launch": {
+        "x": 104,
+        "y": 824
+      },
+      "target": {
+        "x": 428,
+        "y": 198,
+        "r": 36,
+        "maxSpeed": 210
+      },
+      "launchSpeed": 80.23250000000009,
+      "outcome": "target_reached",
+      "elapsed": 8.883333333333333,
+      "x": 383.7834903489417,
+      "y": 190.9476020157069,
+      "arrivalSpeed": 172.21479640979481,
+      "atmosphereTime": 0,
+      "maxAtmosphereStrength": 0,
+      "heatTime": 0,
+      "maxHeat": 0,
+      "maxHeatExposure": 0,
+      "shadowTime": 0,
+      "minTargetDistance": 44.77539550971038,
+      "screenshot": "screenshots/level-16.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 8.9,
+        "speed": 172.2,
+        "score": 2194,
+        "atmosphere": {
+          "currentStrength": 0,
+          "maxStrength": 0,
+          "time": 0
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 0
+        }
+      }
+    },
+    {
+      "level": 17,
+      "name": "Schattennadel",
+      "score": 2276,
+      "powerPercent": 42,
+      "radius": 49.499999999999986,
+      "angleDeg": -159.00000000000003,
+      "pull": {
+        "x": -46.21223111161149,
+        "y": -17.73921350249234
+      },
+      "drag": {
+        "x": 164.2122311116115,
+        "y": 849.7392135024924
+      },
+      "launch": {
+        "x": 118,
+        "y": 832
+      },
+      "target": {
+        "x": 426,
+        "y": 260,
+        "r": 33,
+        "maxSpeed": 180
+      },
+      "launchSpeed": 82.91249999999998,
+      "outcome": "target_reached",
+      "elapsed": 10.5,
+      "x": 455.18583834125246,
+      "y": 229.65065219259225,
+      "arrivalSpeed": 116.81472504380318,
+      "atmosphereTime": 0.6666666666666671,
+      "maxAtmosphereStrength": 0.530088677805739,
+      "heatTime": 3.3333333333333264,
+      "maxHeat": 0.17424758747764033,
+      "maxHeatExposure": 0.36347222533978946,
+      "shadowTime": 2.083333333333331,
+      "minTargetDistance": 42.10577243106612,
+      "screenshot": "screenshots/level-17.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 10.52,
+        "speed": 116.8,
+        "score": 2276,
+        "atmosphere": {
+          "currentStrength": 0,
+          "maxStrength": 0.53,
+          "time": 0.67
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0.174,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 3.33
+        }
+      }
+    },
+    {
+      "level": 18,
+      "name": "Kreiselstaffel",
+      "score": 2392,
+      "powerPercent": 41,
+      "radius": 48.100000000000044,
+      "angleDeg": -10.700000000000038,
+      "pull": {
+        "x": 47.263675513747934,
+        "y": -8.930564200046303
+      },
+      "drag": {
+        "x": 390.73632448625204,
+        "y": 832.9305642000463
+      },
+      "launch": {
+        "x": 438,
+        "y": 824
+      },
+      "target": {
+        "x": 118,
+        "y": 208,
+        "r": 34,
+        "maxSpeed": 220
+      },
+      "launchSpeed": 80.56750000000008,
+      "outcome": "target_reached",
+      "elapsed": 5.733333333333333,
+      "x": 150.6194762567814,
+      "y": 237.5282768753315,
+      "arrivalSpeed": 34.625149064367875,
+      "atmosphereTime": 1.2166666666666672,
+      "maxAtmosphereStrength": 0.5339319685446774,
+      "heatTime": 0,
+      "maxHeat": 0,
+      "maxHeatExposure": 0,
+      "shadowTime": 0,
+      "minTargetDistance": 43.99942461547609,
+      "screenshot": "screenshots/level-18.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 5.75,
+        "speed": 34.6,
+        "score": 2392,
+        "atmosphere": {
+          "currentStrength": 0,
+          "maxStrength": 0.534,
+          "time": 1.22
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 0
+        }
+      }
+    },
+    {
+      "level": 19,
+      "name": "Atmosphären-Slalom",
+      "score": 2610,
+      "powerPercent": 32,
+      "radius": 37.99999999999999,
+      "angleDeg": 4.000000000000001,
+      "pull": {
+        "x": 37.90743390987332,
+        "y": 2.6507460022767617
+      },
+      "drag": {
+        "x": 62.09256609012668,
+        "y": 807.3492539977233
+      },
+      "launch": {
+        "x": 100,
+        "y": 810
+      },
+      "target": {
+        "x": 432,
+        "y": 218,
+        "r": 34,
+        "maxSpeed": 165
+      },
+      "launchSpeed": 63.64999999999999,
+      "outcome": "target_reached",
+      "elapsed": 7.366666666666666,
+      "x": 389.53889973605385,
+      "y": 208.3329280770321,
+      "arrivalSpeed": 118.29645725214381,
+      "atmosphereTime": 1.566666666666666,
+      "maxAtmosphereStrength": 0.8369133983511433,
+      "heatTime": 0,
+      "maxHeat": 0,
+      "maxHeatExposure": 0,
+      "shadowTime": 0,
+      "minTargetDistance": 43.547644197920995,
+      "screenshot": "screenshots/level-19.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 7.38,
+        "speed": 118.3,
+        "score": 2610,
+        "atmosphere": {
+          "currentStrength": 0.837,
+          "maxStrength": 0.837,
+          "time": 1.57
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 0
+        }
+      }
+    },
+    {
+      "level": 20,
+      "name": "Dreifach-Finale",
+      "score": 2645,
+      "powerPercent": 37,
+      "radius": 43.49999999999999,
+      "angleDeg": -152,
+      "pull": {
+        "x": -38.408220289363314,
+        "y": -20.422012981186263
+      },
+      "drag": {
+        "x": 150.40822028936333,
+        "y": 854.4220129811863
+      },
+      "launch": {
+        "x": 112,
+        "y": 834
+      },
+      "target": {
+        "x": 420,
+        "y": 178,
+        "r": 30,
+        "maxSpeed": 135
+      },
+      "launchSpeed": 72.86249999999998,
+      "outcome": "target_reached",
+      "elapsed": 8.816666666666666,
+      "x": 445.66072537935617,
+      "y": 208.57166982255364,
+      "arrivalSpeed": 128.17787083223294,
+      "atmosphereTime": 2.2166666666666637,
+      "maxAtmosphereStrength": 0.8686350335030422,
+      "heatTime": 2.6999999999999953,
+      "maxHeat": 0.1286679568628699,
+      "maxHeatExposure": 0.6217870712638809,
+      "shadowTime": 1.7666666666666653,
+      "minTargetDistance": 39.9136545900519,
+      "screenshot": "screenshots/level-20.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 8.83,
+        "speed": 128.2,
+        "score": 2645,
+        "atmosphere": {
+          "currentStrength": 0.869,
+          "maxStrength": 0.869,
+          "time": 2.22
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0.129,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 2.7
         }
       }
     }

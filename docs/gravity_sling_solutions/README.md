@@ -1,6 +1,6 @@
 # Gravity Sling Optimal Solutions
 
-Generated from `gravity_sling.html` at `2026-06-23T20:02:56.891Z`.
+Generated from `gravity_sling.html` at `2026-06-23T20:53:40.013Z`.
 
 The solver ranks winning shots by the same score formula as the game, so lower launch speed wins when a route still reaches the target. Screenshots show the aiming state for the logged drag point.
 
@@ -230,4 +230,79 @@ Screenshot prediction ratio: `1` (source game ratio: `0.1`).
 - Atmosphere time: `1.83s`; max strength `0.845`
 - Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
 - Browser replay: `target_reached`, score `2144`, speed `101.2`
+
+## Mission 16: Jupiter-Saturn-Weiche
+
+![Mission 16 solution](screenshots/level-16.png)
+
+- Score: `2194`
+- Drag handle: `x 58.1, y 810.2`
+- From launch: 45.9 px left, 13.8 px up (41% power)
+- Launch point: `x 104.0, y 824.0`
+- Pull vector: `x 45.9, y 13.8`
+- Launch speed: `80.2`
+- Arrival: `target_reached` at `8.88s`, speed `172.2`
+- Atmosphere time: `0.00s`; max strength `0.000`
+- Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
+- Browser replay: `target_reached`, score `2194`, speed `172.2`
+
+## Mission 17: Schattennadel
+
+![Mission 17 solution](screenshots/level-17.png)
+
+- Score: `2276`
+- Drag handle: `x 164.2, y 849.7`
+- From launch: 46.2 px right, 17.7 px down (42% power)
+- Launch point: `x 118.0, y 832.0`
+- Pull vector: `x -46.2, y -17.7`
+- Launch speed: `82.9`
+- Arrival: `target_reached` at `10.50s`, speed `116.8`
+- Atmosphere time: `0.67s`; max strength `0.530`
+- Heat: peak `17%`; exposed `3.33s`; shadow `2.08s`
+- Browser replay: `target_reached`, score `2276`, speed `116.8`
+
+## Mission 18: Kreiselstaffel
+
+![Mission 18 solution](screenshots/level-18.png)
+
+- Score: `2392`
+- Drag handle: `x 390.7, y 832.9`
+- From launch: 47.3 px left, 8.9 px down (41% power)
+- Launch point: `x 438.0, y 824.0`
+- Pull vector: `x 47.3, y -8.9`
+- Launch speed: `80.6`
+- Arrival: `target_reached` at `5.73s`, speed `34.6`
+- Atmosphere time: `1.22s`; max strength `0.534`
+- Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
+- Browser replay: `target_reached`, score `2392`, speed `34.6`
+
+## Mission 19: Atmosphären-Slalom
+
+![Mission 19 solution](screenshots/level-19.png)
+
+- Score: `2610`
+- Drag handle: `x 62.1, y 807.3`
+- From launch: 37.9 px left, 2.7 px up (32% power)
+- Launch point: `x 100.0, y 810.0`
+- Pull vector: `x 37.9, y 2.7`
+- Launch speed: `63.6`
+- Arrival: `target_reached` at `7.37s`, speed `118.3`
+- Atmosphere time: `1.57s`; max strength `0.837`
+- Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
+- Browser replay: `target_reached`, score `2610`, speed `118.3`
+
+## Mission 20: Dreifach-Finale
+
+![Mission 20 solution](screenshots/level-20.png)
+
+- Score: `2645`
+- Drag handle: `x 150.4, y 854.4`
+- From launch: 38.4 px right, 20.4 px down (37% power)
+- Launch point: `x 112.0, y 834.0`
+- Pull vector: `x -38.4, y -20.4`
+- Launch speed: `72.9`
+- Arrival: `target_reached` at `8.82s`, speed `128.2`
+- Atmosphere time: `2.22s`; max strength `0.869`
+- Heat: peak `13%`; exposed `2.70s`; shadow `1.77s`
+- Browser replay: `target_reached`, score `2645`, speed `128.2`
 
