@@ -1,4 +1,4 @@
-# Gravity Sling Optimal Solutions
+# Gravitas Optimal Solutions
 
 Generated from `gravity_sling.html` at `2026-06-23T20:53:40.013Z`.
 
@@ -305,4 +305,3 @@ Screenshot prediction ratio: `1` (source game ratio: `0.1`).
 - Atmosphere time: `2.22s`; max strength `0.869`
 - Heat: peak `13%`; exposed `2.70s`; shadow `1.77s`
 - Browser replay: `target_reached`, score `2645`, speed `128.2`
-

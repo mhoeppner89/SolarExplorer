@@ -128,11 +128,11 @@ if (gravitySling) {
   }
 
   if (!gravitySling.includes("window.render_game_to_text")) {
-    fail("Gravity Sling game does not expose window.render_game_to_text.");
+    fail("Gravitas game does not expose window.render_game_to_text.");
   }
 
   if (!gravitySling.includes("window.advanceTime")) {
-    fail("Gravity Sling game does not expose window.advanceTime.");
+    fail("Gravitas game does not expose window.advanceTime.");
   }
 }
 

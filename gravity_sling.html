@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Solar Explorer - Gravity Sling</title>
+    <title>Solar Explorer - Gravitas</title>
     <link rel="icon" href="data:," />
     <style>
         :root {
@@ -231,74 +231,121 @@
             text-align: right;
         }
 
-        .thermal-chip {
-            min-width: 0;
-            display: grid;
-            grid-template-columns: auto auto;
-            align-items: center;
-            gap: 0.42rem;
-        }
-
-        .thermal-meter {
-            display: block;
-            width: 2.85rem;
-            height: 0.52rem;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 205, 128, 0.38);
-            background: rgba(34, 14, 25, 0.78);
-            overflow: hidden;
-            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.38);
-        }
-
-        .thermal-meter__fill {
-            display: block;
-            width: 0%;
-            height: 100%;
-            border-radius: inherit;
-            background: linear-gradient(90deg, #56dcff, #ffd85a, #ff563d);
-            box-shadow: 0 0 12px rgba(255, 124, 61, 0.45);
-            transition: width 0.16s linear;
-        }
-
-        .thermal-readout {
-            min-width: 2.1rem;
-            text-align: right;
-        }
-
-        .thermal-chip.is-critical {
-            border-color: rgba(255, 107, 74, 0.68);
-            box-shadow:
-                inset 0 2px 0 rgba(255, 255, 255, 0.12),
-                0 0 18px rgba(255, 77, 50, 0.28);
-        }
-
         .message {
             align-self: end;
             justify-self: start;
-            max-width: min(26rem, calc(100% - 1rem));
+            max-width: min(31rem, calc(100% - 1rem));
             margin: 0 0 0.12rem;
-            padding: 0.5rem 0.62rem;
-            border: 1px solid rgba(98, 214, 255, 0.28);
-            border-left: 3px solid rgba(117, 232, 92, 0.76);
+            padding: 0.66rem 0.74rem;
+            border: 1px solid rgba(98, 214, 255, 0.34);
+            border-left: 4px solid rgba(117, 232, 92, 0.82);
             border-radius: 0.5rem;
             background:
-                linear-gradient(180deg, rgba(8, 36, 66, 0.84), rgba(4, 18, 42, 0.78)),
+                linear-gradient(180deg, rgba(8, 42, 75, 0.92), rgba(4, 18, 42, 0.84)),
                 rgba(3, 12, 28, 0.86);
             color: var(--ink);
-            font-size: 0.82rem;
+            font-size: 0.86rem;
             text-align: left;
-            line-height: 1.22;
+            line-height: 1.24;
             box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
             backdrop-filter: blur(12px);
+            pointer-events: auto;
             transition: opacity 0.16s ease, transform 0.16s ease;
         }
 
         .message strong {
             display: block;
-            margin-bottom: 0.12rem;
+            margin-bottom: 0.18rem;
             color: #8ffb7a;
-            font-size: 0.7rem;
+            font-size: 0.74rem;
             letter-spacing: 0.09em;
+            text-transform: uppercase;
+        }
+
+        .message__copy {
+            display: block;
+        }
+
+        .message__mechanic {
+            display: block;
+            margin-bottom: 0.12rem;
+            color: #ffd978;
+            font-size: 0.68rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .message__nudge {
+            display: block;
+            margin-top: 0.32rem;
+            color: #ffd978;
+            font-weight: 800;
+        }
+
+        .message-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.34rem;
+            margin-top: 0.5rem;
+        }
+
+        #hintButton {
+            font-size: 1.06rem;
+        }
+
+        #hintButton[hidden] {
+            display: none;
+        }
+
+        #hintButton.is-active {
+            border-color: rgba(255, 217, 120, 0.7);
+            background:
+                linear-gradient(180deg, rgba(214, 155, 42, 0.8), rgba(91, 51, 12, 0.8)),
+                var(--panel);
+            color: #fff2b8;
+        }
+
+        .hint-toggle {
+            min-width: 0;
+            min-height: 2rem;
+            border-radius: 999px;
+            padding: 0.26rem 0.66rem;
+            color: #f8fdff;
+            font-size: 0.78rem;
+            letter-spacing: 0.02em;
+        }
+
+        .hint-toggle::before {
+            content: "?";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.05rem;
+            height: 1.05rem;
+            margin-right: 0.32rem;
+            border-radius: 999px;
+            background: rgba(117, 232, 255, 0.18);
+            color: #8ffbff;
+            font-size: 0.7rem;
+        }
+
+        .level-hint {
+            margin-top: 0.46rem;
+            padding: 0.48rem 0.56rem;
+            border-radius: 0.48rem;
+            border: 1px solid rgba(255, 217, 120, 0.26);
+            background: rgba(58, 38, 12, 0.35);
+            color: #ffe7a3;
+        }
+
+        .level-hint__label {
+            display: block;
+            margin-bottom: 0.12rem;
+            color: #ffd45c;
+            font-size: 0.68rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
         }
 
@@ -306,8 +353,32 @@
             margin-bottom: 4.55rem;
         }
 
-        .message.has-retry {
-            pointer-events: auto;
+        .message.is-hidden {
+            opacity: 0;
+            transform: translateY(0.9rem);
+            pointer-events: none;
+        }
+
+        .message.is-ready {
+            align-self: center;
+            max-width: min(12.5rem, calc(58% - 0.5rem));
+            margin: 0;
+        }
+
+        .message.is-ready.has-tutorial {
+            max-width: min(16.5rem, calc(72% - 0.5rem));
+        }
+
+        .message.is-ready.has-hint {
+            max-width: min(18rem, calc(76% - 0.5rem));
+        }
+
+        .message.is-ready.is-launch-left {
+            justify-self: end;
+        }
+
+        .message.is-ready.is-launch-right {
+            justify-self: start;
         }
 
         .message-restart {
@@ -341,8 +412,9 @@
         .actions {
             grid-column: 2;
             pointer-events: auto;
-            display: grid;
-            grid-template-columns: repeat(2, 2.42rem);
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-start;
             gap: 0.22rem;
             justify-content: flex-end;
         }
@@ -451,7 +523,7 @@
             }
 
             .actions {
-                grid-template-columns: repeat(2, 2.25rem);
+                gap: 0.18rem;
             }
 
             button,
@@ -466,6 +538,15 @@
                 padding: 0.4rem 0.5rem;
                 font-size: 0.78rem;
             }
+
+            .message.is-ready {
+                max-width: min(12rem, 46vw);
+            }
+
+            .message.is-ready.has-tutorial {
+                max-width: min(15.5rem, 58vw);
+            }
+
         }
 
         @media (max-width: 380px),
@@ -477,19 +558,46 @@
 
             .message {
                 max-width: calc(100% - 0.75rem);
-                max-height: 2.7rem;
-                padding: 0.32rem 0.42rem;
+                max-height: none;
+                padding: 0.44rem 0.5rem;
                 border-width: 1px;
                 border-radius: 0.55rem;
                 font-size: 0.72rem;
-                line-height: 1.08;
-                overflow: hidden;
-                opacity: 0.88;
+                line-height: 1.14;
+                overflow: visible;
+                opacity: 0.94;
+            }
+
+            .message.is-ready {
+                max-width: min(12rem, 52vw);
+            }
+
+            .message.is-ready.has-tutorial {
+                max-width: min(15.25rem, 62vw);
+            }
+
+            .message.is-ready.has-hint {
+                max-width: min(16.5rem, 70vw);
             }
 
             .message strong {
-                display: inline;
-                margin: 0 0.32rem 0 0;
+                display: block;
+                margin: 0 0 0.12rem;
+            }
+
+            .message-actions {
+                margin-top: 0.36rem;
+            }
+
+            .hint-toggle {
+                min-height: 1.9rem;
+                padding: 0.22rem 0.54rem;
+                font-size: 0.72rem;
+            }
+
+            .level-hint {
+                margin-top: 0.36rem;
+                padding: 0.4rem 0.44rem;
             }
 
             .message.has-cta,
@@ -516,7 +624,6 @@
 
             .actions {
                 grid-column: 2;
-                grid-template-columns: repeat(2, 2.75rem);
                 gap: 0.18rem;
             }
 
@@ -543,7 +650,7 @@
 
 <body>
     <main class="stage">
-        <section class="game-shell" aria-label="Gravity Sling Spiel">
+        <section class="game-shell" aria-label="Gravitas Spiel">
             <canvas id="game" width="540" height="960"></canvas>
             <div class="hud" aria-hidden="true">
                 <div class="topbar">
@@ -564,22 +671,21 @@
                             <span class="speed-meter"><span id="speedFill" class="speed-meter__fill"></span></span>
                             <strong id="speedLabel" class="speed-readout">0</strong>
                         </div>
-                        <div id="thermalChip" class="chip thermal-chip">
-                            <span>Hitze</span>
-                            <span class="thermal-meter"><span id="heatFill" class="thermal-meter__fill"></span></span>
-                            <strong id="heatLabel" class="thermal-readout">0%</strong>
-                        </div>
                     </div>
                     <div class="actions">
                         <a class="button" href="index.html" title="Zurück zur Spielstation"
                             aria-label="Zurück zur Spielstation">←</a>
+                        <button id="hintButton" title="Level-Tipp anzeigen" aria-label="Level-Tipp anzeigen"
+                            aria-pressed="false" hidden>?</button>
                         <button id="restartButton" title="Mission neu starten"
                             aria-label="Mission neu starten">↻</button>
                     </div>
                 </div>
                 <div id="message" class="message">
-                    <strong>Gravity Sling</strong>
-                    Ziehe die Sonde zurück, lass los und nutze Schwerkraft als Schleuder.
+                    <strong>Gravitas</strong>
+                    <span class="message__mechanic">Start</span>
+                    <span class="message__copy">Ziehe vom Startpunkt weg, lass los und erreiche die grüne
+                        Zielzone.</span>
                 </div>
                 <button id="nextButton" title="Nächste Mission">Weiter</button>
             </div>
@@ -608,6 +714,29 @@
             const SHADOW_COOL_RATE = 0.34;
             const DEFAULT_HEAT_RADIUS_MULTIPLIER = 2.35;
             const SCORE_STORAGE_KEY = "gravity-sling-high-scores-v1";
+            const HINT_UNLOCK_LEVEL_INDEX = 4;
+            const MECHANIC_TUTORIALS = [
+                {
+                    title: "Start",
+                    copy: "Ziehe die Rakete vom Startpunkt weg, lass los und erreiche die grüne Zielzone. Je weniger Schub du gibst, desto mehr Punkte kannst du erreichen.",
+                },
+                {
+                    title: "Schwerkraft",
+                    copy: "Massen biegen deine Flugbahn. Ziele nicht nur direkt auf das Ziel, sondern plane die Gravitation der Planeten ein.",
+                },
+                {
+                    title: "Atmosphäre",
+                    copy: "Ein Flug durch die Atmosphäre bremst die Rakete. Streife sie, wenn du sonst zu schnell ins Ziel kommst.",
+                },
+                {
+                    title: "Hitze",
+                    copy: "Achtung, die Sonne ist heiß! Suche Schutz hinter anderen Himmelskörpern",
+                },
+                {
+                    title: "Level-Tipps",
+                    copy: "Optionale Tipps findest du auf dem ? oben rechts.",
+                },
+            ];
 
             const canvas = document.getElementById("game");
             const ctx = canvas.getContext("2d");
@@ -619,11 +748,9 @@
                 best: document.getElementById("bestLabel"),
                 speed: document.getElementById("speedLabel"),
                 speedFill: document.getElementById("speedFill"),
-                heat: document.getElementById("heatLabel"),
-                heatFill: document.getElementById("heatFill"),
-                thermalChip: document.getElementById("thermalChip"),
                 time: document.getElementById("timeLabel"),
                 message: document.getElementById("message"),
+                hint: document.getElementById("hintButton"),
                 restart: document.getElementById("restartButton"),
                 prevSolved: document.getElementById("prevSolvedButton"),
                 nextSolved: document.getElementById("nextSolvedButton"),
@@ -1112,6 +1239,7 @@
                 heatSource: "",
                 elapsed: 0,
                 message: "",
+                hintVisible: false,
                 lastOutcome: "none",
                 accumulator: 0,
                 viewMode: "portrait",
@@ -1119,6 +1247,21 @@
 
             function currentLevel() {
                 return levels[state.levelIndex];
+            }
+
+            function mechanicTutorialForLevel(levelIndex) {
+                return MECHANIC_TUTORIALS[levelIndex] || null;
+            }
+
+            function levelHintAvailable() {
+                return state.levelIndex >= HINT_UNLOCK_LEVEL_INDEX;
+            }
+
+            function readyPopupVisible() {
+                return state.mode === "ready" && (
+                    Boolean(mechanicTutorialForLevel(state.levelIndex)) ||
+                    Boolean(state.hintVisible && levelHintAvailable())
+                );
             }
 
             function isSolvedMission(index) {
@@ -1138,8 +1281,7 @@
                 const targetIndex = findSolvedMission(direction);
                 if (targetIndex === null) return;
                 state.levelIndex = targetIndex;
-                state.message = currentLevel().hint;
-                resetLevel(true);
+                resetLevel();
             }
 
             function resetLevel(keepMessage = false) {
@@ -1165,15 +1307,15 @@
                 state.heatSource = "";
                 state.elapsed = 0;
                 state.lastOutcome = "none";
-                state.message = keepMessage ? state.message : level.hint;
+                state.hintVisible = false;
+                state.message = keepMessage ? state.message : "";
                 updateUi();
                 render();
             }
 
             function nextLevel() {
                 state.levelIndex = (state.levelIndex + 1) % levels.length;
-                state.message = currentLevel().hint;
-                resetLevel(true);
+                resetLevel();
             }
 
             function length(x, y) {
@@ -1182,6 +1324,15 @@
 
             function clamp(value, min, max) {
                 return Math.max(min, Math.min(max, value));
+            }
+
+            function escapeHtml(value) {
+                return String(value)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
             }
 
             function colorWithAlpha(color, alpha) {
@@ -1247,6 +1398,7 @@
             function setMode(mode, message, outcome = mode) {
                 state.mode = mode;
                 state.message = message;
+                state.hintVisible = false;
                 state.lastOutcome = outcome;
                 updateUi();
             }
@@ -1459,7 +1611,7 @@
                     state.ship.x = launch.x;
                     state.ship.y = launch.y;
                     state.launchSpeed = 0;
-                    state.message = currentLevel().hint;
+                    state.message = "Ziehe etwas weiter zurück, damit die Sonde genug Starttempo bekommt.";
                     updateUi();
                     return;
                 }
@@ -1482,6 +1634,7 @@
                 state.elapsed = 0;
                 state.shots += 1;
                 state.trail = [{ x: state.ship.x, y: state.ship.y }];
+                state.hintVisible = false;
                 state.message = "Sonde unterwegs.";
                 updateUi();
             }
@@ -2304,22 +2457,48 @@
                 drawShip();
             }
 
+            function readyMessageHtml(level) {
+                const tutorial = mechanicTutorialForLevel(state.levelIndex);
+                const tutorialHtml = tutorial
+                    ? [
+                        `<span class="message__mechanic">${escapeHtml(tutorial.title)}</span>`,
+                        `<span class="message__copy">${escapeHtml(tutorial.copy)}</span>`,
+                    ].join("")
+                    : "";
+                const nudge = state.message
+                    ? `<span class="message__nudge">${escapeHtml(state.message)}</span>`
+                    : "";
+                const hint = state.hintVisible
+                    ? `<div class="level-hint"><span class="level-hint__label">Level-Tipp</span>${escapeHtml(level.hint)}</div>`
+                    : "";
+                return [
+                    tutorial ? "" : `<strong>${escapeHtml(level.name)}</strong>`,
+                    tutorialHtml,
+                    nudge,
+                    hint,
+                ].join("");
+            }
+
             function updateUi() {
                 ui.level.textContent = `${state.levelIndex + 1}/${levels.length}`;
                 ui.score.textContent = String(state.levelScore);
                 ui.best.textContent = String(state.highScores[state.levelIndex] || 0);
                 ui.speed.textContent = String(Math.round(shipSpeed()));
                 ui.speedFill.style.width = `${clamp(shipSpeed() / 520, 0, 1) * 100}%`;
-                const heatRatio = clamp((state.ship.heat || 0) / HEAT_LIMIT, 0, 1);
-                ui.heat.textContent = `${Math.round(heatRatio * 100)}%`;
-                ui.heatFill.style.width = `${heatRatio * 100}%`;
-                ui.thermalChip.classList.toggle("is-critical", heatRatio >= 0.72);
                 ui.time.textContent = `${timeRemaining().toFixed(1)}s`;
                 const previousSolvedIndex = findSolvedMission(-1);
                 const nextSolvedIndex = findSolvedMission(1);
                 const navigationBlocked = state.mode === "flying" || state.drag.active;
+                const hintAvailable = levelHintAvailable();
+                const hintButtonVisible = hintAvailable && state.mode === "ready";
                 ui.prevSolved.disabled = navigationBlocked || previousSolvedIndex === null;
                 ui.nextSolved.disabled = navigationBlocked || nextSolvedIndex === null;
+                ui.hint.hidden = !hintButtonVisible;
+                ui.hint.disabled = !hintButtonVisible || navigationBlocked;
+                ui.hint.classList.toggle("is-active", state.hintVisible && hintButtonVisible);
+                ui.hint.setAttribute("aria-pressed", state.hintVisible && hintButtonVisible ? "true" : "false");
+                ui.hint.title = state.hintVisible ? "Level-Tipp ausblenden" : "Level-Tipp anzeigen";
+                ui.hint.setAttribute("aria-label", state.hintVisible ? "Level-Tipp ausblenden" : "Level-Tipp anzeigen");
                 ui.prevSolved.title = previousSolvedIndex === null
                     ? "Keine frühere gelöste Mission"
                     : `Zu Mission ${previousSolvedIndex + 1}`;
@@ -2338,16 +2517,25 @@
                 ui.state.textContent = labels[state.mode] || state.mode;
                 ui.hud.classList.toggle("is-aiming", state.drag.active);
                 ui.hud.classList.toggle("is-active-flight", state.mode === "flying");
-                const title = state.mode === "ready" ? currentLevel().name :
-                    state.mode === "won" ? "Mission geschafft" :
-                        state.mode === "flying" ? "Sonde unterwegs" : "Nochmal versuchen";
+                ui.message.classList.toggle("is-ready", state.mode === "ready");
+                ui.message.classList.toggle("is-launch-left", state.mode === "ready" && currentLevel().launch.x < WORLD.width / 2);
+                ui.message.classList.toggle("is-launch-right", state.mode === "ready" && currentLevel().launch.x >= WORLD.width / 2);
+                const title = state.mode === "won" ? "Mission geschafft" :
+                    state.mode === "flying" ? "Sonde unterwegs" : "Nochmal versuchen";
                 const retryButton = isFailureMode(state.mode)
                     ? `<button type="button" class="message-restart" data-message-restart>Mission neu starten</button>`
                     : "";
-                ui.message.innerHTML = `<strong>${title}</strong>${state.message}${retryButton}`;
+                ui.message.innerHTML = state.mode === "ready"
+                    ? readyMessageHtml(currentLevel())
+                    : `<strong>${escapeHtml(title)}</strong>${escapeHtml(state.message)}${retryButton}`;
                 ui.next.classList.toggle("is-visible", state.mode === "won");
                 ui.message.classList.toggle("has-cta", state.mode === "won");
                 ui.message.classList.toggle("has-retry", isFailureMode(state.mode));
+                ui.message.classList.toggle("has-hint", state.mode === "ready" && state.hintVisible);
+                ui.message.classList.toggle("has-tutorial", state.mode === "ready" && Boolean(mechanicTutorialForLevel(state.levelIndex)));
+                const hideReadyMessage = state.mode === "ready" && !readyPopupVisible();
+                ui.message.hidden = hideReadyMessage;
+                ui.message.classList.toggle("is-hidden", hideReadyMessage);
             }
 
             function fitShellToViewport() {
@@ -2419,6 +2607,7 @@
                 const nextSolvedIndex = findSolvedMission(1);
                 const navigationBlocked = state.mode === "flying" || state.drag.active;
                 const thermal = thermalAt(state.ship.x, state.ship.y, level);
+                const tutorial = mechanicTutorialForLevel(state.levelIndex);
                 const payload = {
                     coordinates: `world units; origin top-left; x right; y down; canvas world ${WORLD.width}x${WORLD.height}`,
                     mode: state.mode,
@@ -2504,6 +2693,11 @@
                     realTimeLimit: REAL_TIME_LIMIT,
                     flightPlaybackSpeed: FLIGHT_PLAYBACK_SPEED,
                     messageRestartVisible: isFailureMode(state.mode),
+                    hintVisible: state.mode === "ready" && state.hintVisible,
+                    helperHidden: state.mode === "ready" && !state.hintVisible,
+                    hintButtonVisible: levelHintAvailable() && state.mode === "ready",
+                    readyPopupVisible: readyPopupVisible(),
+                    tutorial: state.mode === "ready" && tutorial ? tutorial.title : null,
                     lastOutcome: state.lastOutcome,
                     message: state.message,
                 };
@@ -2525,10 +2719,19 @@
                 if (state.drag.active) resetLevel();
             });
             ui.restart.addEventListener("click", () => resetLevel());
+            ui.hint.addEventListener("click", () => {
+                if (!levelHintAvailable() || state.mode !== "ready" || state.drag.active) return;
+                state.hintVisible = !state.hintVisible;
+                state.message = "";
+                updateUi();
+            });
             ui.prevSolved.addEventListener("click", () => goToSolvedMission(-1));
             ui.nextSolved.addEventListener("click", () => goToSolvedMission(1));
             ui.message.addEventListener("click", (event) => {
-                if (event.target.closest("[data-message-restart]")) resetLevel();
+                if (event.target.closest("[data-message-restart]")) {
+                    resetLevel();
+                    return;
+                }
             });
             ui.next.addEventListener("click", () => nextLevel());
             window.addEventListener("keydown", handleKey);
