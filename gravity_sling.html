@@ -353,6 +353,19 @@
             transform: translate(-50%, -50%);
         }
 
+        .message.has-failure {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            max-width: min(21rem, calc(100% - 1.5rem));
+            width: max-content;
+            margin: 0;
+            border-left-color: rgba(255, 107, 83, 0.92);
+            text-align: center;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+
         .message.is-hidden {
             opacity: 0;
             transform: translateY(0.9rem);
@@ -379,28 +392,6 @@
 
         .message.is-ready.is-launch-right {
             justify-self: start;
-        }
-
-        .message-restart {
-            width: 100%;
-            min-height: 2.55rem;
-            margin-top: 0.46rem;
-            border-radius: 0.78rem;
-            border-color: rgba(255, 231, 138, 0.78);
-            background: linear-gradient(180deg, #ffd55a, #ff983b);
-            color: #162139;
-            font-size: 0.98rem;
-            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
-            letter-spacing: 0.02em;
-            gap: 0.36rem;
-            box-shadow:
-                inset 0 3px 0 rgba(255, 255, 255, 0.26),
-                0 12px 24px rgba(255, 125, 58, 0.24);
-        }
-
-        .message-restart::before {
-            content: "↻";
-            font-size: 1.08em;
         }
 
         .hud.is-aiming .message,
@@ -604,8 +595,7 @@
                 margin-top: 0.22rem;
             }
 
-            .message.has-cta,
-            .message.has-retry {
+            .message.has-cta {
                 max-height: none;
                 margin-bottom: 4.2rem;
                 opacity: 1;
@@ -1677,11 +1667,11 @@
             }
 
             function onPointerDown(event) {
+                if (isFailureMode(state.mode)) resetLevel();
                 if (state.mode !== "ready") return;
                 const point = screenToWorld(event);
                 const launch = currentLevel().launch;
-                if (length(point.x - state.ship.x, point.y - state.ship.y) > 48 &&
-                    length(point.x - launch.x, point.y - launch.y) > 60) {
+                if (length(point.x - launch.x, point.y - launch.y) > MAX_DRAG) {
                     return;
                 }
                 state.drag.active = true;
@@ -2564,15 +2554,12 @@
                 ui.message.classList.toggle("is-launch-right", state.mode === "ready" && currentLevel().launch.x >= WORLD.width / 2);
                 const title = state.mode === "won" ? "Mission geschafft" :
                     state.mode === "flying" ? "Rakete unterwegs" : "Nochmal versuchen";
-                const retryButton = isFailureMode(state.mode)
-                    ? `<button type="button" class="message-restart" data-message-restart>Mission neu starten</button>`
-                    : "";
                 ui.message.innerHTML = state.mode === "ready"
                     ? readyMessageHtml(currentLevel())
-                    : `<strong>${escapeHtml(title)}</strong>${escapeHtml(state.message)}${retryButton}`;
+                    : `<strong>${escapeHtml(title)}</strong>${escapeHtml(state.message)}`;
                 ui.next.classList.toggle("is-visible", state.mode === "won");
                 ui.message.classList.toggle("has-cta", state.mode === "won");
-                ui.message.classList.toggle("has-retry", isFailureMode(state.mode));
+                ui.message.classList.toggle("has-failure", isFailureMode(state.mode));
                 ui.message.classList.toggle("has-hint", state.mode === "ready" && state.hintVisible);
                 ui.message.classList.toggle("has-tutorial", state.mode === "ready" && Boolean(mechanicTutorialForLevel(state.levelIndex)));
                 const hideReadyMessage = state.mode === "ready" && !readyPopupVisible();
@@ -2740,7 +2727,8 @@
                     timeLimit: TIME_LIMIT,
                     realTimeLimit: REAL_TIME_LIMIT,
                     flightPlaybackSpeed: FLIGHT_PLAYBACK_SPEED,
-                    messageRestartVisible: isFailureMode(state.mode),
+                    messageRestartVisible: false,
+                    failureMessageVisible: isFailureMode(state.mode),
                     hintVisible: state.mode === "ready" && state.hintVisible,
                     helperHidden: state.mode === "ready" && !state.hintVisible,
                     hintButtonVisible: levelHintAvailable() && state.mode === "ready",
@@ -2775,12 +2763,6 @@
             });
             ui.prevSolved.addEventListener("click", () => goToSolvedMission(-1));
             ui.nextSolved.addEventListener("click", () => goToSolvedMission(1));
-            ui.message.addEventListener("click", (event) => {
-                if (event.target.closest("[data-message-restart]")) {
-                    resetLevel();
-                    return;
-                }
-            });
             ui.next.addEventListener("click", () => nextLevel());
             window.addEventListener("keydown", handleKey);
             window.addEventListener("resize", resizeCanvas);
