@@ -1,6 +1,6 @@
-# Gravitas Optimal Solutions
+# Gravity Sling Optimal Solutions
 
-Generated from `gravity_sling.html` at `2026-06-23T20:53:40.013Z`.
+Generated from `gravity_sling.html` at `2026-06-24T09:04:52.883Z`.
 
 The solver ranks winning shots by the same score formula as the game, so lower launch speed wins when a route still reaches the target. Screenshots show the aiming state for the logged drag point.
 
@@ -266,9 +266,9 @@ Screenshot prediction ratio: `1` (source game ratio: `0.1`).
 ![Mission 18 solution](screenshots/level-18.png)
 
 - Score: `2392`
-- Drag handle: `x 390.7, y 832.9`
+- Drag handle: `x 350.7, y 832.9`
 - From launch: 47.3 px left, 8.9 px down (41% power)
-- Launch point: `x 438.0, y 824.0`
+- Launch point: `x 398.0, y 824.0`
 - Pull vector: `x 47.3, y -8.9`
 - Launch speed: `80.6`
 - Arrival: `target_reached` at `5.73s`, speed `34.6`

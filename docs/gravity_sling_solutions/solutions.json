@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-23T20:53:40.013Z",
+  "generatedAt": "2026-06-24T09:04:52.883Z",
   "source": "gravity_sling.html",
   "method": "Deterministic physics search ranked by the in-game score formula; screenshots show the aiming drag for the chosen solution.",
   "constants": {
@@ -1061,15 +1061,15 @@
         "y": -8.930564200046303
       },
       "drag": {
-        "x": 390.73632448625204,
+        "x": 350.73632448625204,
         "y": 832.9305642000463
       },
       "launch": {
-        "x": 438,
+        "x": 398,
         "y": 824
       },
       "target": {
-        "x": 118,
+        "x": 78,
         "y": 208,
         "r": 34,
         "maxSpeed": 220
@@ -1077,16 +1077,16 @@
       "launchSpeed": 80.56750000000008,
       "outcome": "target_reached",
       "elapsed": 5.733333333333333,
-      "x": 150.6194762567814,
+      "x": 110.61947625678157,
       "y": 237.5282768753315,
-      "arrivalSpeed": 34.625149064367875,
+      "arrivalSpeed": 34.6251490643679,
       "atmosphereTime": 1.2166666666666672,
-      "maxAtmosphereStrength": 0.5339319685446774,
+      "maxAtmosphereStrength": 0.5339319685446781,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 43.99942461547609,
+      "minTargetDistance": 43.99942461547621,
       "screenshot": "screenshots/level-18.png",
       "browserReplay": {
         "mode": "won",

@@ -331,26 +331,26 @@
         }
 
         .level-hint {
-            margin-top: 0.46rem;
-            padding: 0.48rem 0.56rem;
-            border-radius: 0.48rem;
-            border: 1px solid rgba(255, 217, 120, 0.26);
-            background: rgba(58, 38, 12, 0.35);
+            margin-top: 0.28rem;
+            padding: 0;
+            border: 0;
+            background: transparent;
             color: #ffe7a3;
-        }
-
-        .level-hint__label {
-            display: block;
-            margin-bottom: 0.12rem;
-            color: #ffd45c;
-            font-size: 0.68rem;
-            font-weight: 900;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
         }
 
         .message.has-cta {
             margin-bottom: 4.55rem;
+        }
+
+        .hud.is-won .message.has-cta {
+            position: absolute;
+            left: 50%;
+            top: calc(50% - 2.3rem);
+            max-width: min(20rem, calc(100% - 1.5rem));
+            width: max-content;
+            margin: 0;
+            text-align: center;
+            transform: translate(-50%, -50%);
         }
 
         .message.is-hidden {
@@ -467,6 +467,11 @@
             opacity: 1;
             pointer-events: auto;
             transform: translate(-50%, 0) scale(1);
+        }
+
+        .hud.is-won #nextButton.is-visible {
+            top: calc(50% + 0.35rem);
+            bottom: auto;
         }
 
         #nextButton::after {
@@ -596,8 +601,7 @@
             }
 
             .level-hint {
-                margin-top: 0.36rem;
-                padding: 0.4rem 0.44rem;
+                margin-top: 0.22rem;
             }
 
             .message.has-cta,
@@ -675,7 +679,7 @@
                     <div class="actions">
                         <a class="button" href="index.html" title="Zurück zur Spielstation"
                             aria-label="Zurück zur Spielstation">←</a>
-                        <button id="hintButton" title="Level-Tipp anzeigen" aria-label="Level-Tipp anzeigen"
+                        <button id="hintButton" title="Hinweis anzeigen" aria-label="Hinweis anzeigen"
                             aria-pressed="false" hidden>?</button>
                         <button id="restartButton" title="Mission neu starten"
                             aria-label="Mission neu starten">↻</button>
@@ -733,8 +737,8 @@
                     copy: "Achtung, die Sonne ist heiß! Suche Schutz hinter anderen Himmelskörpern",
                 },
                 {
-                    title: "Level-Tipps",
-                    copy: "Optionale Tipps findest du auf dem ? oben rechts.",
+                    title: "Hinweise",
+                    copy: "Das ? oben rechts öffnet bei Bedarf eine kurze Hilfe zur Flugbahn.",
                 },
             ];
 
@@ -766,7 +770,7 @@
                     hazards: [
                         { label: "Asteroid", x: 330, y: 505, r: 22, color: "#9c8b7a" },
                     ],
-                    hint: "Ziehen, zielen, loslassen. Ohne Schwerkraft fliegt die Sonde geradeaus - aber nicht durch den Brocken.",
+                    hint: "Starte sehr sanft nach rechts oben. Die direkte Linie läuft links am Brocken vorbei und trifft den Zielkreis von unten.",
                 },
                 {
                     name: "Erste Ablenkung", // level 2
@@ -779,7 +783,7 @@
                         { label: "Asteroid", x: 188, y: 686, r: 20, color: "#9c8b7a" },
                         { label: "Asteroid", x: 382, y: 482, r: 24, color: "#8d817c" },
                     ],
-                    hint: "Ziehe mittelstark nach links unten. Merkur zieht die Bahn zwischen den Brocken ins Ziel.",
+                    hint: "Lass die Sonde links unten um Merkur ausholen. Danach steigt sie rechts am Planeten vorbei und kippt von unten in die Zielzone.",
                 },
                 {
                     name: "Atmosphären-Fenster", // level 3
@@ -793,7 +797,7 @@
                         { label: "Asteroid", x: 190, y: 492, r: 22, color: "#8d817c" },
                         { label: "Asteroid", x: 430, y: 438, r: 20, color: "#9c8b7a" },
                     ],
-                    hint: "Die helle Atmosphärenzone bremst die Sonde. Streife Mars knapp, statt nur vorbei zu schießen.",
+                    hint: "Führe die Bahn knapp durch den unteren Rand der Mars-Atmosphäre. Der kurze Bremskontakt macht die Kurve eng genug für den Zielkreis.",
                 },
                 {
                     name: "Sonnen-Schwung", // level 4
@@ -807,7 +811,7 @@
                         { label: "Asteroid", x: 404, y: 620, r: 23, color: "#9c8b7a" },
                         { label: "Asteroid", x: 326, y: 338, r: 21, color: "#8d817c" },
                     ],
-                    hint: "Nah an der Sonne wird die Sonde schnell und heiß. Nutze den Schwung, aber bleib nicht zu lange im Glühen.",
+                    hint: "Nimm einen weiten Bogen links an der Sonne vorbei. Die Sonde soll oben über die Sonne ziehen und von links in die Zielzone fallen.",
                 },
                 {
                     name: "Doppelpass", // level 5
@@ -823,7 +827,7 @@
                         { label: "Asteroid", x: 412, y: 462, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 318, y: 300, r: 21, color: "#8d817c" },
                     ],
-                    hint: "Zwei Körper formen die Flugbahn nacheinander. Triff die Lücke zwischen Venus und Mars.",
+                    hint: "Erst Mars links streifen, dann fast senkrecht durch die Lücke nach oben. Venus zieht den letzten Knick von unten in den Zielkreis.",
                 },
                 {
                     name: "Saturn-Lücke", // level 6
@@ -842,7 +846,7 @@
                         { label: "Ringbrocken", x: 438, y: 462, r: 20, color: "#8d817c" },
                         { label: "Ringbrocken", x: 488, y: 428, r: 22, color: "#9c8b7a" },
                     ],
-                    hint: "Saturn zieht stark. Die kleinen Brocken markieren die gefährliche Ringzone.",
+                    hint: "Hole links außen aus. Saturn zieht dich oben herum; danach fällt die Sonde rechts am Ring vorbei in die grüne Lücke.",
                 },
                 {
                     name: "Äußere Bahn", // level 7
@@ -861,7 +865,7 @@
                         { label: "Asteroid", x: 55, y: 574, r: 22, color: "#9c8b7a" },
                         { label: "Asteroid", x: 15, y: 644, r: 22, color: "#9c8b7a" }
                     ],
-                    hint: "Jupiter macht den großen Schwung, Neptun korrigiert am Ende. Die Außenbahn ist zugestellt.",
+                    hint: "Jupiter hebt die Bahn in einen langen Innenbogen. Bleib links von Neptun, dann zieht er die Spitze sauber in den Zielkreis.",
                 },
                 {
                     name: "Einfangen bei Pluto", // level 8
@@ -881,7 +885,7 @@
                         { label: "Asteroid", x: 454, y: 344, r: 20, color: "#8d817c" },
                         { label: "Asteroid", x: 414, y: 358, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Treffen reicht nicht: Streife Plutos Atmosphäre zum Bremsen und komm aus der Sonnenhitze wieder heraus.",
+                    hint: "Steige knapp rechts an der Sonne hoch und lass die Bahn oben nach links ausdrehen. Pluto wird von links oben angeflogen, damit seine Atmosphäre bremst.",
                 },
                 {
                     name: "Drei-Körper-Kanal", // level 9
@@ -900,7 +904,7 @@
                         { label: "Asteroid", x: 338, y: 304, r: 20, color: "#8d817c" },
                         { label: "Asteroid", x: 418, y: 358, r: 30, color: "#8d817c" },
                     ],
-                    hint: "Die erste Masse zieht dich hoch, die Erde bremst im hellen Atmosphärenring. Kleine Korrekturen reichen.",
+                    hint: "Jupiter zieht dich links außen hoch. Danach führt der Korridor zwischen Mond und Asteroiden zur Zielzone; der Mond setzt den letzten Rechtsknick.",
                 },
                 {
                     name: "Finaler Sonnenbogen", // level 10
@@ -922,7 +926,7 @@
                         { label: "Asteroid", x: 242, y: 386, r: 20, color: "#9c8b7a" },
                         { label: "Asteroid", x: 392, y: 236, r: 22, color: "#8d817c" },
                     ],
-                    hint: "Der Sonnenbogen gibt Schwung, aber Schatten hinter den Brocken verschafft Abkühlung. Komme sauber bei Pluto an.",
+                    hint: "Spiele eine schmale S-Kurve: rechts an der unteren Sonne vorbei, links am Saturnring hoch und von unten in Plutos Bremsring.",
                 },
                 {
                     name: "Orbit-Schleuse", // level 11
@@ -943,7 +947,7 @@
                         { label: "Asteroiden", x: 316, y: 846, r: 27, color: "#9c8b7a" },
                         { label: "Asteroiden", x: 410, y: 810, r: 41, color: "#8d817c" },
                     ],
-                    hint: "Der direkte Weg ist dicht. Ziehe kurz nach rechts und lass Jupiters Atmosphäre den langen Bogen zähmen.",
+                    hint: "Der direkte Weg ist dicht. Lass die Sonde links um Jupiter kreisen, oben über ihn hinwegziehen und langsam von links in die Schleuse fallen.",
                 },
                 {
                     name: "Kometenschweif", // level 12
@@ -966,7 +970,7 @@
                         { label: "Komet", x: 560, y: 250, r: 12, color: "#8d817c" },
                         { label: "Komet", x: 72, y: 438, r: 22, color: "#9c8b7a" },
                     ],
-                    hint: "Nutze die Sonne als riskanten Schwunggeber. Mars kann Schatten und Atmosphäre liefern, bevor oben das Tempo aus der Kurve geht.",
+                    hint: "Hole weit links im Sonnenfeld aus und schneide dann unter Mars in dessen Atmosphäre. Der Zielkreis wird von rechts oben angerollt.",
                 },
                 {
                     name: "Bremskorridor", // level 13
@@ -991,7 +995,7 @@
                         { label: "Trümmer", x: 360, y: 210, r: 20, color: "#9c8b7a" },
                         { label: "Trümmer", x: 222, y: 222, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Der Korridor ist langsam. Lass Jupiter weit ausholen und streife danach die Erdatmosphäre, bevor der Mond dich ins Ziel kippt.",
+                    hint: "Jupiter trägt dich rechts hoch in den Korridor. Streife danach die untere rechte Erdatmosphäre; der Mond links oben hält die Linie flach genug.",
                 },
                 {
                     name: "Mondstaffel", // level 14
@@ -1018,7 +1022,7 @@
                         { label: "Splitter", x: 120, y: 254, r: 20, color: "#8d817c" },
                         { label: "Splitter", x: 492, y: 166, r: 20, color: "#9c8b7a" },
                     ],
-                    hint: "Eine Staffel aus kleinen Körpern übernimmt die Sonde. Suche keinen großen Bogen, sondern drei kleine Richtungswechsel.",
+                    hint: "Gehe zuerst links außen herum. Der untere Mond hebt die Linie, Mars bleibt rechts liegen, und der obere Mond schiebt diagonal in Plutos Rand.",
                 },
                 {
                     name: "Resonanz-Finale", // level 15
@@ -1048,7 +1052,7 @@
                         { label: "Barriere", x: 186, y: 190, r: 21, color: "#9c8b7a" },
                         { label: "Barriere", x: 330, y: 152, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Finale: Der Süden ist verriegelt. Ziehe nach links oben, nimm Saturns oberen Bogen mit und lass Jupiter dich langsam zurück zu Pluto kippen.",
+                    hint: "Der Süden ist verriegelt. Fahre links außen bis zur oberen rechten Wende, dann fällt die Bahn zwischen Saturn und Jupiter zurück in Plutos Bremsfeld.",
                 },
                 {
                     name: "Jupiter-Saturn-Weiche", // level 16
@@ -1072,7 +1076,7 @@
                         { label: "Weiche", x: 476, y: 310, r: 21, color: "#8d817c" },
                         { label: "Weiche", x: 288, y: 204, r: 20, color: "#9c8b7a" },
                     ],
-                    hint: "Eine sichtbare Schwerkraft-Treppe: Jupiter zieht links an, Saturn dreht die Mitte und der Mond kippt die Sonde in die grüne Zone.",
+                    hint: "Jupiter links unten schickt dich auf die Außenbahn. Steige an Saturns linker Seite hoch; der Mond rechts oben setzt den letzten Knick ins Ziel.",
                 },
                 {
                     name: "Schattennadel", // level 17
@@ -1096,32 +1100,32 @@
                         { label: "Schattenstein", x: 352, y: 194, r: 20, color: "#9c8b7a" },
                         { label: "Schattenstein", x: 502, y: 206, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Stich kurz in die Sonnennähe, suche Schatten hinter den Brocken und lass Erde und Mars den heißen Bogen nacheinander umlenken.",
+                    hint: "Ziehe links an der Sonne hoch, dann quer zwischen Mars und Erde. Die obere Schleife kommt zurück in Erdes Atmosphäre und rollt langsam ins Ziel.",
                 },
                 {
                     name: "Kreiselstaffel", // level 18
-                    launch: { x: 438, y: 824 },
-                    target: { x: 118, y: 208, r: 34, maxSpeed: 220 },
+                    launch: { x: 378, y: 824 },
+                    target: { x: 58, y: 208, r: 34, maxSpeed: 220 },
                     planets: [
-                        { label: "Neptun", x: 486, y: 650, r: 36, mass: 0.72, softening: 98, color: "#709cff", ring: false },
-                        { label: "Jupiter", x: 356, y: 504, r: 54, mass: 1.16, softening: 122, color: "#d79d55", ring: false, atmosphereRadius: 112, atmosphereDrag: 0.16, atmosphereColor: "#ffd189" },
-                        { label: "Saturn", x: 336, y: 292, r: 44, mass: 0.78, softening: 108, color: "#e2c987", ring: true, atmosphereRadius: 106, atmosphereDrag: 0.38, atmosphereColor: "#ffe0a5" },
+                        { label: "Neptun", x: 426, y: 650, r: 36, mass: 0.72, softening: 98, color: "#709cff", ring: false },
+                        { label: "Jupiter", x: 296, y: 504, r: 54, mass: 1.16, softening: 122, color: "#d79d55", ring: false, atmosphereRadius: 112, atmosphereDrag: 0.16, atmosphereColor: "#ffd189" },
+                        { label: "Saturn", x: 276, y: 292, r: 44, mass: 0.78, softening: 108, color: "#e2c987", ring: true, atmosphereRadius: 106, atmosphereDrag: 0.38, atmosphereColor: "#ffe0a5" },
                     ],
                     hazards: [
-                        { label: "Staffelstein", x: 364, y: 766, r: 24, color: "#9c8b7a" },
-                        { label: "Staffelstein", x: 260, y: 760, r: 23, color: "#8d817c" },
-                        { label: "Staffelstein", x: 128, y: 706, r: 25, color: "#9c8b7a" },
-                        { label: "Staffelstein", x: 486, y: 622, r: 23, color: "#8d817c" },
-                        { label: "Staffelstein", x: 306, y: 596, r: 20, color: "#9c8b7a" },
-                        { label: "Staffelstein", x: 90, y: 538, r: 22, color: "#8d817c" },
-                        { label: "Staffelstein", x: 392, y: 470, r: 21, color: "#9c8b7a" },
-                        { label: "Staffelstein", x: 156, y: 380, r: 21, color: "#8d817c" },
-                        { label: "Staffelstein", x: 462, y: 360, r: 22, color: "#9c8b7a" },
-                        { label: "Staffelstein", x: 252, y: 232, r: 20, color: "#8d817c" },
-                        { label: "Staffelstein", x: 58, y: 296, r: 19, color: "#9c8b7a" },
-                        { label: "Staffelstein", x: 186, y: 156, r: 20, color: "#8d817c" },
+                        { label: "Staffelstein", x: 304, y: 766, r: 24, color: "#9c8b7a" },
+                        { label: "Staffelstein", x: 200, y: 760, r: 23, color: "#8d817c" },
+                        { label: "Staffelstein", x: 68, y: 706, r: 25, color: "#9c8b7a" },
+                        { label: "Staffelstein", x: 426, y: 622, r: 23, color: "#8d817c" },
+                        { label: "Staffelstein", x: 246, y: 596, r: 20, color: "#9c8b7a" },
+                        { label: "Staffelstein", x: 30, y: 538, r: 22, color: "#8d817c" },
+                        { label: "Staffelstein", x: 332, y: 470, r: 21, color: "#9c8b7a" },
+                        { label: "Staffelstein", x: 96, y: 380, r: 21, color: "#8d817c" },
+                        { label: "Staffelstein", x: 402, y: 360, r: 22, color: "#9c8b7a" },
+                        { label: "Staffelstein", x: 192, y: 232, r: 20, color: "#8d817c" },
+                        { label: "Staffelstein", x: -2, y: 296, r: 19, color: "#9c8b7a" },
+                        { label: "Staffelstein", x: 126, y: 156, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Von rechts unten aus zählt jeder Umlenker: Neptun öffnet die Bahn, Jupiter dreht sie zurück, Saturn setzt den letzten Kreisel.",
+                    hint: "Von rechts unten zuerst um Neptun nach außen. Danach diagonal zwischen Jupiter und Saturn hindurch; Saturn dreht die Linie links oben ins Ziel.",
                 },
                 {
                     name: "Atmosphären-Slalom", // level 19
@@ -1148,7 +1152,7 @@
                         { label: "Slalomtor", x: 330, y: 180, r: 16, color: "#9c8b7a" },
                         { label: "Slalomtor", x: 104, y: 194, r: 20, color: "#8d817c" },
                     ],
-                    hint: "Der Zielkorridor ist langsam. Slalome durch Jupiters und Erdes Atmosphäre, dann bremst Plutos Rand den Rücklauf.",
+                    hint: "Großer linker Slalom: Jupiter hebt dich außen, dann führt die Bahn durch Erdes Atmosphäre nach oben. Pluto wird von links angeflogen und bremst.",
                 },
                 {
                     name: "Dreifach-Finale", // level 20
@@ -1176,7 +1180,7 @@
                         { label: "Finalbarriere", x: 330, y: 178, r: 20, color: "#8d817c" },
                         { label: "Finalbarriere", x: 148, y: 174, r: 20, color: "#9c8b7a" },
                     ],
-                    hint: "Letzte Prüfung: Ein heißer Sonnenschwung, ein Jupiter-Rückzug und Saturns oberer Bogen müssen zusammenpassen, bevor Pluto dich weich einfängt.",
+                    hint: "Weit links aus dem Sonnenfeld heraus, dann diagonal durch die Lücke zwischen Saturn und Jupiter. Pluto oben rechts weich von links unten treffen.",
                 },
             ];
 
@@ -2459,7 +2463,8 @@
 
             function readyMessageHtml(level) {
                 const tutorial = mechanicTutorialForLevel(state.levelIndex);
-                const tutorialHtml = tutorial
+                const showingHint = state.hintVisible;
+                const tutorialHtml = tutorial && !showingHint
                     ? [
                         `<span class="message__mechanic">${escapeHtml(tutorial.title)}</span>`,
                         `<span class="message__copy">${escapeHtml(tutorial.copy)}</span>`,
@@ -2469,10 +2474,10 @@
                     ? `<span class="message__nudge">${escapeHtml(state.message)}</span>`
                     : "";
                 const hint = state.hintVisible
-                    ? `<div class="level-hint"><span class="level-hint__label">Level-Tipp</span>${escapeHtml(level.hint)}</div>`
+                    ? `<div class="level-hint">${escapeHtml(level.hint)}</div>`
                     : "";
                 return [
-                    tutorial ? "" : `<strong>${escapeHtml(level.name)}</strong>`,
+                    showingHint || !tutorial ? `<strong>${escapeHtml(level.name)}</strong>` : "",
                     tutorialHtml,
                     nudge,
                     hint,
@@ -2497,8 +2502,8 @@
                 ui.hint.disabled = !hintButtonVisible || navigationBlocked;
                 ui.hint.classList.toggle("is-active", state.hintVisible && hintButtonVisible);
                 ui.hint.setAttribute("aria-pressed", state.hintVisible && hintButtonVisible ? "true" : "false");
-                ui.hint.title = state.hintVisible ? "Level-Tipp ausblenden" : "Level-Tipp anzeigen";
-                ui.hint.setAttribute("aria-label", state.hintVisible ? "Level-Tipp ausblenden" : "Level-Tipp anzeigen");
+                ui.hint.title = state.hintVisible ? "Hinweis ausblenden" : "Hinweis anzeigen";
+                ui.hint.setAttribute("aria-label", state.hintVisible ? "Hinweis ausblenden" : "Hinweis anzeigen");
                 ui.prevSolved.title = previousSolvedIndex === null
                     ? "Keine frühere gelöste Mission"
                     : `Zu Mission ${previousSolvedIndex + 1}`;
@@ -2517,6 +2522,7 @@
                 ui.state.textContent = labels[state.mode] || state.mode;
                 ui.hud.classList.toggle("is-aiming", state.drag.active);
                 ui.hud.classList.toggle("is-active-flight", state.mode === "flying");
+                ui.hud.classList.toggle("is-won", state.mode === "won");
                 ui.message.classList.toggle("is-ready", state.mode === "ready");
                 ui.message.classList.toggle("is-launch-left", state.mode === "ready" && currentLevel().launch.x < WORLD.width / 2);
                 ui.message.classList.toggle("is-launch-right", state.mode === "ready" && currentLevel().launch.x >= WORLD.width / 2);
