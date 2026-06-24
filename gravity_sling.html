@@ -688,7 +688,7 @@
                 <div id="message" class="message">
                     <strong>Gravitas</strong>
                     <span class="message__mechanic">Start</span>
-                    <span class="message__copy">Ziehe vom Startpunkt weg, lass los und erreiche die grüne
+                    <span class="message__copy">Ziehe die Rakete vom Startpunkt weg, lass los und erreiche die grüne
                         Zielzone.</span>
                 </div>
                 <button id="nextButton" title="Nächste Mission">Weiter</button>
@@ -702,9 +702,12 @@
 
             const WORLD = { width: 540, height: 960 };
             const SHIP_RADIUS = 10;
-            const MAX_DRAG = 118;
+            const MAX_LAUNCH_PULL = 118;
+            const MAX_DRAG = 180;
             const LAUNCH_POWER = 1.675;
-            const MAX_LAUNCH_SPEED = MAX_DRAG * LAUNCH_POWER;
+            const MAX_LAUNCH_SPEED = MAX_LAUNCH_PULL * LAUNCH_POWER;
+            const LAUNCH_DEAD_ZONE_RATIO = 0.05;
+            const MIN_LAUNCH_RATIO = 0.10;
             const FIXED_DT = 1 / 60;
             const FLIGHT_PLAYBACK_SPEED = 3;
             const TIME_LIMIT = 30;
@@ -783,7 +786,7 @@
                         { label: "Asteroid", x: 188, y: 686, r: 20, color: "#9c8b7a" },
                         { label: "Asteroid", x: 382, y: 482, r: 24, color: "#8d817c" },
                     ],
-                    hint: "Lass die Sonde links unten um Merkur ausholen. Danach steigt sie rechts am Planeten vorbei und kippt von unten in die Zielzone.",
+                    hint: "Lass die Rakete links unten um Merkur ausholen. Danach steigt sie rechts am Planeten vorbei und kippt von unten in die Zielzone.",
                 },
                 {
                     name: "Atmosphären-Fenster", // level 3
@@ -811,7 +814,7 @@
                         { label: "Asteroid", x: 404, y: 620, r: 23, color: "#9c8b7a" },
                         { label: "Asteroid", x: 326, y: 338, r: 21, color: "#8d817c" },
                     ],
-                    hint: "Nimm einen weiten Bogen links an der Sonne vorbei. Die Sonde soll oben über die Sonne ziehen und von links in die Zielzone fallen.",
+                    hint: "Nimm einen weiten Bogen links an der Sonne vorbei. Die Rakete soll oben über die Sonne ziehen und von links in die Zielzone fallen.",
                 },
                 {
                     name: "Doppelpass", // level 5
@@ -846,7 +849,7 @@
                         { label: "Ringbrocken", x: 438, y: 462, r: 20, color: "#8d817c" },
                         { label: "Ringbrocken", x: 488, y: 428, r: 22, color: "#9c8b7a" },
                     ],
-                    hint: "Hole links außen aus. Saturn zieht dich oben herum; danach fällt die Sonde rechts am Ring vorbei in die grüne Lücke.",
+                    hint: "Hole links außen aus. Saturn zieht dich oben herum; danach fällt die Rakete rechts am Ring vorbei in die grüne Lücke.",
                 },
                 {
                     name: "Äußere Bahn", // level 7
@@ -947,7 +950,7 @@
                         { label: "Asteroiden", x: 316, y: 846, r: 27, color: "#9c8b7a" },
                         { label: "Asteroiden", x: 410, y: 810, r: 41, color: "#8d817c" },
                     ],
-                    hint: "Der direkte Weg ist dicht. Lass die Sonde links um Jupiter kreisen, oben über ihn hinwegziehen und langsam von links in die Schleuse fallen.",
+                    hint: "Der direkte Weg ist dicht. Lass die Rakete links um Jupiter kreisen, oben über ihn hinwegziehen und langsam von links in die Schleuse fallen.",
                 },
                 {
                     name: "Kometenschweif", // level 12
@@ -1411,6 +1414,38 @@
                 return length(state.ship.vx, state.ship.vy);
             }
 
+            function launchVectorFromDrag() {
+                const launch = currentLevel().launch;
+                const rawDx = launch.x - state.drag.x;
+                const rawDy = launch.y - state.drag.y;
+                const rawPull = length(rawDx, rawDy);
+                const rawRatio = rawPull / MAX_DRAG;
+                if (rawPull <= 0 || rawRatio <= LAUNCH_DEAD_ZONE_RATIO) {
+                    return {
+                        canLaunch: false,
+                        rawPull,
+                        launchPull: 0,
+                        dx: 0,
+                        dy: 0,
+                        rawRatio,
+                        launchRatio: 0,
+                    };
+                }
+                const launchPull = rawRatio < MIN_LAUNCH_RATIO
+                    ? MAX_LAUNCH_PULL * MIN_LAUNCH_RATIO
+                    : rawRatio * MAX_LAUNCH_PULL;
+                const scale = launchPull / rawPull;
+                return {
+                    canLaunch: true,
+                    rawPull,
+                    launchPull,
+                    dx: rawDx * scale,
+                    dy: rawDy * scale,
+                    rawRatio,
+                    launchRatio: launchPull / MAX_LAUNCH_PULL,
+                };
+            }
+
             function realElapsed() {
                 return state.elapsed / FLIGHT_PLAYBACK_SPEED;
             }
@@ -1512,18 +1547,18 @@
                 return strongest;
             }
 
-            function updateProbeHeat(probe, level, dt) {
-                const thermal = thermalAt(probe.x, probe.y, level);
-                const currentHeat = probe.heat || 0;
+            function updateShipHeat(ship, level, dt) {
+                const thermal = thermalAt(ship.x, ship.y, level);
+                const currentHeat = ship.heat || 0;
                 if (thermal.heatRate > 0) {
-                    probe.heat = clamp(currentHeat + thermal.heatRate * dt, 0, HEAT_LIMIT);
+                    ship.heat = clamp(currentHeat + thermal.heatRate * dt, 0, HEAT_LIMIT);
                 } else {
                     const coolingRate = thermal.inShadow ? SHADOW_COOL_RATE : HEAT_COOL_RATE;
-                    probe.heat = clamp(currentHeat - coolingRate * dt, 0, HEAT_LIMIT);
+                    ship.heat = clamp(currentHeat - coolingRate * dt, 0, HEAT_LIMIT);
                 }
                 return {
                     ...thermal,
-                    heat: probe.heat,
+                    heat: ship.heat,
                 };
             }
 
@@ -1561,26 +1596,26 @@
                 return { atmosphereStrength: strongestAtmosphere };
             }
 
-            function checkProbeOutcome(probe, level, elapsed) {
+            function checkShipOutcome(ship, level, elapsed) {
                 for (const planet of level.planets) {
-                    if (length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.r) {
+                    if (length(ship.x - planet.x, ship.y - planet.y) <= SHIP_RADIUS + planet.r) {
                         return { mode: "crashed", message: "Zu nah dran. Beim nächsten Start etwas mehr Abstand halten.", outcome: "planet_collision" };
                     }
                 }
 
                 for (const hazard of level.hazards || []) {
-                    if (length(probe.x - hazard.x, probe.y - hazard.y) <= SHIP_RADIUS + hazard.r) {
+                    if (length(ship.x - hazard.x, ship.y - hazard.y) <= SHIP_RADIUS + hazard.r) {
                         return { mode: "crashed", message: "Kollision mit Trümmern. Neue Flugbahn?", outcome: "hazard_collision" };
                     }
                 }
 
-                if ((probe.heat || 0) >= HEAT_LIMIT) {
+                if ((ship.heat || 0) >= HEAT_LIMIT) {
                     return { mode: "crashed", message: "Überhitzt. Suche Schatten oder verlasse die Sonnennähe früher.", outcome: "overheated" };
                 }
 
                 const target = level.target;
-                if (length(probe.x - target.x, probe.y - target.y) <= SHIP_RADIUS + target.r) {
-                    if (target.maxSpeed && length(probe.vx, probe.vy) > target.maxSpeed) {
+                if (length(ship.x - target.x, ship.y - target.y) <= SHIP_RADIUS + target.r) {
+                    if (target.maxSpeed && length(ship.vx, ship.vy) > target.maxSpeed) {
                         return { mode: "crashed", message: "Zu schnell am Ziel. Nutze die Schwerkraft zum Abbremsen.", outcome: "too_fast" };
                     }
                     return {
@@ -1593,13 +1628,13 @@
                 }
 
                 if (elapsed >= TIME_LIMIT) {
-                    return { mode: "timeout", message: "Das Signal ist abgelaufen. Die Sonde war zu lange unterwegs.", outcome: "timeout" };
+                    return { mode: "timeout", message: "Das Signal ist abgelaufen. Die Rakete war zu lange unterwegs.", outcome: "timeout" };
                 }
 
                 const flyMargin = Math.max(FLY_MARGIN, Math.min(WORLD.width, WORLD.height) * 0.32);
-                if (probe.x < -flyMargin || probe.x > WORLD.width + flyMargin ||
-                    probe.y < -flyMargin || probe.y > WORLD.height + flyMargin) {
-                    return { mode: "flyaway", message: "Die Sonde verlässt den Sektor.", outcome: "flyaway" };
+                if (ship.x < -flyMargin || ship.x > WORLD.width + flyMargin ||
+                    ship.y < -flyMargin || ship.y > WORLD.height + flyMargin) {
+                    return { mode: "flyaway", message: "Die Rakete verlässt den Sektor.", outcome: "flyaway" };
                 }
 
                 return null;
@@ -1607,23 +1642,21 @@
 
             function launchFromDrag() {
                 const launch = currentLevel().launch;
-                const dx = launch.x - state.drag.x;
-                const dy = launch.y - state.drag.y;
-                const pull = length(dx, dy);
+                const launchVector = launchVectorFromDrag();
                 state.drag.active = false;
-                if (pull < 12) {
+                if (!launchVector.canLaunch) {
                     state.ship.x = launch.x;
                     state.ship.y = launch.y;
                     state.launchSpeed = 0;
-                    state.message = "Ziehe etwas weiter zurück, damit die Sonde genug Starttempo bekommt.";
+                    state.message = "Ziehe etwas weiter zurück, damit die Rakete genug Starttempo bekommt.";
                     updateUi();
                     return;
                 }
                 state.ship.x = launch.x;
                 state.ship.y = launch.y;
-                state.ship.vx = dx * LAUNCH_POWER;
-                state.ship.vy = dy * LAUNCH_POWER;
-                state.launchSpeed = pull * LAUNCH_POWER;
+                state.ship.vx = launchVector.dx * LAUNCH_POWER;
+                state.ship.vy = launchVector.dy * LAUNCH_POWER;
+                state.launchSpeed = launchVector.launchPull * LAUNCH_POWER;
                 state.levelScore = 0;
                 state.atmosphereTime = 0;
                 state.currentAtmosphereStrength = 0;
@@ -1639,7 +1672,7 @@
                 state.shots += 1;
                 state.trail = [{ x: state.ship.x, y: state.ship.y }];
                 state.hintVisible = false;
-                state.message = "Sonde unterwegs.";
+                state.message = "Rakete unterwegs.";
                 updateUi();
             }
 
@@ -1686,7 +1719,7 @@
                     state.atmosphereTime += dt;
                     state.maxAtmosphereStrength = Math.max(state.maxAtmosphereStrength, environment.atmosphereStrength);
                 }
-                const thermal = updateProbeHeat(state.ship, level, dt);
+                const thermal = updateShipHeat(state.ship, level, dt);
                 state.currentHeatExposure = thermal.exposure;
                 state.heatInShadow = thermal.inShadow;
                 state.heatSource = thermal.sourceLabel;
@@ -1699,7 +1732,7 @@
                     if (state.trail.length > 170) state.trail.shift();
                 }
 
-                const outcome = checkProbeOutcome(state.ship, level, state.elapsed);
+                const outcome = checkShipOutcome(state.ship, level, state.elapsed);
                 if (outcome) {
                     if (outcome.outcome === "target_reached") {
                         const score = recordLevelScore();
@@ -1719,11 +1752,13 @@
                 if (!state.drag.active) return { points: [], outcome: "idle" };
                 const level = currentLevel();
                 const launch = level.launch;
+                const launchVector = launchVectorFromDrag();
+                if (!launchVector.canLaunch) return { points: [], outcome: "idle" };
                 const sim = {
                     x: launch.x,
                     y: launch.y,
-                    vx: (launch.x - state.drag.x) * LAUNCH_POWER,
-                    vy: (launch.y - state.drag.y) * LAUNCH_POWER,
+                    vx: launchVector.dx * LAUNCH_POWER,
+                    vy: launchVector.dy * LAUNCH_POWER,
                     heat: 0,
                 };
                 const points = [];
@@ -1731,9 +1766,9 @@
                 const predictionSteps = Math.ceil((TIME_LIMIT * PREDICTION_TIME_RATIO) / FIXED_DT);
                 for (let i = 0; i < predictionSteps; i += 1) {
                     applyGravity(sim, level, FIXED_DT);
-                    updateProbeHeat(sim, level, FIXED_DT);
+                    updateShipHeat(sim, level, FIXED_DT);
                     if (i % 5 === 0) points.push({ x: sim.x, y: sim.y });
-                    outcome = checkProbeOutcome(sim, level, i * FIXED_DT);
+                    outcome = checkShipOutcome(sim, level, i * FIXED_DT);
                     if (outcome) break;
                 }
                 return { points, outcome: outcome ? outcome.outcome : "flight" };
@@ -2249,11 +2284,10 @@
                 ctx.save();
                 drawLaunchOrigin(launch);
                 if (state.drag.active) {
-                    const aimX = launch.x + (launch.x - state.drag.x);
-                    const aimY = launch.y + (launch.y - state.drag.y);
-                    const pull = length(launch.x - state.drag.x, launch.y - state.drag.y);
-
-                    const pullRatio = pull / MAX_DRAG;
+                    const launchVector = launchVectorFromDrag();
+                    const aimX = launch.x + launchVector.dx;
+                    const aimY = launch.y + launchVector.dy;
+                    const pullRatio = launchVector.launchRatio || launchVector.rawRatio;
                     ctx.strokeStyle = "rgba(255, 255, 255, 0.48)";
                     ctx.lineWidth = 7;
                     ctx.beginPath();
@@ -2261,23 +2295,25 @@
                     ctx.lineTo(state.drag.x, state.drag.y);
                     ctx.stroke();
 
-                    ctx.strokeStyle = "rgba(119, 244, 255, 0.96)";
-                    ctx.fillStyle = "rgba(119, 244, 255, 0.96)";
-                    ctx.shadowColor = "#28e0ff";
-                    ctx.shadowBlur = 16;
-                    ctx.lineWidth = 5 + pullRatio * 2;
-                    ctx.beginPath();
-                    ctx.moveTo(launch.x, launch.y);
-                    ctx.lineTo(aimX, aimY);
-                    ctx.stroke();
-                    const angle = Math.atan2(aimY - launch.y, aimX - launch.x);
-                    ctx.beginPath();
-                    ctx.moveTo(aimX, aimY);
-                    ctx.lineTo(aimX - Math.cos(angle - 0.55) * 13, aimY - Math.sin(angle - 0.55) * 13);
-                    ctx.lineTo(aimX - Math.cos(angle + 0.55) * 13, aimY - Math.sin(angle + 0.55) * 13);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
+                    if (launchVector.canLaunch) {
+                        ctx.strokeStyle = "rgba(119, 244, 255, 0.96)";
+                        ctx.fillStyle = "rgba(119, 244, 255, 0.96)";
+                        ctx.shadowColor = "#28e0ff";
+                        ctx.shadowBlur = 16;
+                        ctx.lineWidth = 5 + pullRatio * 2;
+                        ctx.beginPath();
+                        ctx.moveTo(launch.x, launch.y);
+                        ctx.lineTo(aimX, aimY);
+                        ctx.stroke();
+                        const angle = Math.atan2(aimY - launch.y, aimX - launch.x);
+                        ctx.beginPath();
+                        ctx.moveTo(aimX, aimY);
+                        ctx.lineTo(aimX - Math.cos(angle - 0.55) * 13, aimY - Math.sin(angle - 0.55) * 13);
+                        ctx.lineTo(aimX - Math.cos(angle + 0.55) * 13, aimY - Math.sin(angle + 0.55) * 13);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
 
                     ctx.fillStyle = "rgba(247, 251, 255, 0.86)";
                     ctx.font = "700 13px Avenir Next Condensed, Trebuchet MS, sans-serif";
@@ -2527,7 +2563,7 @@
                 ui.message.classList.toggle("is-launch-left", state.mode === "ready" && currentLevel().launch.x < WORLD.width / 2);
                 ui.message.classList.toggle("is-launch-right", state.mode === "ready" && currentLevel().launch.x >= WORLD.width / 2);
                 const title = state.mode === "won" ? "Mission geschafft" :
-                    state.mode === "flying" ? "Sonde unterwegs" : "Nochmal versuchen";
+                    state.mode === "flying" ? "Rakete unterwegs" : "Nochmal versuchen";
                 const retryButton = isFailureMode(state.mode)
                     ? `<button type="button" class="message-restart" data-message-restart>Mission neu starten</button>`
                     : "";
@@ -2614,6 +2650,7 @@
                 const navigationBlocked = state.mode === "flying" || state.drag.active;
                 const thermal = thermalAt(state.ship.x, state.ship.y, level);
                 const tutorial = mechanicTutorialForLevel(state.levelIndex);
+                const dragLaunch = state.drag.active ? launchVectorFromDrag() : null;
                 const payload = {
                     coordinates: `world units; origin top-left; x right; y down; canvas world ${WORLD.width}x${WORLD.height}`,
                     mode: state.mode,
@@ -2659,6 +2696,8 @@
                     speed: Number(shipSpeed().toFixed(1)),
                     launchSpeed: Number(state.launchSpeed.toFixed(1)),
                     maxLaunchSpeed: Number(MAX_LAUNCH_SPEED.toFixed(1)),
+                    maxDragDistance: MAX_DRAG,
+                    maxLaunchPull: MAX_LAUNCH_PULL,
                     score: {
                         level: state.levelScore,
                         bestForLevel: state.highScores[state.levelIndex] || 0,
@@ -2690,6 +2729,9 @@
                     drag: state.drag.active ? {
                         x: Number(state.drag.x.toFixed(1)),
                         y: Number(state.drag.y.toFixed(1)),
+                        canLaunch: dragLaunch.canLaunch,
+                        rawPowerPercent: Math.round(dragLaunch.rawRatio * 100),
+                        launchPowerPercent: Math.round(dragLaunch.launchRatio * 100),
                     } : null,
                     shots: state.shots,
                     elapsed: Number(state.elapsed.toFixed(2)),

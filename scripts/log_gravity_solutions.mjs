@@ -31,9 +31,10 @@ const levels = new Function(`return ${levelsSource};`)();
 
 const WORLD = { width: 540, height: 960 };
 const SHIP_RADIUS = numberConst("SHIP_RADIUS");
+const MAX_LAUNCH_PULL = numberConst("MAX_LAUNCH_PULL");
 const MAX_DRAG = numberConst("MAX_DRAG");
 const LAUNCH_POWER = numberConst("LAUNCH_POWER");
-const MAX_LAUNCH_SPEED = MAX_DRAG * LAUNCH_POWER;
+const MAX_LAUNCH_SPEED = MAX_LAUNCH_PULL * LAUNCH_POWER;
 const FIXED_DT = numberConst("FIXED_DT");
 const TIME_LIMIT = numberConst("TIME_LIMIT");
 const FLY_MARGIN = numberConst("FLY_MARGIN");
@@ -47,7 +48,11 @@ const SOURCE_PREDICTION_TIME_RATIO = numberConst("PREDICTION_TIME_RATIO");
 const SCREENSHOT_PREDICTION_TIME_RATIO = process.env.GRAVITY_SOLUTION_PREDICTION_RATIO === undefined
   ? SOURCE_PREDICTION_TIME_RATIO
   : Number(process.env.GRAVITY_SOLUTION_PREDICTION_RATIO);
-const MIN_LAUNCH_PULL = 12;
+const LAUNCH_DEAD_ZONE_RATIO = numberConst("LAUNCH_DEAD_ZONE_RATIO");
+const MIN_LAUNCH_RATIO = numberConst("MIN_LAUNCH_RATIO");
+const DEAD_DRAG_PULL = MAX_DRAG * LAUNCH_DEAD_ZONE_RATIO;
+const MIN_DRAG_PULL = MAX_DRAG * MIN_LAUNCH_RATIO;
+const MIN_LAUNCH_PULL = MAX_LAUNCH_PULL * MIN_LAUNCH_RATIO;
 
 if (!Number.isFinite(SCREENSHOT_PREDICTION_TIME_RATIO) || SCREENSHOT_PREDICTION_TIME_RATIO <= 0) {
   throw new Error("GRAVITY_SOLUTION_PREDICTION_RATIO must be a positive number when provided.");
@@ -237,12 +242,32 @@ function scoreForLaunchSpeed(launchSpeed, levelIndex) {
   return Math.round(levelBonus + 1200 * efficiency);
 }
 
+function normalizedLaunchPull(pullX, pullY) {
+  const rawRadius = length(pullX, pullY);
+  if (rawRadius <= DEAD_DRAG_PULL || rawRadius > MAX_DRAG) return null;
+  const dragRatio = rawRadius / MAX_DRAG;
+  const launchRadius = dragRatio < MIN_LAUNCH_RATIO
+    ? MIN_LAUNCH_PULL
+    : dragRatio * MAX_LAUNCH_PULL;
+  const scale = launchRadius / rawRadius;
+  return {
+    rawRadius,
+    launchRadius,
+    pullX: pullX * scale,
+    pullY: pullY * scale,
+  };
+}
+
 function simulate(level, pullX, pullY) {
+  const launchPull = normalizedLaunchPull(pullX, pullY);
+  if (!launchPull) {
+    return { outcome: "invalid_pull", elapsed: 0, arrivalSpeed: 0 };
+  }
   const probe = {
     x: level.launch.x,
     y: level.launch.y,
-    vx: pullX * LAUNCH_POWER,
-    vy: pullY * LAUNCH_POWER,
+    vx: launchPull.pullX * LAUNCH_POWER,
+    vy: launchPull.pullY * LAUNCH_POWER,
     heat: 0,
   };
   let atmosphereTime = 0;
@@ -302,7 +327,9 @@ function simulate(level, pullX, pullY) {
 
 function solutionRecord(level, levelIndex, pullX, pullY, result) {
   const radius = length(pullX, pullY);
-  const launchSpeed = radius * LAUNCH_POWER;
+  const launchPull = normalizedLaunchPull(pullX, pullY);
+  const launchRadius = launchPull ? launchPull.launchRadius : radius;
+  const launchSpeed = launchRadius * LAUNCH_POWER;
   const drag = {
     x: level.launch.x - pullX,
     y: level.launch.y - pullY,
@@ -311,8 +338,9 @@ function solutionRecord(level, levelIndex, pullX, pullY, result) {
     level: levelIndex + 1,
     name: level.name,
     score: scoreForLaunchSpeed(launchSpeed, levelIndex),
-    powerPercent: Math.round(radius / MAX_DRAG * 100),
+    powerPercent: Math.round(launchRadius / MAX_LAUNCH_PULL * 100),
     radius,
+    launchRadius,
     angleDeg: Math.atan2(pullY, pullX) * 180 / Math.PI,
     pull: { x: pullX, y: pullY },
     drag,
@@ -326,7 +354,7 @@ function solutionRecord(level, levelIndex, pullX, pullY, result) {
 function candidateRanges(winners) {
   const sorted = [...winners].sort((a, b) => b.score - a.score);
   return sorted.slice(0, 12).map((winner) => ({
-    radiusMin: Math.max(MIN_LAUNCH_PULL, winner.radius - 5),
+    radiusMin: Math.max(MIN_DRAG_PULL, winner.radius - 5),
     radiusMax: Math.min(MAX_DRAG, winner.radius + 4),
     angleMin: winner.angleDeg - 8,
     angleMax: winner.angleDeg + 8,
@@ -336,7 +364,7 @@ function candidateRanges(winners) {
 function scan(level, levelIndex, ranges, radiusStep, angleStep) {
   const winners = [];
   for (const range of ranges) {
-    const radiusMin = Math.max(MIN_LAUNCH_PULL, range.radiusMin);
+    const radiusMin = Math.max(MIN_DRAG_PULL, range.radiusMin);
     for (let radius = radiusMin; radius <= range.radiusMax + 0.0001; radius += radiusStep) {
       for (let angleDeg = range.angleMin; angleDeg <= range.angleMax + 0.0001; angleDeg += angleStep) {
         const angle = angleDeg * Math.PI / 180;
@@ -364,7 +392,7 @@ function dedupeSolutions(solutions) {
 }
 
 function findBestSolution(level, levelIndex) {
-  const fullRange = [{ radiusMin: MIN_LAUNCH_PULL, radiusMax: MAX_DRAG, angleMin: -180, angleMax: 180 }];
+  const fullRange = [{ radiusMin: MIN_DRAG_PULL, radiusMax: MAX_DRAG, angleMin: -180, angleMax: 180 }];
   let winners = scan(level, levelIndex, fullRange, 2, 2);
   if (!winners.length) winners = scan(level, levelIndex, fullRange, 1, 1);
   if (!winners.length) {
@@ -487,8 +515,11 @@ function writeOutputs(solutions) {
     constants: {
       world: WORLD,
       shipRadius: SHIP_RADIUS,
+      maxLaunchPull: MAX_LAUNCH_PULL,
       maxDrag: MAX_DRAG,
       launchPower: LAUNCH_POWER,
+      launchDeadZoneRatio: LAUNCH_DEAD_ZONE_RATIO,
+      minLaunchRatio: MIN_LAUNCH_RATIO,
       timeLimit: TIME_LIMIT,
       sourcePredictionTimeRatio: SOURCE_PREDICTION_TIME_RATIO,
       screenshotPredictionTimeRatio: SCREENSHOT_PREDICTION_TIME_RATIO,
