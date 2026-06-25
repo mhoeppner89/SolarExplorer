@@ -95,6 +95,39 @@
             z-index: 1;
         }
 
+        .language-toggle {
+            position: absolute;
+            top: clamp(0.7rem, 2vw, 1rem);
+            right: clamp(0.7rem, 2vw, 1rem);
+            z-index: 3;
+            width: 2.75rem;
+            aspect-ratio: 1 / 1;
+            display: inline-grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 999px;
+            color: var(--ink);
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+                rgba(10, 19, 40, 0.72);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                0 10px 24px rgba(0, 0, 0, 0.28);
+            cursor: pointer;
+            font: inherit;
+            font-size: 1.32rem;
+            line-height: 1;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .language-toggle:hover,
+        .language-toggle:focus-visible {
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.56);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.34);
+            outline: none;
+        }
+
         .kicker {
             margin: 0;
             letter-spacing: 0.2em;
@@ -330,10 +363,13 @@
 
 <body>
     <main class="panel">
+        <button class="language-toggle" id="language-toggle" type="button">
+            <span aria-hidden="true">🇬🇧</span>
+        </button>
         <header class="hero">
-            <p class="kicker">Solar Explorer Spielstation</p>
-            <h1>Wähle dein Minispiel</h1>
-            <p class="subtitle">Vier Missionen starten hier. Drei Abenteuer sind bereits spielbar, eine weitere Mission folgt bald.</p>
+            <p class="kicker" data-i18n="kicker">Solar Explorer Spielstation</p>
+            <h1 data-i18n="heading">Wähle dein Minispiel</h1>
+            <p class="subtitle" data-i18n="subtitle">Vier Missionen starten hier. Drei Abenteuer sind bereits spielbar, eine weitere Mission folgt bald.</p>
         </header>
 
         <div class="orbit-display" aria-hidden="true">
@@ -343,33 +379,144 @@
             <div class="orbit"><span class="planet"></span></div>
         </div>
 
-        <div class="choices" aria-label="Minispiel-Auswahl">
-            <a class="choice active" href="solarexplorer_deutsch.html">
-                <span class="eyebrow">Jetzt spielbar</span>
+        <div class="choices" aria-label="Minispiel-Auswahl" data-i18n-aria="choicesLabel">
+            <a class="choice active" href="solarexplorer_deutsch.html" data-game-link="explorer">
+                <span class="eyebrow" data-i18n="explorerEyebrow">Jetzt spielbar</span>
                 <span class="title">Solar Explorer</span>
-                <span class="desc">Starte die Reise durch das Sonnensystem und entdecke Planeten, Monde und Zwergplaneten.</span>
-                <span class="status">Mission starten</span>
+                <span class="desc" data-i18n="explorerDesc">Starte die Reise durch das Sonnensystem und entdecke Planeten, Monde und Zwergplaneten.</span>
+                <span class="status" data-i18n="explorerStatus">Mission starten</span>
             </a>
-            <a class="choice active" href="memory_deutsch.html">
-                <span class="eyebrow">Minispiel 2</span>
+            <a class="choice active" href="memory_deutsch.html" data-game-link="memory">
+                <span class="eyebrow" data-i18n="memoryEyebrow">Minispiel 2</span>
                 <span class="title">Memory</span>
-                <span class="desc">Finde in einem 5x6-Raster die passenden Bildpaare aus dem Sonnensystem.</span>
-                <span class="status">Jetzt spielen</span>
+                <span class="desc" data-i18n="memoryDesc">Finde in einem 5x6-Raster die passenden Bildpaare aus dem Sonnensystem.</span>
+                <span class="status" data-i18n="memoryStatus">Jetzt spielen</span>
             </a>
-            <a class="choice active" href="gravity_sling.html">
-                <span class="eyebrow">Minispiel 3</span>
+            <a class="choice active" href="gravity_sling.html" data-game-link="gravitas">
+                <span class="eyebrow" data-i18n="gravitasEyebrow">Minispiel 3</span>
                 <span class="title">Gravitas</span>
-                <span class="desc">Ziehe eine Rakete auf Kurs und nutze Planeten als Schwerkraft-Schleuder.</span>
-                <span class="status">Jetzt spielen</span>
+                <span class="desc" data-i18n="gravitasDesc">Ziehe eine Rakete auf Kurs und nutze Planeten als Schwerkraft-Schleuder.</span>
+                <span class="status" data-i18n="gravitasStatus">Jetzt spielen</span>
             </a>
             <div class="choice placeholder" aria-disabled="true">
-                <span class="eyebrow">Minispiel 4</span>
-                <span class="title">Kommt bald</span>
-                <span class="desc">Noch eine Mission ist geplant und bekommt hier später ihren Startplatz.</span>
-                <span class="status">Kommt bald</span>
+                <span class="eyebrow" data-i18n="placeholderEyebrow">Minispiel 4</span>
+                <span class="title" data-i18n="placeholderTitle">Kommt bald</span>
+                <span class="desc" data-i18n="placeholderDesc">Noch eine Mission ist geplant und bekommt hier später ihren Startplatz.</span>
+                <span class="status" data-i18n="placeholderStatus">Kommt bald</span>
             </div>
         </div>
     </main>
+    <script>
+        const LANGUAGE_STORAGE_KEY = "solarExplorer.language";
+        const supportedLanguages = new Set(["de", "en"]);
+        const indexCopy = {
+            de: {
+                title: "Solar Explorer - Minispiele",
+                flag: "🇬🇧",
+                switchLabel: "Switch to English",
+                kicker: "Solar Explorer Spielstation",
+                heading: "Wähle dein Minispiel",
+                subtitle: "Vier Missionen starten hier. Drei Abenteuer sind bereits spielbar, eine weitere Mission folgt bald.",
+                choicesLabel: "Minispiel-Auswahl",
+                explorerEyebrow: "Jetzt spielbar",
+                explorerDesc: "Starte die Reise durch das Sonnensystem und entdecke Planeten, Monde und Zwergplaneten.",
+                explorerStatus: "Mission starten",
+                memoryEyebrow: "Minispiel 2",
+                memoryDesc: "Finde in einem 5x6-Raster die passenden Bildpaare aus dem Sonnensystem.",
+                memoryStatus: "Jetzt spielen",
+                gravitasEyebrow: "Minispiel 3",
+                gravitasDesc: "Ziehe eine Rakete auf Kurs und nutze Planeten als Schwerkraft-Schleuder.",
+                gravitasStatus: "Jetzt spielen",
+                placeholderEyebrow: "Minispiel 4",
+                placeholderTitle: "Kommt bald",
+                placeholderDesc: "Noch eine Mission ist geplant und bekommt hier später ihren Startplatz.",
+                placeholderStatus: "Kommt bald"
+            },
+            en: {
+                title: "Solar Explorer - Minigames",
+                flag: "🇩🇪",
+                switchLabel: "Zur deutschen Version wechseln",
+                kicker: "Solar Explorer Game Station",
+                heading: "Choose Your Minigame",
+                subtitle: "Four missions launch from here. Three adventures are playable now, with one more mission coming soon.",
+                choicesLabel: "Minigame selection",
+                explorerEyebrow: "Playable now",
+                explorerDesc: "Start a journey through the solar system and discover planets, moons, and dwarf planets.",
+                explorerStatus: "Start mission",
+                memoryEyebrow: "Minigame 2",
+                memoryDesc: "Find the matching solar-system image pairs on a 5x6 board.",
+                memoryStatus: "Play now",
+                gravitasEyebrow: "Minigame 3",
+                gravitasDesc: "Pull a rocket onto course and use planets as gravity slingshots.",
+                gravitasStatus: "Play now",
+                placeholderEyebrow: "Minigame 4",
+                placeholderTitle: "Coming soon",
+                placeholderDesc: "Another mission is planned and will get its launch spot here later.",
+                placeholderStatus: "Coming soon"
+            }
+        };
+        const gameLinks = {
+            explorer: "solarexplorer_deutsch.html",
+            memory: "memory_deutsch.html",
+            gravitas: "gravity_sling.html"
+        };
+
+        function preferredLanguage() {
+            const queryLang = new URLSearchParams(window.location.search).get("lang");
+            if (supportedLanguages.has(queryLang)) return queryLang;
+            try {
+                const storedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+                if (supportedLanguages.has(storedLang)) return storedLang;
+            } catch (error) {
+                // Storage can be unavailable in restricted browser contexts.
+            }
+            return "de";
+        }
+
+        function rememberLanguage(language) {
+            try {
+                localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+            } catch (error) {
+                // The query parameter still carries the choice to linked pages.
+            }
+        }
+
+        function localizedUrl(path, language) {
+            const url = new URL(path, window.location.href);
+            url.searchParams.set("lang", language);
+            return `${url.pathname.split("/").pop()}${url.search}`;
+        }
+
+        function applyLanguage(language) {
+            const copy = indexCopy[language];
+            document.documentElement.lang = language;
+            document.title = copy.title;
+            document.querySelectorAll("[data-i18n]").forEach((element) => {
+                element.textContent = copy[element.dataset.i18n];
+            });
+            document.querySelectorAll("[data-i18n-aria]").forEach((element) => {
+                element.setAttribute("aria-label", copy[element.dataset.i18nAria]);
+            });
+            document.querySelectorAll("[data-game-link]").forEach((link) => {
+                link.href = localizedUrl(gameLinks[link.dataset.gameLink], language);
+            });
+
+            const toggle = document.getElementById("language-toggle");
+            toggle.querySelector("span").textContent = copy.flag;
+            toggle.setAttribute("aria-label", copy.switchLabel);
+            toggle.title = copy.switchLabel;
+        }
+
+        let currentLanguage = preferredLanguage();
+        rememberLanguage(currentLanguage);
+        applyLanguage(currentLanguage);
+
+        document.getElementById("language-toggle").addEventListener("click", () => {
+            currentLanguage = currentLanguage === "de" ? "en" : "de";
+            rememberLanguage(currentLanguage);
+            applyLanguage(currentLanguage);
+        });
+    </script>
 </body>
 
 </html>

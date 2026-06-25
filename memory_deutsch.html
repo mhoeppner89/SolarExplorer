@@ -733,22 +733,114 @@
     </div>
 
     <script>
+        const LANGUAGE_STORAGE_KEY = "solarExplorer.language";
+        const supportedLanguages = new Set(["de", "en"]);
+        const memoryLanguage = (() => {
+            const queryLang = new URLSearchParams(window.location.search).get("lang");
+            if (supportedLanguages.has(queryLang)) return queryLang;
+            try {
+                const storedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+                if (supportedLanguages.has(storedLang)) return storedLang;
+            } catch (error) {
+                // Storage can be unavailable in restricted browser contexts.
+            }
+            return "de";
+        })();
+        try {
+            localStorage.setItem(LANGUAGE_STORAGE_KEY, memoryLanguage);
+        } catch (error) {
+            // The page can still use the query parameter without localStorage.
+        }
+        document.documentElement.lang = memoryLanguage;
+
+        const memoryCopy = {
+            de: {
+                documentTitle: "Solar Explorer - Memory",
+                back: "Zurück",
+                restart: "Neu mischen",
+                progressAria: "Gefundene Paare",
+                progressLabel: "Paare",
+                eyebrow: "Solar Explorer Memory",
+                heading: "Finde die Bildpaare",
+                subtitle: "30 Karten. 15 Paare. Merke dir die Himmelskörper und räume das Deck ab.",
+                stageAria: "Memory-Spielfeld",
+                boardAria: "Memory-Spielbrett",
+                winEyebrow: "Mission geschafft",
+                winTitle: "Alle 15 Paare sind gefunden.",
+                winCopy: "Das Deck ist leer. Starte direkt eine neue Runde.",
+                winRestart: "Noch eine Runde",
+                backUrl: "index.html?lang=de",
+                cardFound: (name) => `${name} gefunden`,
+                cardLabel: (name) => `Karte ${name}`,
+                turnWon: "Alle Paare gefunden.",
+                turnMismatch: "Kein Paar. Tippe eine Karte an, damit die beiden wieder umgedreht werden.",
+                turnTwoOpen: "Zwei Karten offen.",
+                turnPickSecond: "Wähle jetzt die zweite Karte.",
+                turnPickFirst: "Wähle die erste Karte.",
+                gridNote: "Reihen laufen von oben nach unten, Karten werden zeilenweise links nach rechts gelesen."
+            },
+            en: {
+                documentTitle: "Solar Explorer - Memory",
+                back: "Back",
+                restart: "Shuffle again",
+                progressAria: "Matched pairs",
+                progressLabel: "Pairs",
+                eyebrow: "Solar Explorer Memory",
+                heading: "Find the Image Pairs",
+                subtitle: "30 cards. 15 pairs. Remember the celestial bodies and clear the deck.",
+                stageAria: "Memory play area",
+                boardAria: "Memory board",
+                winEyebrow: "Mission complete",
+                winTitle: "All 15 pairs have been found.",
+                winCopy: "The deck is clear. Start another round right away.",
+                winRestart: "Play again",
+                backUrl: "index.html?lang=en",
+                cardFound: (name) => `${name} found`,
+                cardLabel: (name) => `${name} card`,
+                turnWon: "All pairs found.",
+                turnMismatch: "Not a pair. Tap a card to turn both cards back over.",
+                turnTwoOpen: "Two cards are open.",
+                turnPickSecond: "Choose the second card now.",
+                turnPickFirst: "Choose the first card.",
+                gridNote: "Rows run from top to bottom; cards are read left to right within each row."
+            }
+        }[memoryLanguage];
+
+        function applyMemoryCopy() {
+            document.title = memoryCopy.documentTitle;
+            const backLink = document.querySelector(".rail-actions a");
+            backLink.textContent = memoryCopy.back;
+            backLink.href = memoryCopy.backUrl;
+            document.getElementById("restart-btn").textContent = memoryCopy.restart;
+            document.querySelector(".progress-chip").setAttribute("aria-label", memoryCopy.progressAria);
+            document.querySelector(".progress-chip__label").textContent = memoryCopy.progressLabel;
+            document.querySelector(".eyebrow").textContent = memoryCopy.eyebrow;
+            document.querySelector(".hero-panel h1").textContent = memoryCopy.heading;
+            document.querySelector(".subtitle").textContent = memoryCopy.subtitle;
+            document.querySelector(".board-stage").setAttribute("aria-label", memoryCopy.stageAria);
+            document.getElementById("board").setAttribute("aria-label", memoryCopy.boardAria);
+            document.querySelector(".win-overlay__eyebrow").textContent = memoryCopy.winEyebrow;
+            document.querySelector(".win-overlay__panel strong").textContent = memoryCopy.winTitle;
+            document.querySelector(".win-overlay__panel span").textContent = memoryCopy.winCopy;
+            document.getElementById("win-restart-btn").textContent = memoryCopy.winRestart;
+        }
+
         const sourceBodies = [
-            { id: "sun", name: "Sonne", images: ["images/sun1.png", "images/sun2.png", "images/sun3.png", "images/sun4.png", "images/sun5.png"] },
-            { id: "mercury", name: "Merkur", images: ["images/mercury1.png", "images/mercury2.png", "images/mercury3.png", "images/mercury4.png", "images/mercury5.png"] },
-            { id: "venus", name: "Venus", images: ["images/venus1.png", "images/venus2.png", "images/venus3.png", "images/venus4.png", "images/venus5.png"] },
-            { id: "earth", name: "Erde", images: ["images/earth1.png", "images/earth2.png", "images/earth3.png", "images/earth4.png", "images/earth5.png"] },
-            { id: "moon", name: "Mond", images: ["images/moon1.png", "images/moon2.png", "images/moon3.png"] },
-            { id: "mars", name: "Mars", images: ["images/mars1.png", "images/mars2.png", "images/mars3.png", "images/mars4.png", "images/mars5.png"] },
-            { id: "jupiter", name: "Jupiter", images: ["images/jupiter1.png", "images/jupiter2.png", "images/jupiter3.png", "images/jupiter4.png", "images/jupiter5.png"] },
-            { id: "saturn", name: "Saturn", images: ["images/saturn1.png", "images/saturn2.png", "images/saturn3.png", "images/saturn4.png", "images/saturn5.png"] },
-            { id: "uranus", name: "Uranus", images: ["images/uranus1.png", "images/uranus2.png", "images/uranus3.png", "images/uranus4.png", "images/uranus5.png"] },
-            { id: "neptun", name: "Neptun", images: ["images/neptun1.png", "images/neptun2.png", "images/neptun3.png", "images/neptun4.png", "images/neptun5.png"] },
-            { id: "ceres", name: "Ceres", images: ["images/ceres1.png", "images/ceres2.png", "images/ceres3.png"] },
-            { id: "pluto", name: "Pluto", images: ["images/pluto1.png", "images/pluto2.png", "images/pluto3.png"] },
-            { id: "eris", name: "Eris", images: ["images/eris1.png", "images/eris2.png", "images/eris3.png"] },
-            { id: "haumea", name: "Haumea", images: ["images/haumea1.png", "images/haumea2.png", "images/haumea3.png"] },
-            { id: "makemake", name: "Makemake", images: ["images/makemake1.png", "images/makemake2.png", "images/makemake3.png"] }
+            { id: "sun", name: "Sonne", nameEn: "Sun", images: ["images/sun1.png", "images/sun2.png", "images/sun3.png", "images/sun4.png", "images/sun5.png"] },
+            { id: "mercury", name: "Merkur", nameEn: "Mercury", images: ["images/mercury1.png", "images/mercury2.png", "images/mercury3.png", "images/mercury4.png", "images/mercury5.png"] },
+            { id: "venus", name: "Venus", nameEn: "Venus", images: ["images/venus1.png", "images/venus2.png", "images/venus3.png", "images/venus4.png", "images/venus5.png"] },
+            { id: "earth", name: "Erde", nameEn: "Earth", images: ["images/earth1.png", "images/earth2.png", "images/earth3.png", "images/earth4.png", "images/earth5.png"] },
+            { id: "moon", name: "Mond", nameEn: "Moon", images: ["images/moon1.png", "images/moon2.png", "images/moon3.png"] },
+            { id: "mars", name: "Mars", nameEn: "Mars", images: ["images/mars1.png", "images/mars2.png", "images/mars3.png", "images/mars4.png", "images/mars5.png"] },
+            { id: "jupiter", name: "Jupiter", nameEn: "Jupiter", images: ["images/jupiter1.png", "images/jupiter2.png", "images/jupiter3.png", "images/jupiter4.png", "images/jupiter5.png"] },
+            { id: "saturn", name: "Saturn", nameEn: "Saturn", images: ["images/saturn1.png", "images/saturn2.png", "images/saturn3.png", "images/saturn4.png", "images/saturn5.png"] },
+            { id: "uranus", name: "Uranus", nameEn: "Uranus", images: ["images/uranus1.png", "images/uranus2.png", "images/uranus3.png", "images/uranus4.png", "images/uranus5.png"] },
+            { id: "neptun", name: "Neptun", nameEn: "Neptune", images: ["images/neptun1.png", "images/neptun2.png", "images/neptun3.png", "images/neptun4.png", "images/neptun5.png"] },
+            { id: "ceres", name: "Ceres", nameEn: "Ceres", images: ["images/ceres1.png", "images/ceres2.png", "images/ceres3.png"] },
+            { id: "pluto", name: "Pluto", nameEn: "Pluto", images: ["images/pluto1.png", "images/pluto2.png", "images/pluto3.png"] },
+            { id: "eris", name: "Eris", nameEn: "Eris", images: ["images/eris1.png", "images/eris2.png", "images/eris3.png"] },
+            { id: "haumea", name: "Haumea", nameEn: "Haumea", images: ["images/haumea1.png", "images/haumea2.png", "images/haumea3.png"] },
+            { id: "makemake", name: "Makemake", nameEn: "Makemake", images: ["images/makemake1.png", "images/makemake2.png", "images/makemake3.png"] }
         ];
 
         const preferredGridOptions = [
@@ -843,18 +935,18 @@
 
         function getTurnStatusText() {
             if (state.mode === "won") {
-                return "Alle Paare gefunden.";
+                return memoryCopy.turnWon;
             }
             if (state.pendingMismatchIds.length) {
-                return "Kein Paar. Tippe eine Karte an, damit die beiden wieder umgedreht werden.";
+                return memoryCopy.turnMismatch;
             }
             if (state.revealedIds.length === 2) {
-                return "Zwei Karten offen.";
+                return memoryCopy.turnTwoOpen;
             }
             if (state.revealedIds.length === 1) {
-                return "Wähle jetzt die zweite Karte.";
+                return memoryCopy.turnPickSecond;
             }
-            return "Wähle die erste Karte.";
+            return memoryCopy.turnPickFirst;
         }
 
         function shuffle(items) {
@@ -870,12 +962,16 @@
             return body.images[Math.floor(Math.random() * body.images.length)];
         }
 
+        function localizedBodyName(body) {
+            return memoryLanguage === "en" ? body.nameEn : body.name;
+        }
+
         function buildDeck() {
             const deck = [];
             sourceBodies.forEach((body) => {
                 const cardBody = {
                     id: body.id,
-                    name: body.name,
+                    name: localizedBodyName(body),
                     image: pickRandomImage(body)
                 };
                 deck.push({ ...cardBody, cardId: `card-${state.nextCardId += 1}` });
@@ -902,7 +998,7 @@
                         class="${classNames}"
                         type="button"
                         data-card-id="${card.cardId}"
-                        aria-label="${card.isMatched ? `${card.name} gefunden` : `Karte ${card.name}`}"
+                        aria-label="${card.isMatched ? memoryCopy.cardFound(card.name) : memoryCopy.cardLabel(card.name)}"
                         aria-pressed="${card.isRevealed || card.isMatched ? "true" : "false"}"
                         ${card.isMatched ? "disabled" : ""}
                     >
@@ -1019,7 +1115,7 @@
                 grid: {
                     columns: state.layout.columns,
                     rows: state.layout.rows,
-                    note: "Reihen laufen von oben nach unten, Karten werden zeilenweise links nach rechts gelesen."
+                    note: memoryCopy.gridNote
                 },
                 matchedPairs: state.matchedPairs,
                 turnStatus: getTurnStatusText(),
@@ -1047,6 +1143,7 @@
         restartBtn.addEventListener("click", restartGame);
         winRestartBtn.addEventListener("click", restartGame);
 
+        applyMemoryCopy();
         restartGame();
     </script>
 </body>

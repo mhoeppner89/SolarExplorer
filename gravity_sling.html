@@ -652,22 +652,22 @@
                         <div class="chip mission-chip">
                             <button id="prevSolvedButton" class="mission-nav-button" title="Vorherige gelöste Mission"
                                 aria-label="Vorherige gelöste Mission">‹</button>
-                            <span>Mission</span><strong id="levelLabel">1</strong>
+                            <span id="missionChipLabel">Mission</span><strong id="levelLabel">1</strong>
                             <button id="nextSolvedButton" class="mission-nav-button" title="Nächste gelöste Mission"
                                 aria-label="Nächste gelöste Mission">›</button>
                         </div>
-                        <div class="chip score-chip"><span>Punkte</span><strong><span id="scoreLabel">0</span>/<span
+                        <div class="chip score-chip"><span id="scoreChipLabel">Punkte</span><strong><span id="scoreLabel">0</span>/<span
                                     id="bestLabel">0</span></strong></div>
-                        <div class="chip status-chip"><span>Status</span><strong id="stateLabel">Bereit</strong></div>
-                        <div class="chip"><span>Restzeit</span><strong id="timeLabel">10.0s</strong></div>
+                        <div class="chip status-chip"><span id="statusChipLabel">Status</span><strong id="stateLabel">Bereit</strong></div>
+                        <div class="chip"><span id="timeChipLabel">Restzeit</span><strong id="timeLabel">10.0s</strong></div>
                         <div class="chip speed-chip">
-                            <span>Tempo</span>
+                            <span id="speedChipLabel">Tempo</span>
                             <span class="speed-meter"><span id="speedFill" class="speed-meter__fill"></span></span>
                             <strong id="speedLabel" class="speed-readout">0</strong>
                         </div>
                     </div>
                     <div class="actions">
-                        <a class="button" href="index.html" title="Zurück zur Spielstation"
+                        <a id="backButton" class="button" href="index.html" title="Zurück zur Spielstation"
                             aria-label="Zurück zur Spielstation">←</a>
                         <button id="hintButton" title="Hinweis anzeigen" aria-label="Hinweis anzeigen"
                             aria-pressed="false" hidden>?</button>
@@ -712,28 +712,326 @@
             const DEFAULT_HEAT_RADIUS_MULTIPLIER = 2.35;
             const SCORE_STORAGE_KEY = "gravity-sling-high-scores-v1";
             const HINT_UNLOCK_LEVEL_INDEX = 4;
-            const MECHANIC_TUTORIALS = [
-                {
-                    title: "Start",
-                    copy: "Ziehe die Rakete vom Startpunkt weg, lass los und erreiche die grüne Zielzone. Je weniger Schub du gibst, desto mehr Punkte kannst du erreichen.",
+            const LANGUAGE_STORAGE_KEY = "solarExplorer.language";
+            const supportedLanguages = new Set(["de", "en"]);
+            const gameLanguage = (() => {
+                const queryLang = new URLSearchParams(window.location.search).get("lang");
+                if (supportedLanguages.has(queryLang)) return queryLang;
+                try {
+                    const storedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+                    if (supportedLanguages.has(storedLang)) return storedLang;
+                } catch (error) {
+                    // Storage can be unavailable in restricted browser contexts.
+                }
+                return "de";
+            })();
+            try {
+                localStorage.setItem(LANGUAGE_STORAGE_KEY, gameLanguage);
+            } catch (error) {
+                // The game still honors the query parameter without localStorage.
+            }
+            document.documentElement.lang = gameLanguage;
+
+            const gravitasCopy = {
+                de: {
+                    documentTitle: "Solar Explorer - Gravitas",
+                    gameAria: "Gravitas Spiel",
+                    backUrl: "index.html?lang=de",
+                    labels: {
+                        mission: "Mission",
+                        score: "Punkte",
+                        status: "Status",
+                        time: "Restzeit",
+                        speed: "Tempo",
+                        target: "Ziel",
+                        gravity: "Schwerkraft",
+                        hazard: "Gefahr",
+                        debrisField: "Trümmerfeld",
+                        best: "Best"
+                    },
+                    controls: {
+                        previousSolved: "Vorherige gelöste Mission",
+                        nextSolved: "Nächste gelöste Mission",
+                        noPreviousSolved: "Keine frühere gelöste Mission",
+                        noNextSolved: "Keine spätere gelöste Mission",
+                        toMission: (number) => `Zu Mission ${number}`,
+                        back: "Zurück zur Spielstation",
+                        hintShow: "Hinweis anzeigen",
+                        hintHide: "Hinweis ausblenden",
+                        restart: "Mission neu starten",
+                        next: "Weiter"
+                    },
+                    tutorials: [
+                        {
+                            title: "Start",
+                            copy: "Ziehe die Rakete vom Startpunkt weg, lass los und erreiche die grüne Zielzone. Je weniger Schub du gibst, desto mehr Punkte kannst du erreichen.",
+                        },
+                        {
+                            title: "Schwerkraft",
+                            copy: "Massen biegen deine Flugbahn. Ziele nicht nur direkt auf das Ziel, sondern plane die Gravitation der Planeten ein.",
+                        },
+                        {
+                            title: "Atmosphäre",
+                            copy: "Ein Flug durch die Atmosphäre bremst die Rakete. Streife sie, wenn du sonst zu schnell ins Ziel kommst.",
+                        },
+                        {
+                            title: "Hitze",
+                            copy: "Achtung, die Sonne ist heiß! Suche Schutz hinter anderen Himmelskörpern.",
+                        },
+                        {
+                            title: "Hinweise",
+                            copy: "Das ? oben rechts öffnet bei Bedarf eine kurze Hilfe zur Flugbahn.",
+                        },
+                    ],
+                    levelNames: [
+                        "Direkter Flug",
+                        "Erste Ablenkung",
+                        "Atmosphären-Fenster",
+                        "Sonnen-Schwung",
+                        "Doppelpass",
+                        "Saturn-Lücke",
+                        "Äußere Bahn",
+                        "Einfangen bei Pluto",
+                        "Drei-Körper-Kanal",
+                        "Finaler Sonnenbogen",
+                        "Orbit-Schleuse",
+                        "Kometenschweif",
+                        "Bremskorridor",
+                        "Mondstaffel",
+                        "Resonanz-Finale",
+                        "Jupiter-Saturn-Weiche",
+                        "Schattennadel",
+                        "Kreiselstaffel",
+                        "Atmosphären-Slalom",
+                        "Dreifach-Finale"
+                    ],
+                    levelHints: [
+                        "Starte sehr sanft nach rechts oben. Die direkte Linie läuft links am Brocken vorbei und trifft den Zielkreis von unten.",
+                        "Lass die Rakete links unten um Merkur ausholen. Danach steigt sie rechts am Planeten vorbei und kippt von unten in die Zielzone.",
+                        "Führe die Bahn knapp durch den unteren Rand der Mars-Atmosphäre. Der kurze Bremskontakt macht die Kurve eng genug für den Zielkreis.",
+                        "Nimm einen weiten Bogen links an der Sonne vorbei. Die Rakete soll oben über die Sonne ziehen und von links in die Zielzone fallen.",
+                        "Erst Mars links streifen, dann fast senkrecht durch die Lücke nach oben. Venus zieht den letzten Knick von unten in den Zielkreis.",
+                        "Hole links außen aus. Saturn zieht dich oben herum; danach fällt die Rakete rechts am Ring vorbei in die grüne Lücke.",
+                        "Jupiter hebt die Bahn in einen langen Innenbogen. Bleib links von Neptun, dann zieht er die Spitze sauber in den Zielkreis.",
+                        "Steige knapp rechts an der Sonne hoch und lass die Bahn oben nach links ausdrehen. Pluto wird von links oben angeflogen, damit seine Atmosphäre bremst.",
+                        "Jupiter zieht dich links außen hoch. Danach führt der Korridor zwischen Mond und Asteroiden zur Zielzone; der Mond setzt den letzten Rechtsknick.",
+                        "Spiele eine schmale S-Kurve: rechts an der unteren Sonne vorbei, links am Saturnring hoch und von unten in Plutos Bremsring.",
+                        "Der direkte Weg ist dicht. Lass die Rakete links um Jupiter kreisen, oben über ihn hinwegziehen und langsam von links in die Schleuse fallen.",
+                        "Hole weit links im Sonnenfeld aus und schneide dann unter Mars in dessen Atmosphäre. Der Zielkreis wird von rechts oben angerollt.",
+                        "Jupiter trägt dich rechts hoch in den Korridor. Streife danach die untere rechte Erdatmosphäre; der Mond links oben hält die Linie flach genug.",
+                        "Gehe zuerst links außen herum. Der untere Mond hebt die Linie, Mars bleibt rechts liegen, und der obere Mond schiebt diagonal in Plutos Rand.",
+                        "Der Süden ist verriegelt. Fahre links außen bis zur oberen rechten Wende, dann fällt die Bahn zwischen Saturn und Jupiter zurück in Plutos Bremsfeld.",
+                        "Jupiter links unten schickt dich auf die Außenbahn. Steige an Saturns linker Seite hoch; der Mond rechts oben setzt den letzten Knick ins Ziel.",
+                        "Ziehe links an der Sonne hoch, dann quer zwischen Mars und Erde. Die obere Schleife kommt zurück in Erdes Atmosphäre und rollt langsam ins Ziel.",
+                        "Von rechts unten zuerst um Neptun nach außen. Danach diagonal zwischen Jupiter und Saturn hindurch; Saturn dreht die Linie links oben ins Ziel.",
+                        "Großer linker Slalom: Jupiter hebt dich außen, dann führt die Bahn durch Erdes Atmosphäre nach oben. Pluto wird von links angeflogen und bremst.",
+                        "Weit links aus dem Sonnenfeld heraus, dann diagonal durch die Lücke zwischen Saturn und Jupiter. Pluto oben rechts weich von links unten treffen."
+                    ],
+                    statusLabels: {
+                        ready: "Bereit",
+                        flying: "Flug",
+                        won: "Geschafft",
+                        crashed: "Kollision",
+                        timeout: "Zeit aus",
+                        flyaway: "Verloren"
+                    },
+                    messageTitles: {
+                        won: "Mission geschafft",
+                        flying: "Rakete unterwegs",
+                        retry: "Nochmal versuchen"
+                    },
+                    messages: {
+                        planetCollision: "Zu nah dran. Beim nächsten Start etwas mehr Abstand halten.",
+                        hazardCollision: "Kollision mit Trümmern. Neue Flugbahn?",
+                        overheated: "Überhitzt. Suche Schatten oder verlasse die Sonnennähe früher.",
+                        tooFast: "Zu schnell am Ziel. Nutze die Schwerkraft zum Abbremsen.",
+                        finalTarget: "Letzte Bahn erreicht. Alle Missionen geschafft.",
+                        targetReached: "Mission geschafft. Bereit für den nächsten Kurs?",
+                        timeout: "Das Signal ist abgelaufen. Die Rakete war zu lange unterwegs.",
+                        flyaway: "Die Rakete verlässt den Sektor.",
+                        lowLaunch: "Ziehe etwas weiter zurück, damit die Rakete genug Starttempo bekommt.",
+                        flying: "Rakete unterwegs.",
+                        newBest: " Neuer Bestwert!",
+                        best: (score) => ` Best: ${score}.`,
+                        scoreFinal: (score, bestText) => `+${score} Punkte.${bestText} Alle Missionen geschafft.`,
+                        scoreNext: (score, bestText) => `+${score} Punkte.${bestText} Bereit für den nächsten Kurs?`
+                    },
+                    bodyLabels: {
+                        Asteroid: "Asteroid",
+                        Asteroiden: "Asteroiden",
+                        Barriere: "Barriere",
+                        Erde: "Erde",
+                        Finalbarriere: "Finalbarriere",
+                        Jupiter: "Jupiter",
+                        Komet: "Komet",
+                        Mars: "Mars",
+                        Merkur: "Merkur",
+                        Mond: "Mond",
+                        Neptun: "Neptun",
+                        Pluto: "Pluto",
+                        Ringbrocken: "Ringbrocken",
+                        Saturn: "Saturn",
+                        Schattenstein: "Schattenstein",
+                        Slalomtor: "Slalomtor",
+                        Sonne: "Sonne",
+                        Splitter: "Splitter",
+                        Staffelstein: "Staffelstein",
+                        Trümmer: "Trümmer",
+                        Venus: "Venus",
+                        Weiche: "Weiche"
+                    }
                 },
-                {
-                    title: "Schwerkraft",
-                    copy: "Massen biegen deine Flugbahn. Ziele nicht nur direkt auf das Ziel, sondern plane die Gravitation der Planeten ein.",
-                },
-                {
-                    title: "Atmosphäre",
-                    copy: "Ein Flug durch die Atmosphäre bremst die Rakete. Streife sie, wenn du sonst zu schnell ins Ziel kommst.",
-                },
-                {
-                    title: "Hitze",
-                    copy: "Achtung, die Sonne ist heiß! Suche Schutz hinter anderen Himmelskörpern",
-                },
-                {
-                    title: "Hinweise",
-                    copy: "Das ? oben rechts öffnet bei Bedarf eine kurze Hilfe zur Flugbahn.",
-                },
-            ];
+                en: {
+                    documentTitle: "Solar Explorer - Gravitas",
+                    gameAria: "Gravitas game",
+                    backUrl: "index.html?lang=en",
+                    labels: {
+                        mission: "Mission",
+                        score: "Score",
+                        status: "Status",
+                        time: "Time",
+                        speed: "Speed",
+                        target: "Target",
+                        gravity: "Gravity",
+                        hazard: "Hazard",
+                        debrisField: "Debris field",
+                        best: "Best"
+                    },
+                    controls: {
+                        previousSolved: "Previous solved mission",
+                        nextSolved: "Next solved mission",
+                        noPreviousSolved: "No earlier solved mission",
+                        noNextSolved: "No later solved mission",
+                        toMission: (number) => `To mission ${number}`,
+                        back: "Back to game station",
+                        hintShow: "Show hint",
+                        hintHide: "Hide hint",
+                        restart: "Restart mission",
+                        next: "Next"
+                    },
+                    tutorials: [
+                        {
+                            title: "Launch",
+                            copy: "Pull the rocket away from the start point, let go, and reach the green target zone. The less thrust you use, the more points you can earn.",
+                        },
+                        {
+                            title: "Gravity",
+                            copy: "Mass bends your flight path. Do not aim only at the target; plan around the planets' gravity.",
+                        },
+                        {
+                            title: "Atmosphere",
+                            copy: "Flying through an atmosphere slows the rocket. Graze it when you would otherwise reach the target too fast.",
+                        },
+                        {
+                            title: "Heat",
+                            copy: "Careful, the Sun is hot! Look for cover behind other celestial bodies.",
+                        },
+                        {
+                            title: "Hints",
+                            copy: "The ? in the top-right opens a short flight-path hint when you need one.",
+                        },
+                    ],
+                    levelNames: [
+                        "Direct Flight",
+                        "First Deflection",
+                        "Atmosphere Window",
+                        "Solar Swing",
+                        "Double Pass",
+                        "Saturn Gap",
+                        "Outer Orbit",
+                        "Capture at Pluto",
+                        "Three-Body Channel",
+                        "Final Solar Arc",
+                        "Orbit Gate",
+                        "Comet Tail",
+                        "Brake Corridor",
+                        "Moon Relay",
+                        "Resonance Finale",
+                        "Jupiter-Saturn Switch",
+                        "Shadow Needle",
+                        "Spin Relay",
+                        "Atmosphere Slalom",
+                        "Triple Finale"
+                    ],
+                    levelHints: [
+                        "Launch very gently up and right. The direct line passes left of the rock and reaches the target circle from below.",
+                        "Let the rocket sweep down-left around Mercury. It should climb past the planet's right side and tip into the target from below.",
+                        "Thread the path through the lower edge of Mars' atmosphere. The brief braking touch tightens the curve enough for the target circle.",
+                        "Take a wide arc to the left of the Sun. The rocket should pull over the top of the Sun and fall into the target from the left.",
+                        "First skim Mars on the left, then climb almost straight through the gap. Venus provides the final bend from below into the target.",
+                        "Swing wide on the left. Saturn pulls you around the top, then the rocket drops past the right side of the ring into the green gap.",
+                        "Jupiter lifts the path into a long inner arc. Stay left of Neptune so it can draw the tip cleanly into the target circle.",
+                        "Rise just to the right of the Sun and let the path roll left at the top. Approach Pluto from the upper left so its atmosphere can brake you.",
+                        "Jupiter pulls you up along the left side. Then the corridor between the Moon and asteroids leads to the target; the Moon adds the final rightward kink.",
+                        "Play a narrow S-curve: right of the lower Sun, up along the left side of Saturn's ring, then into Pluto's braking ring from below.",
+                        "The direct lane is closed. Let the rocket orbit left around Jupiter, crest above it, and fall slowly into the gate from the left.",
+                        "Swing far left through the solar field, then cut under Mars into its atmosphere. Roll into the target circle from the upper right.",
+                        "Jupiter carries you up into the right corridor. Graze Earth's lower-right atmosphere afterward; the upper-left Moon keeps the line flat enough.",
+                        "Go around the far left first. The lower Moon lifts the line, Mars stays to the right, and the upper Moon pushes diagonally into Pluto's edge.",
+                        "The south is locked. Ride the far-left lane to the upper-right turn, then let the path fall back between Saturn and Jupiter into Pluto's braking field.",
+                        "Jupiter at lower left sends you onto the outside lane. Climb along Saturn's left side; the upper-right Moon sets the final bend into the target.",
+                        "Pull up along the left side of the Sun, then cross between Mars and Earth. The upper loop returns into Earth's atmosphere and rolls slowly into the target.",
+                        "From the lower right, go around Neptune outward first. Then pass diagonally between Jupiter and Saturn; Saturn turns the line into the upper-left target.",
+                        "Make a broad left slalom: Jupiter lifts you outside, then the path runs through Earth's atmosphere upward. Approach Pluto from the left so it brakes you.",
+                        "Move far left out of the solar field, then cut diagonally through the gap between Saturn and Jupiter. Meet upper-right Pluto softly from below-left."
+                    ],
+                    statusLabels: {
+                        ready: "Ready",
+                        flying: "Flight",
+                        won: "Complete",
+                        crashed: "Collision",
+                        timeout: "Time out",
+                        flyaway: "Lost"
+                    },
+                    messageTitles: {
+                        won: "Mission complete",
+                        flying: "Rocket in flight",
+                        retry: "Try again"
+                    },
+                    messages: {
+                        planetCollision: "Too close. Leave a little more room on the next launch.",
+                        hazardCollision: "Collision with debris. Try a new flight path?",
+                        overheated: "Overheated. Find shade or leave the solar heat sooner.",
+                        tooFast: "Too fast at the target. Use gravity to slow down.",
+                        finalTarget: "Final path reached. All missions complete.",
+                        targetReached: "Mission complete. Ready for the next course?",
+                        timeout: "The signal expired. The rocket was in flight too long.",
+                        flyaway: "The rocket leaves the sector.",
+                        lowLaunch: "Pull a little farther back so the rocket gets enough launch speed.",
+                        flying: "Rocket in flight.",
+                        newBest: " New best!",
+                        best: (score) => ` Best: ${score}.`,
+                        scoreFinal: (score, bestText) => `+${score} points.${bestText} All missions complete.`,
+                        scoreNext: (score, bestText) => `+${score} points.${bestText} Ready for the next course?`
+                    },
+                    bodyLabels: {
+                        Asteroid: "Asteroid",
+                        Asteroiden: "Asteroids",
+                        Barriere: "Barrier",
+                        Erde: "Earth",
+                        Finalbarriere: "Final barrier",
+                        Jupiter: "Jupiter",
+                        Komet: "Comet",
+                        Mars: "Mars",
+                        Merkur: "Mercury",
+                        Mond: "Moon",
+                        Neptun: "Neptune",
+                        Pluto: "Pluto",
+                        Ringbrocken: "Ring rock",
+                        Saturn: "Saturn",
+                        Schattenstein: "Shadow stone",
+                        Slalomtor: "Slalom gate",
+                        Sonne: "Sun",
+                        Splitter: "Shard",
+                        Staffelstein: "Relay stone",
+                        Trümmer: "Debris",
+                        Venus: "Venus",
+                        Weiche: "Switch"
+                    }
+                }
+            };
+            const copy = gravitasCopy[gameLanguage];
+            const MECHANIC_TUTORIALS = copy.tutorials;
 
             const canvas = document.getElementById("game");
             const ctx = canvas.getContext("2d");
@@ -753,6 +1051,32 @@
                 nextSolved: document.getElementById("nextSolvedButton"),
                 next: document.getElementById("nextButton"),
             };
+
+            function applyGravitasStaticCopy() {
+                document.title = copy.documentTitle;
+                document.querySelector(".game-shell").setAttribute("aria-label", copy.gameAria);
+                document.getElementById("missionChipLabel").textContent = copy.labels.mission;
+                document.getElementById("scoreChipLabel").textContent = copy.labels.score;
+                document.getElementById("statusChipLabel").textContent = copy.labels.status;
+                document.getElementById("timeChipLabel").textContent = copy.labels.time;
+                document.getElementById("speedChipLabel").textContent = copy.labels.speed;
+                const backButton = document.getElementById("backButton");
+                backButton.href = copy.backUrl;
+                backButton.title = copy.controls.back;
+                backButton.setAttribute("aria-label", copy.controls.back);
+                ui.prevSolved.title = copy.controls.previousSolved;
+                ui.prevSolved.setAttribute("aria-label", copy.controls.previousSolved);
+                ui.nextSolved.title = copy.controls.nextSolved;
+                ui.nextSolved.setAttribute("aria-label", copy.controls.nextSolved);
+                ui.hint.title = copy.controls.hintShow;
+                ui.hint.setAttribute("aria-label", copy.controls.hintShow);
+                ui.restart.title = copy.controls.restart;
+                ui.restart.setAttribute("aria-label", copy.controls.restart);
+                ui.next.textContent = copy.controls.next;
+                ui.next.title = copy.controls.next;
+            }
+
+            applyGravitasStaticCopy();
 
             const levels = [
                 {
@@ -1177,6 +1501,11 @@
                 },
             ];
 
+            levels.forEach((level, index) => {
+                level.name = copy.levelNames[index] || level.name;
+                level.hint = copy.levelHints[index] || level.hint;
+            });
+
             const stars = Array.from({ length: 190 }, (_, i) => ({
                 nx: ((i * 157 + 43) % 1000) / 1000,
                 ny: ((i * 89 + 71) % 1000) / 1000,
@@ -1589,42 +1918,42 @@
             function checkShipOutcome(ship, level, elapsed) {
                 for (const planet of level.planets) {
                     if (length(ship.x - planet.x, ship.y - planet.y) <= SHIP_RADIUS + planet.r) {
-                        return { mode: "crashed", message: "Zu nah dran. Beim nächsten Start etwas mehr Abstand halten.", outcome: "planet_collision" };
+                        return { mode: "crashed", message: copy.messages.planetCollision, outcome: "planet_collision" };
                     }
                 }
 
                 for (const hazard of level.hazards || []) {
                     if (length(ship.x - hazard.x, ship.y - hazard.y) <= SHIP_RADIUS + hazard.r) {
-                        return { mode: "crashed", message: "Kollision mit Trümmern. Neue Flugbahn?", outcome: "hazard_collision" };
+                        return { mode: "crashed", message: copy.messages.hazardCollision, outcome: "hazard_collision" };
                     }
                 }
 
                 if ((ship.heat || 0) >= HEAT_LIMIT) {
-                    return { mode: "crashed", message: "Überhitzt. Suche Schatten oder verlasse die Sonnennähe früher.", outcome: "overheated" };
+                    return { mode: "crashed", message: copy.messages.overheated, outcome: "overheated" };
                 }
 
                 const target = level.target;
                 if (length(ship.x - target.x, ship.y - target.y) <= SHIP_RADIUS + target.r) {
                     if (target.maxSpeed && length(ship.vx, ship.vy) > target.maxSpeed) {
-                        return { mode: "crashed", message: "Zu schnell am Ziel. Nutze die Schwerkraft zum Abbremsen.", outcome: "too_fast" };
+                        return { mode: "crashed", message: copy.messages.tooFast, outcome: "too_fast" };
                     }
                     return {
                         mode: "won",
                         message: state.levelIndex === levels.length - 1
-                            ? "Letzte Bahn erreicht. Alle Missionen geschafft."
-                            : "Mission geschafft. Bereit für den nächsten Kurs?",
+                            ? copy.messages.finalTarget
+                            : copy.messages.targetReached,
                         outcome: "target_reached"
                     };
                 }
 
                 if (elapsed >= TIME_LIMIT) {
-                    return { mode: "timeout", message: "Das Signal ist abgelaufen. Die Rakete war zu lange unterwegs.", outcome: "timeout" };
+                    return { mode: "timeout", message: copy.messages.timeout, outcome: "timeout" };
                 }
 
                 const flyMargin = Math.max(FLY_MARGIN, Math.min(WORLD.width, WORLD.height) * 0.32);
                 if (ship.x < -flyMargin || ship.x > WORLD.width + flyMargin ||
                     ship.y < -flyMargin || ship.y > WORLD.height + flyMargin) {
-                    return { mode: "flyaway", message: "Die Rakete verlässt den Sektor.", outcome: "flyaway" };
+                    return { mode: "flyaway", message: copy.messages.flyaway, outcome: "flyaway" };
                 }
 
                 return null;
@@ -1638,7 +1967,7 @@
                     state.ship.x = launch.x;
                     state.ship.y = launch.y;
                     state.launchSpeed = 0;
-                    state.message = "Ziehe etwas weiter zurück, damit die Rakete genug Starttempo bekommt.";
+                    state.message = copy.messages.lowLaunch;
                     updateUi();
                     return;
                 }
@@ -1662,7 +1991,7 @@
                 state.shots += 1;
                 state.trail = [{ x: state.ship.x, y: state.ship.y }];
                 state.hintVisible = false;
-                state.message = "Rakete unterwegs.";
+                state.message = copy.messages.flying;
                 updateUi();
             }
 
@@ -1726,10 +2055,10 @@
                 if (outcome) {
                     if (outcome.outcome === "target_reached") {
                         const score = recordLevelScore();
-                        const bestText = score.isNewBest ? " Neuer Bestwert!" : ` Best: ${score.best}.`;
+                        const bestText = score.isNewBest ? copy.messages.newBest : copy.messages.best(score.best);
                         outcome.message = state.levelIndex === levels.length - 1
-                            ? `+${score.score} Punkte.${bestText} Alle Missionen geschafft.`
-                            : `+${score.score} Punkte.${bestText} Bereit für den nächsten Kurs?`;
+                            ? copy.messages.scoreFinal(score.score, bestText)
+                            : copy.messages.scoreNext(score.score, bestText);
                     }
                     setMode(outcome.mode, outcome.message, outcome.outcome);
                     return;
@@ -2221,7 +2550,7 @@
                 ctx.stroke();
                 drawTargetIcon(target, pulse);
                 if (target.maxSpeed) {
-                    const label = `Tempo < ${target.maxSpeed}`;
+                    const label = `${copy.labels.speed} < ${target.maxSpeed}`;
                     const labelY = target.y > WORLD.height * 0.72
                         ? target.y - target.r - 18
                         : target.y + target.r + 20;
@@ -2234,6 +2563,10 @@
                     ctx.fillText(label, target.x, labelY);
                 }
                 ctx.restore();
+            }
+
+            function localizedBodyLabel(label, fallback) {
+                return copy.bodyLabels[label] || label || fallback;
             }
 
             function drawLaunchOrigin(launch) {
@@ -2448,21 +2781,24 @@
                 ctx.font = "700 18px Avenir Next Condensed, Trebuchet MS, sans-serif";
                 ctx.fillStyle = "rgba(168, 189, 216, 0.72)";
                 ctx.font = "14px Avenir Next Condensed, Trebuchet MS, sans-serif";
-                ctx.fillText("Ziel", level.target.x - 12, level.target.y - level.target.r - 14);
+                ctx.textAlign = "center";
+                ctx.fillText(copy.labels.target, level.target.x, level.target.y - level.target.r - 14);
+                ctx.textAlign = "start";
                 for (const planet of level.planets) {
-                    ctx.fillText(planet.label || "Schwerkraft", planet.x - 22, planet.y + planet.r + 22);
+                    ctx.fillText(localizedBodyLabel(planet.label, copy.labels.gravity), planet.x - 22, planet.y + planet.r + 22);
                 }
                 const hazards = level.hazards || [];
                 if (hazards.length <= 3) {
                     for (const hazard of hazards) {
-                        ctx.fillText(hazard.label || "Gefahr", hazard.x - 22, hazard.y + hazard.r + 20);
+                        ctx.fillText(localizedBodyLabel(hazard.label, copy.labels.hazard), hazard.x - 22, hazard.y + hazard.r + 20);
                     }
                 } else {
                     const center = hazards.reduce((acc, hazard) => ({
                         x: acc.x + hazard.x / hazards.length,
                         y: acc.y + hazard.y / hazards.length,
                     }), { x: 0, y: 0 });
-                    ctx.fillText("Trümmerfeld", center.x - 42, center.y + 24);
+                    ctx.textAlign = "center";
+                    ctx.fillText(copy.labels.debrisField, center.x, center.y + 24);
                 }
                 ctx.restore();
             }
@@ -2528,32 +2864,26 @@
                 ui.hint.disabled = !hintButtonVisible || navigationBlocked;
                 ui.hint.classList.toggle("is-active", state.hintVisible && hintButtonVisible);
                 ui.hint.setAttribute("aria-pressed", state.hintVisible && hintButtonVisible ? "true" : "false");
-                ui.hint.title = state.hintVisible ? "Hinweis ausblenden" : "Hinweis anzeigen";
-                ui.hint.setAttribute("aria-label", state.hintVisible ? "Hinweis ausblenden" : "Hinweis anzeigen");
+                ui.hint.title = state.hintVisible ? copy.controls.hintHide : copy.controls.hintShow;
+                ui.hint.setAttribute("aria-label", state.hintVisible ? copy.controls.hintHide : copy.controls.hintShow);
                 ui.prevSolved.title = previousSolvedIndex === null
-                    ? "Keine frühere gelöste Mission"
-                    : `Zu Mission ${previousSolvedIndex + 1}`;
+                    ? copy.controls.noPreviousSolved
+                    : copy.controls.toMission(previousSolvedIndex + 1);
                 ui.nextSolved.title = nextSolvedIndex === null
-                    ? "Keine spätere gelöste Mission"
-                    : `Zu Mission ${nextSolvedIndex + 1}`;
+                    ? copy.controls.noNextSolved
+                    : copy.controls.toMission(nextSolvedIndex + 1);
+                ui.prevSolved.setAttribute("aria-label", ui.prevSolved.title);
+                ui.nextSolved.setAttribute("aria-label", ui.nextSolved.title);
 
-                const labels = {
-                    ready: "Bereit",
-                    flying: "Flug",
-                    won: "Geschafft",
-                    crashed: "Kollision",
-                    timeout: "Zeit aus",
-                    flyaway: "Verloren",
-                };
-                ui.state.textContent = labels[state.mode] || state.mode;
+                ui.state.textContent = copy.statusLabels[state.mode] || state.mode;
                 ui.hud.classList.toggle("is-aiming", state.drag.active);
                 ui.hud.classList.toggle("is-active-flight", state.mode === "flying");
                 ui.hud.classList.toggle("is-won", state.mode === "won");
                 ui.message.classList.toggle("is-ready", state.mode === "ready");
                 ui.message.classList.toggle("is-launch-left", state.mode === "ready" && currentLevel().launch.x < WORLD.width / 2);
                 ui.message.classList.toggle("is-launch-right", state.mode === "ready" && currentLevel().launch.x >= WORLD.width / 2);
-                const title = state.mode === "won" ? "Mission geschafft" :
-                    state.mode === "flying" ? "Rakete unterwegs" : "Nochmal versuchen";
+                const title = state.mode === "won" ? copy.messageTitles.won :
+                    state.mode === "flying" ? copy.messageTitles.flying : copy.messageTitles.retry;
                 ui.message.innerHTML = state.mode === "ready"
                     ? readyMessageHtml(currentLevel())
                     : `<strong>${escapeHtml(title)}</strong>${escapeHtml(state.message)}`;
@@ -2662,7 +2992,7 @@
                     launch: level.launch,
                     target: level.target,
                     planets: level.planets.map((planet) => ({
-                        label: planet.label || "",
+                        label: localizedBodyLabel(planet.label, ""),
                         x: planet.x,
                         y: planet.y,
                         r: planet.r,
@@ -2675,7 +3005,7 @@
                         atmosphereStrength: Number(atmosphereStrengthAt(state.ship.x, state.ship.y, planet).toFixed(3)),
                     })),
                     hazards: (level.hazards || []).map((hazard) => ({
-                        label: hazard.label || "",
+                        label: localizedBodyLabel(hazard.label, ""),
                         x: hazard.x,
                         y: hazard.y,
                         r: hazard.r,
