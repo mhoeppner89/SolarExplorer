@@ -189,6 +189,92 @@
         };
     }
 
+    const textureSeamBlendWidth = 42;
+
+    function smoothStep(value) {
+        const t = Math.max(0, Math.min(1, value));
+        return t * t * (3 - 2 * t);
+    }
+
+    function periodicWave(x, width, cycles, phase = 0) {
+        return Math.sin((x / width) * Math.PI * 2 * cycles + phase);
+    }
+
+    function sampleSeamlessXs(width, step) {
+        const points = [];
+        for (let x = 0; x < width; x += step) {
+            points.push(x);
+        }
+        if (points[points.length - 1] !== width) {
+            points.push(width);
+        }
+        return points;
+    }
+
+    function makeHorizontalSeamless(ctx, blendWidth = textureSeamBlendWidth) {
+        const { width, height } = ctx.canvas;
+        const band = Math.max(1, Math.min(blendWidth, Math.floor(width / 4)));
+        const source = ctx.getImageData(0, 0, width, height);
+        const output = ctx.getImageData(0, 0, width, height);
+
+        for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < band; x += 1) {
+                const t = smoothStep(x / Math.max(1, band - 1));
+                const leftIndex = (y * width + x) * 4;
+                const rightIndex = (y * width + (width - 1 - x)) * 4;
+
+                for (let channel = 0; channel < 4; channel += 1) {
+                    const left = source.data[leftIndex + channel];
+                    const right = source.data[rightIndex + channel];
+                    const seamValue = (left + right) * 0.5;
+                    output.data[leftIndex + channel] = seamValue * (1 - t) + left * t;
+                    output.data[rightIndex + channel] = seamValue * (1 - t) + right * t;
+                }
+            }
+        }
+
+        ctx.putImageData(output, 0, 0);
+    }
+
+    function finalizeSphereTexture(cacheKey, canvas, { seamless = true } = {}) {
+        if (seamless) {
+            makeHorizontalSeamless(canvas.getContext('2d'));
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        if ('sRGBEncoding' in THREE) {
+            texture.encoding = THREE.sRGBEncoding;
+        }
+        if ('RepeatWrapping' in THREE) {
+            texture.wrapS = THREE.RepeatWrapping;
+        }
+        if ('ClampToEdgeWrapping' in THREE) {
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+        }
+        texture.needsUpdate = true;
+        textureCache.set(cacheKey, texture);
+        return texture;
+    }
+
+    function drawWithHorizontalWrap(ctx, x, radius, drawAtX) {
+        const width = ctx.canvas.width;
+        drawAtX(x);
+        if (x - radius < 0) {
+            drawAtX(x + width);
+        }
+        if (x + radius > width) {
+            drawAtX(x - width);
+        }
+    }
+
+    function drawWrappedEllipse(ctx, x, y, rx, ry, rotation = 0) {
+        drawWithHorizontalWrap(ctx, x, Math.max(rx, ry) + 2, (drawX) => {
+            ctx.beginPath();
+            ctx.ellipse(drawX, y, rx, ry, rotation, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
     function makeCanvasTexture(cacheKey, width, height, draw) {
         if (textureCache.has(cacheKey)) {
             return textureCache.get(cacheKey);
@@ -200,13 +286,7 @@
         const ctx = canvas.getContext('2d');
         draw(ctx, canvas);
 
-        const texture = new THREE.CanvasTexture(canvas);
-        if ('sRGBEncoding' in THREE) {
-            texture.encoding = THREE.sRGBEncoding;
-        }
-        texture.needsUpdate = true;
-        textureCache.set(cacheKey, texture);
-        return texture;
+        return finalizeSphereTexture(cacheKey, canvas);
     }
 
     function fillGradient(ctx, stops, vertical = true) {
@@ -220,23 +300,26 @@
 
     function drawCrater(ctx, x, y, radius, rng, palette = {}) {
         const flatten = 0.62 + rng() * 0.28;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate((rng() - 0.5) * 0.65);
-        ctx.fillStyle = palette.shadow || 'rgba(12, 12, 16, 0.26)';
-        ctx.beginPath();
-        ctx.ellipse(radius * 0.08, radius * 0.16, radius, radius * flatten, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = palette.rim || 'rgba(255, 255, 255, 0.18)';
-        ctx.lineWidth = Math.max(0.8, radius * 0.15);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, radius, radius * flatten, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = palette.floor || 'rgba(255, 255, 255, 0.08)';
-        ctx.beginPath();
-        ctx.ellipse(-radius * 0.2, -radius * 0.18, radius * 0.42, radius * flatten * 0.32, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        const rotation = (rng() - 0.5) * 0.65;
+        drawWithHorizontalWrap(ctx, x, radius * 1.25, (drawX) => {
+            ctx.save();
+            ctx.translate(drawX, y);
+            ctx.rotate(rotation);
+            ctx.fillStyle = palette.shadow || 'rgba(12, 12, 16, 0.26)';
+            ctx.beginPath();
+            ctx.ellipse(radius * 0.08, radius * 0.16, radius, radius * flatten, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = palette.rim || 'rgba(255, 255, 255, 0.18)';
+            ctx.lineWidth = Math.max(0.8, radius * 0.15);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, radius, radius * flatten, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = palette.floor || 'rgba(255, 255, 255, 0.08)';
+            ctx.beginPath();
+            ctx.ellipse(-radius * 0.2, -radius * 0.18, radius * 0.42, radius * flatten * 0.32, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
     }
 
     function drawBandTexture(ctx, rng, palette, options = {}) {
@@ -245,22 +328,30 @@
         const bands = options.bands || 15;
         const wobble = options.wobble || 8;
         const alpha = options.alpha || 1;
+        const xPoints = sampleSeamlessXs(width, 28);
         ctx.globalAlpha = alpha;
         for (let i = 0; i < bands; i += 1) {
             const y = (i / bands) * height;
             const bandHeight = height / bands * (0.78 + rng() * 0.72);
+            const topPhase = rng() * Math.PI * 2;
+            const bottomPhase = rng() * Math.PI * 2;
+            const topCycles = 1 + (i % 3);
+            const bottomCycles = 1 + ((i + 1) % 3);
             ctx.fillStyle = palette[i % palette.length];
             ctx.beginPath();
-            ctx.moveTo(0, y);
-            for (let x = 0; x <= width; x += 28) {
-                const waveY = y + Math.sin(x * 0.025 + i * 1.8) * wobble + (rng() - 0.5) * wobble * 0.35;
-                ctx.lineTo(x, waveY);
-            }
-            ctx.lineTo(width, y + bandHeight);
-            for (let x = width; x >= 0; x -= 28) {
-                const waveY = y + bandHeight + Math.sin(x * 0.02 + i) * wobble * 0.55;
-                ctx.lineTo(x, waveY);
-            }
+            const topAt = (x) => y
+                + periodicWave(x, width, topCycles, topPhase) * wobble
+                + periodicWave(x, width, topCycles + 2, topPhase * 0.47 + i) * wobble * 0.28;
+            const bottomAt = (x) => y + bandHeight
+                + periodicWave(x, width, bottomCycles, bottomPhase) * wobble * 0.55
+                + periodicWave(x, width, bottomCycles + 1, bottomPhase * 0.61 + i) * wobble * 0.18;
+            ctx.moveTo(0, topAt(0));
+            xPoints.slice(1).forEach((x) => {
+                ctx.lineTo(x, topAt(x));
+            });
+            xPoints.slice().reverse().forEach((x) => {
+                ctx.lineTo(x, bottomAt(x));
+            });
             ctx.closePath();
             ctx.fill();
         }
@@ -292,23 +383,26 @@
         const wobble = options.wobble || 5;
         const phase = options.phase || 0;
         const step = options.step || 24;
+        const xPoints = sampleSeamlessXs(width, step);
         ctx.save();
         ctx.globalAlpha = options.alpha ?? 1;
         ctx.fillStyle = color;
+        const topCycles = options.topCycles || 1;
+        const bottomCycles = options.bottomCycles || 2;
+        const topAt = (x) => y
+            + periodicWave(x, width, topCycles, phase) * wobble
+            + periodicWave(x, width, topCycles + 1, phase * 1.7) * wobble * 0.45;
+        const bottomAt = (x) => y + height
+            + periodicWave(x, width, bottomCycles, phase + 0.8) * wobble * 0.7
+            + periodicWave(x, width, bottomCycles + 1, phase) * wobble * 0.35;
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        for (let x = 0; x <= width + step; x += step) {
-            const top = y
-                + Math.sin(x * 0.028 + phase) * wobble
-                + Math.sin(x * 0.011 + phase * 1.7) * wobble * 0.45;
-            ctx.lineTo(x, top);
-        }
-        for (let x = width + step; x >= 0; x -= step) {
-            const bottom = y + height
-                + Math.sin(x * 0.023 + phase + 0.8) * wobble * 0.7
-                + Math.sin(x * 0.009 + phase) * wobble * 0.35;
-            ctx.lineTo(x, bottom);
-        }
+        ctx.moveTo(0, topAt(0));
+        xPoints.slice(1).forEach((x) => {
+            ctx.lineTo(x, topAt(x));
+        });
+        xPoints.slice().reverse().forEach((x) => {
+            ctx.lineTo(x, bottomAt(x));
+        });
         ctx.closePath();
         ctx.fill();
         ctx.restore();
@@ -347,11 +441,11 @@
                 for (let i = 0; i < 11; i += 1) {
                     ctx.beginPath();
                     const y = 22 + i * 21;
-                    for (let x = -20; x <= w + 20; x += 34) {
-                        const py = y + Math.sin(x * 0.035 + i) * 11;
-                        if (x === -20) ctx.moveTo(x, py);
+                    sampleSeamlessXs(w, 34).forEach((x, index) => {
+                        const py = y + periodicWave(x, w, 2, i) * 11;
+                        if (index === 0) ctx.moveTo(x, py);
                         else ctx.lineTo(x, py);
-                    }
+                    });
                     ctx.stroke();
                 }
                 ctx.globalAlpha = 1;
@@ -438,11 +532,13 @@
                 for (let i = 0; i < 13; i += 1) {
                     const y = h * (0.12 + i * 0.061);
                     ctx.beginPath();
-                    for (let x = -20; x <= w + 20; x += 24) {
-                        const py = y + Math.sin(x * 0.035 + i * 0.7) * 4 + Math.sin(x * 0.012 + i) * 2;
-                        if (x === -20) ctx.moveTo(x, py);
+                    sampleSeamlessXs(w, 24).forEach((x, index) => {
+                        const py = y
+                            + periodicWave(x, w, 3, i * 0.7) * 4
+                            + periodicWave(x, w, 1, i) * 2;
+                        if (index === 0) ctx.moveTo(x, py);
                         else ctx.lineTo(x, py);
-                    }
+                    });
                     ctx.stroke();
                 }
                 ctx.globalAlpha = 1;
@@ -547,9 +643,7 @@
                 ctx.globalAlpha = 0.35;
                 for (let i = 0; i < 44; i += 1) {
                     ctx.fillStyle = rng() > 0.45 ? '#f2d4c6' : '#6e3434';
-                    ctx.beginPath();
-                    ctx.ellipse(rng() * w, rng() * h, 8 + rng() * 25, 3 + rng() * 10, rng() * Math.PI, 0, Math.PI * 2);
-                    ctx.fill();
+                    drawWrappedEllipse(ctx, rng() * w, rng() * h, 8 + rng() * 25, 3 + rng() * 10, rng() * Math.PI);
                 }
                 ctx.globalAlpha = 1;
                 return;
@@ -569,9 +663,7 @@
                 ctx.globalAlpha = 0.38;
                 ctx.fillStyle = '#f6fbff';
                 for (let i = 0; i < 24; i += 1) {
-                    ctx.beginPath();
-                    ctx.ellipse(rng() * w, rng() * h, 10 + rng() * 24, 3 + rng() * 9, rng() * Math.PI, 0, Math.PI * 2);
-                    ctx.fill();
+                    drawWrappedEllipse(ctx, rng() * w, rng() * h, 10 + rng() * 24, 3 + rng() * 9, rng() * Math.PI);
                 }
                 ctx.globalAlpha = 1;
             }
@@ -604,13 +696,16 @@
             const y = Math.random() * canvas.height;
             const radius = 3 + Math.random() * 18;
             const color = Math.random() > 0.45 ? '255,239,153' : '255,111,31';
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-            gradient.addColorStop(0, `rgba(${color}, ${0.2 + Math.random() * 0.35})`);
-            gradient.addColorStop(1, `rgba(${color}, 0)`);
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
+            const opacity = 0.2 + Math.random() * 0.35;
+            drawWithHorizontalWrap(ctx, x, radius, (drawX) => {
+                const gradient = ctx.createRadialGradient(drawX, y, 0, drawX, y, radius);
+                gradient.addColorStop(0, `rgba(${color}, ${opacity})`);
+                gradient.addColorStop(1, `rgba(${color}, 0)`);
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(drawX, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
         }
 
         ctx.lineCap = 'round';
@@ -618,28 +713,29 @@
             const y = (i / 25) * canvas.height + Math.sin(i * 1.7) * 8;
             ctx.strokeStyle = i % 3 === 0 ? 'rgba(255, 248, 184, 0.34)' : 'rgba(255, 95, 26, 0.22)';
             ctx.lineWidth = 2 + Math.random() * 5;
+            const waveAmplitude = 9 + Math.random() * 8;
+            const phase = Math.random() * Math.PI * 2;
+            const cycles = 1 + (i % 3);
             ctx.beginPath();
-            ctx.moveTo(-20, y);
-            for (let x = 0; x <= canvas.width + 40; x += 64) {
-                ctx.lineTo(x, y + Math.sin(x * 0.028 + i) * (9 + Math.random() * 8));
-            }
+            sampleSeamlessXs(canvas.width, 64).forEach((x, index) => {
+                const py = y + periodicWave(x, canvas.width, cycles, phase) * waveAmplitude;
+                if (index === 0) ctx.moveTo(x, py);
+                else ctx.lineTo(x, py);
+            });
             ctx.stroke();
         }
 
         ctx.globalCompositeOperation = 'source-over';
         for (let i = 0; i < 14; i += 1) {
             ctx.fillStyle = `rgba(115, 31, 14, ${0.16 + Math.random() * 0.16})`;
-            ctx.beginPath();
-            ctx.ellipse(
+            drawWrappedEllipse(
+                ctx,
                 Math.random() * canvas.width,
                 24 + Math.random() * (canvas.height - 48),
                 6 + Math.random() * 17,
                 2 + Math.random() * 7,
-                Math.random() * Math.PI,
-                0,
-                Math.PI * 2
+                Math.random() * Math.PI
             );
-            ctx.fill();
         }
 
         ctx.globalCompositeOperation = 'lighter';
@@ -652,13 +748,7 @@
 
         ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = 1;
-        const texture = new THREE.CanvasTexture(canvas);
-        if ('sRGBEncoding' in THREE) {
-            texture.encoding = THREE.sRGBEncoding;
-        }
-        texture.needsUpdate = true;
-        textureCache.set(cacheKey, texture);
-        return texture;
+        return finalizeSphereTexture(cacheKey, canvas);
     }
 
     function drawNormalizedPath(ctx, points) {
@@ -710,14 +800,14 @@
         ctx.lineWidth = 1;
         for (let y = 24; y < canvas.height - 16; y += 18) {
             ctx.beginPath();
-            for (let x = 0; x <= canvas.width; x += 18) {
-                const waveY = y + Math.sin(x * 0.028 + y * 0.09) * 3;
-                if (x === 0) {
+            sampleSeamlessXs(canvas.width, 18).forEach((x, index) => {
+                const waveY = y + periodicWave(x, canvas.width, 2, y * 0.09) * 3;
+                if (index === 0) {
                     ctx.moveTo(x, waveY);
                 } else {
                     ctx.lineTo(x, waveY);
                 }
-            }
+            });
             ctx.stroke();
         }
 
@@ -766,13 +856,7 @@
         ctx.fillRect(0, canvas.height - 18, canvas.width, 18);
         ctx.globalAlpha = 1;
 
-        const texture = new THREE.CanvasTexture(canvas);
-        if ('sRGBEncoding' in THREE) {
-            texture.encoding = THREE.sRGBEncoding;
-        }
-        texture.needsUpdate = true;
-        textureCache.set(cacheKey, texture);
-        return texture;
+        return finalizeSphereTexture(cacheKey, canvas);
     }
 
     function createEarthCloudTexture() {
@@ -791,16 +875,19 @@
         for (let i = 0; i < 42; i += 1) {
             const x = ((i * 73) % canvas.width) - 40;
             const y = 24 + ((i * 41) % (canvas.height - 52));
-            const w = 34 + ((i * 17) % 58);
-            const h = 5 + ((i * 11) % 16);
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate((Math.sin(i * 1.7) * 0.32));
-            ctx.beginPath();
-            ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
-            ctx.ellipse(w * 0.42, h * 0.16, w * 0.55, h * 0.9, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
+            const cloudW = 34 + ((i * 17) % 58);
+            const cloudH = 5 + ((i * 11) % 16);
+            const rotation = Math.sin(i * 1.7) * 0.32;
+            drawWithHorizontalWrap(ctx, x, cloudW * 1.05, (drawX) => {
+                ctx.save();
+                ctx.translate(drawX, y);
+                ctx.rotate(rotation);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, cloudW, cloudH, 0, 0, Math.PI * 2);
+                ctx.ellipse(cloudW * 0.42, cloudH * 0.16, cloudW * 0.55, cloudH * 0.9, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
         }
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
@@ -808,21 +895,15 @@
         for (let i = 0; i < 9; i += 1) {
             const y = 36 + i * 21;
             ctx.beginPath();
-            for (let x = 0; x <= canvas.width; x += 24) {
-                const py = y + Math.sin(x * 0.035 + i) * 7;
-                if (x === 0) ctx.moveTo(x, py);
+            sampleSeamlessXs(canvas.width, 24).forEach((x, index) => {
+                const py = y + periodicWave(x, canvas.width, 2, i) * 7;
+                if (index === 0) ctx.moveTo(x, py);
                 else ctx.lineTo(x, py);
-            }
+            });
             ctx.stroke();
         }
 
-        const texture = new THREE.CanvasTexture(canvas);
-        if ('sRGBEncoding' in THREE) {
-            texture.encoding = THREE.sRGBEncoding;
-        }
-        texture.needsUpdate = true;
-        textureCache.set(cacheKey, texture);
-        return texture;
+        return finalizeSphereTexture(cacheKey, canvas);
     }
 
     function hasDetailedBodyTexture(data) {
@@ -895,20 +976,19 @@
                 color.offsetHSL(0, 0, (Math.random() - 0.5) * noise);
                 ctx.globalAlpha = 0.14 + Math.random() * 0.22;
                 ctx.fillStyle = `#${color.getHexString()}`;
-                ctx.beginPath();
-                ctx.ellipse(Math.random() * canvas.width, Math.random() * canvas.height, 1 + Math.random() * 8, 1 + Math.random() * 5, Math.random() * Math.PI, 0, Math.PI * 2);
-                ctx.fill();
+                drawWrappedEllipse(
+                    ctx,
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height,
+                    1 + Math.random() * 8,
+                    1 + Math.random() * 5,
+                    Math.random() * Math.PI
+                );
             }
         }
 
         ctx.globalAlpha = 1;
-        const texture = new THREE.CanvasTexture(canvas);
-        if ('sRGBEncoding' in THREE) {
-            texture.encoding = THREE.sRGBEncoding;
-        }
-        texture.needsUpdate = true;
-        textureCache.set(cacheKey, texture);
-        return texture;
+        return finalizeSphereTexture(cacheKey, canvas);
     }
 
     function createBodyMaterial(data) {
