@@ -17,13 +17,21 @@ function numberConst(name) {
   return Number(new Function(`return ${match[1]};`)());
 }
 
-const levelsStart = html.indexOf("const levels = [");
-const levelsEnd = html.indexOf("];\n\n            const stars");
-if (levelsStart === -1 || levelsEnd === -1) {
+function arrayConst(name) {
+  const match = html.match(new RegExp(`const ${name} = (\\[[\\s\\S]*?\\]);`));
+  if (!match) throw new Error(`Missing const ${name}`);
+  return new Function(`return ${match[1]};`)();
+}
+
+const levelsMarker = "const levels = ";
+const levelsStart = html.indexOf(levelsMarker);
+const levelsArrayStart = levelsStart === -1 ? -1 : html.indexOf("[", levelsStart);
+const levelsEnd = levelsArrayStart === -1 ? -1 : html.indexOf("\n            ];", levelsArrayStart);
+if (levelsStart === -1 || levelsArrayStart === -1 || levelsEnd === -1) {
   throw new Error("Could not locate Gravity Sling levels array.");
 }
 
-const levelsSource = html.slice(levelsStart + "const levels = ".length, levelsEnd) + "]";
+const levelsSource = html.slice(levelsArrayStart, levelsEnd + "\n            ]".length);
 const levels = new Function(`return ${levelsSource};`)();
 
 const WORLD = { width: 540, height: 960 };
@@ -40,6 +48,9 @@ const SUN_HEAT_GAIN_RATE = numberConst("SUN_HEAT_GAIN_RATE");
 const HEAT_COOL_RATE = numberConst("HEAT_COOL_RATE");
 const SHADOW_COOL_RATE = numberConst("SHADOW_COOL_RATE");
 const DEFAULT_HEAT_RADIUS_MULTIPLIER = numberConst("DEFAULT_HEAT_RADIUS_MULTIPLIER");
+const SCORE_BEST_POINTS = numberConst("SCORE_BEST_POINTS");
+const SCORE_FULL_POWER_POINTS = numberConst("SCORE_FULL_POWER_POINTS");
+const SCORE_BEST_LAUNCH_SPEEDS = arrayConst("SCORE_BEST_LAUNCH_SPEEDS");
 const LAUNCH_DEAD_ZONE_RATIO = numberConst("LAUNCH_DEAD_ZONE_RATIO");
 const MIN_LAUNCH_RATIO = numberConst("MIN_LAUNCH_RATIO");
 const DEAD_DRAG_PULL = MAX_DRAG * LAUNCH_DEAD_ZONE_RATIO;
@@ -317,10 +328,14 @@ function tracePath(level, radius, angleDeg, sampleEvery = 0.5) {
 }
 
 function scoreForLaunchSpeed(launchSpeed, levelIndex) {
-  const speedRatio = clamp(launchSpeed / (MAX_LAUNCH_PULL * LAUNCH_POWER), 0, 1);
-  const efficiency = Math.pow(1 - speedRatio, 1.35);
-  const levelBonus = (levelIndex + 1) * 100;
-  return Math.round(levelBonus + 1200 * efficiency);
+  const maxLaunchSpeed = MAX_LAUNCH_PULL * LAUNCH_POWER;
+  const bestLaunchSpeed = SCORE_BEST_LAUNCH_SPEEDS[levelIndex] || (maxLaunchSpeed * MIN_LAUNCH_RATIO);
+  if (bestLaunchSpeed >= maxLaunchSpeed) return SCORE_BEST_POINTS;
+
+  const speed = clamp(launchSpeed, bestLaunchSpeed, maxLaunchSpeed);
+  const progress = (speed - bestLaunchSpeed) / (maxLaunchSpeed - bestLaunchSpeed);
+  const score = SCORE_BEST_POINTS + (SCORE_FULL_POWER_POINTS - SCORE_BEST_POINTS) * progress;
+  return Math.round(clamp(score, SCORE_FULL_POWER_POINTS, SCORE_BEST_POINTS));
 }
 
 function solutionRecord(level, levelIndex, radius, angleDeg, result) {
@@ -372,7 +387,7 @@ function dedupeSolutions(solutions) {
 }
 
 function candidateRanges(winners) {
-  const sorted = [...winners].sort((a, b) => b.score - a.score);
+  const sorted = [...winners].sort((a, b) => b.score - a.score || a.launchSpeed - b.launchSpeed);
   return sorted.slice(0, 12).map((winner) => ({
     radiusMin: Math.max(MIN_DRAG_PULL, winner.radius - 5),
     radiusMax: Math.min(MAX_DRAG, winner.radius + 4),

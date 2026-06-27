@@ -710,7 +710,15 @@
             const HEAT_COOL_RATE = 0.18;
             const SHADOW_COOL_RATE = 0.34;
             const DEFAULT_HEAT_RADIUS_MULTIPLIER = 2.35;
-            const SCORE_STORAGE_KEY = "gravity-sling-high-scores-v1";
+            const SCORE_BEST_POINTS = 100;
+            const SCORE_FULL_POWER_POINTS = 10;
+            const SCORE_BEST_LAUNCH_SPEEDS = [
+                19.765, 67.0912, 33.4907, 45.3497, 50.0713,
+                26.3533, 53.2557, 41.5065, 83.2326, 66.3226,
+                53.2557, 49.5223, 42.8242, 83.3424, 72.9109,
+                80.1581, 82.6836, 80.5973, 63.6872, 72.8011,
+            ];
+            const SCORE_STORAGE_KEY = "gravitas-high-scores-v2";
             const HINT_UNLOCK_LEVEL_INDEX = 4;
             const LANGUAGE_STORAGE_KEY = "solarExplorer.language";
             const supportedLanguages = new Set(["de", "en"]);
@@ -764,7 +772,7 @@
                     tutorials: [
                         {
                             title: "Start",
-                            copy: "Ziehe die Rakete vom Startpunkt weg, lass los und erreiche die grüne Zielzone. Je weniger Schub du gibst, desto mehr Punkte kannst du erreichen.",
+                            copy: "Ziehe die Rakete vom Startpunkt weg, lass los und erreiche die grüne Zielzone. Die sparsamste bekannte Lösung zählt 100 Punkte; ein Start mit voller Kraft zählt 10.",
                         },
                         {
                             title: "Schwerkraft",
@@ -912,7 +920,7 @@
                     tutorials: [
                         {
                             title: "Launch",
-                            copy: "Pull the rocket away from the start point, let go, and reach the green target zone. The less thrust you use, the more points you can earn.",
+                            copy: "Pull the rocket away from the start point, let go, and reach the green target zone. The most efficient known solution is worth 100 points; a full-power launch is worth 10.",
                         },
                         {
                             title: "Gravity",
@@ -1680,10 +1688,13 @@
             }
 
             function scoreForLaunchSpeed(launchSpeed, levelIndex) {
-                const speedRatio = clamp(launchSpeed / MAX_LAUNCH_SPEED, 0, 1);
-                const efficiency = Math.pow(1 - speedRatio, 1.35);
-                const levelBonus = (levelIndex + 1) * 100;
-                return Math.round(levelBonus + 1200 * efficiency);
+                const bestLaunchSpeed = SCORE_BEST_LAUNCH_SPEEDS[levelIndex] || (MAX_LAUNCH_SPEED * MIN_LAUNCH_RATIO);
+                if (bestLaunchSpeed >= MAX_LAUNCH_SPEED) return SCORE_BEST_POINTS;
+
+                const speed = clamp(launchSpeed, bestLaunchSpeed, MAX_LAUNCH_SPEED);
+                const progress = (speed - bestLaunchSpeed) / (MAX_LAUNCH_SPEED - bestLaunchSpeed);
+                const score = SCORE_BEST_POINTS + (SCORE_FULL_POWER_POINTS - SCORE_BEST_POINTS) * progress;
+                return Math.round(clamp(score, SCORE_FULL_POWER_POINTS, SCORE_BEST_POINTS));
             }
 
             function recordLevelScore() {
@@ -3019,6 +3030,9 @@
                         level: state.levelScore,
                         bestForLevel: state.highScores[state.levelIndex] || 0,
                         totalBest: totalHighScore(),
+                        bestSolutionPoints: SCORE_BEST_POINTS,
+                        fullPowerPoints: SCORE_FULL_POWER_POINTS,
+                        bestLaunchSpeedForLevel: Number((SCORE_BEST_LAUNCH_SPEEDS[state.levelIndex] || 0).toFixed(2)),
                         solvedLevels: state.highScores
                             .map((score, index) => score > 0 ? index + 1 : null)
                             .filter((levelNumber) => levelNumber !== null),

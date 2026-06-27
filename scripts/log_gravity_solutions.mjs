@@ -20,13 +20,21 @@ function numberConst(name) {
   return Number(new Function(`return ${match[1]};`)());
 }
 
-const levelsStart = html.indexOf("const levels = [");
-const levelsEnd = html.indexOf("];\n\n            const stars");
-if (levelsStart === -1 || levelsEnd === -1) {
+function arrayConst(name) {
+  const match = html.match(new RegExp(`const ${name} = (\\[[\\s\\S]*?\\]);`));
+  if (!match) throw new Error(`Missing const ${name}`);
+  return new Function(`return ${match[1]};`)();
+}
+
+const levelsMarker = "const levels = ";
+const levelsStart = html.indexOf(levelsMarker);
+const levelsArrayStart = levelsStart === -1 ? -1 : html.indexOf("[", levelsStart);
+const levelsEnd = levelsArrayStart === -1 ? -1 : html.indexOf("\n            ];", levelsArrayStart);
+if (levelsStart === -1 || levelsArrayStart === -1 || levelsEnd === -1) {
   throw new Error("Could not locate Gravity Sling levels array.");
 }
 
-const levelsSource = html.slice(levelsStart + "const levels = ".length, levelsEnd) + "]";
+const levelsSource = html.slice(levelsArrayStart, levelsEnd + "\n            ]".length);
 const levels = new Function(`return ${levelsSource};`)();
 
 const WORLD = { width: 540, height: 960 };
@@ -44,6 +52,9 @@ const SUN_HEAT_GAIN_RATE = numberConst("SUN_HEAT_GAIN_RATE");
 const HEAT_COOL_RATE = numberConst("HEAT_COOL_RATE");
 const SHADOW_COOL_RATE = numberConst("SHADOW_COOL_RATE");
 const DEFAULT_HEAT_RADIUS_MULTIPLIER = numberConst("DEFAULT_HEAT_RADIUS_MULTIPLIER");
+const SCORE_BEST_POINTS = numberConst("SCORE_BEST_POINTS");
+const SCORE_FULL_POWER_POINTS = numberConst("SCORE_FULL_POWER_POINTS");
+const SCORE_BEST_LAUNCH_SPEEDS = arrayConst("SCORE_BEST_LAUNCH_SPEEDS");
 const SOURCE_PREDICTION_TIME_RATIO = numberConst("PREDICTION_TIME_RATIO");
 const SCREENSHOT_PREDICTION_TIME_RATIO = process.env.GRAVITY_SOLUTION_PREDICTION_RATIO === undefined
   ? SOURCE_PREDICTION_TIME_RATIO
@@ -236,10 +247,13 @@ function checkProbeOutcome(probe, level, elapsed) {
 }
 
 function scoreForLaunchSpeed(launchSpeed, levelIndex) {
-  const speedRatio = clamp(launchSpeed / MAX_LAUNCH_SPEED, 0, 1);
-  const efficiency = Math.pow(1 - speedRatio, 1.35);
-  const levelBonus = (levelIndex + 1) * 100;
-  return Math.round(levelBonus + 1200 * efficiency);
+  const bestLaunchSpeed = SCORE_BEST_LAUNCH_SPEEDS[levelIndex] || (MAX_LAUNCH_SPEED * MIN_LAUNCH_RATIO);
+  if (bestLaunchSpeed >= MAX_LAUNCH_SPEED) return SCORE_BEST_POINTS;
+
+  const speed = clamp(launchSpeed, bestLaunchSpeed, MAX_LAUNCH_SPEED);
+  const progress = (speed - bestLaunchSpeed) / (MAX_LAUNCH_SPEED - bestLaunchSpeed);
+  const score = SCORE_BEST_POINTS + (SCORE_FULL_POWER_POINTS - SCORE_BEST_POINTS) * progress;
+  return Math.round(clamp(score, SCORE_FULL_POWER_POINTS, SCORE_BEST_POINTS));
 }
 
 function normalizedLaunchPull(pullX, pullY) {
@@ -352,7 +366,7 @@ function solutionRecord(level, levelIndex, pullX, pullY, result) {
 }
 
 function candidateRanges(winners) {
-  const sorted = [...winners].sort((a, b) => b.score - a.score);
+  const sorted = [...winners].sort((a, b) => b.score - a.score || a.launchSpeed - b.launchSpeed);
   return sorted.slice(0, 12).map((winner) => ({
     radiusMin: Math.max(MIN_DRAG_PULL, winner.radius - 5),
     radiusMax: Math.min(MAX_DRAG, winner.radius + 4),
@@ -518,6 +532,9 @@ function writeOutputs(solutions) {
       maxLaunchPull: MAX_LAUNCH_PULL,
       maxDrag: MAX_DRAG,
       launchPower: LAUNCH_POWER,
+      scoreBestPoints: SCORE_BEST_POINTS,
+      scoreFullPowerPoints: SCORE_FULL_POWER_POINTS,
+      scoreBestLaunchSpeeds: SCORE_BEST_LAUNCH_SPEEDS,
       launchDeadZoneRatio: LAUNCH_DEAD_ZONE_RATIO,
       minLaunchRatio: MIN_LAUNCH_RATIO,
       timeLimit: TIME_LIMIT,
@@ -535,11 +552,11 @@ function writeOutputs(solutions) {
   fs.writeFileSync(jsonPath, `${JSON.stringify(json, null, 2)}\n`);
 
   const lines = [
-    "# Gravity Sling Optimal Solutions",
+    "# Gravitas Optimal Solutions",
     "",
     `Generated from \`gravity_sling.html\` at \`${generatedAt}\`.`,
     "",
-    "The solver ranks winning shots by the same score formula as the game, so lower launch speed wins when a route still reaches the target. Screenshots show the aiming state for the logged drag point.",
+    "The solver ranks winning shots by the same score formula as the game: the logged best launch speed for each mission is worth 100 points, a 100% launch is worth 10 points, and intermediate launch speeds are linearly scaled between those anchors.",
     "",
     `Screenshot prediction ratio: \`${SCREENSHOT_PREDICTION_TIME_RATIO}\` (source game ratio: \`${SOURCE_PREDICTION_TIME_RATIO}\`).`,
     "",
