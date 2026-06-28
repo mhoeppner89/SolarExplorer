@@ -656,10 +656,12 @@
                             <button id="nextSolvedButton" class="mission-nav-button" title="Nächste gelöste Mission"
                                 aria-label="Nächste gelöste Mission">›</button>
                         </div>
-                        <div class="chip score-chip"><span id="scoreChipLabel">Punkte</span><strong><span id="scoreLabel">0</span>/<span
-                                    id="bestLabel">0</span></strong></div>
-                        <div class="chip status-chip"><span id="statusChipLabel">Status</span><strong id="stateLabel">Bereit</strong></div>
-                        <div class="chip"><span id="timeChipLabel">Restzeit</span><strong id="timeLabel">10.0s</strong></div>
+                        <div class="chip score-chip"><span id="scoreChipLabel">Punkte</span><strong><span
+                                    id="scoreLabel">0</span>/<span id="bestLabel">0</span></strong></div>
+                        <div class="chip status-chip"><span id="statusChipLabel">Status</span><strong
+                                id="stateLabel">Bereit</strong></div>
+                        <div class="chip"><span id="timeChipLabel">Restzeit</span><strong id="timeLabel">10.0s</strong>
+                        </div>
                         <div class="chip speed-chip">
                             <span id="speedChipLabel">Tempo</span>
                             <span class="speed-meter"><span id="speedFill" class="speed-meter__fill"></span></span>
@@ -709,6 +711,7 @@
             const SUN_HEAT_GAIN_RATE = 0.42;
             const HEAT_COOL_RATE = 0.18;
             const SHADOW_COOL_RATE = 0.34;
+            const OVERHEAT_BURST_DURATION = 2.2;
             const DEFAULT_HEAT_RADIUS_MULTIPLIER = 2.35;
             const SCORE_BEST_POINTS = 100;
             const SCORE_FULL_POWER_POINTS = 10;
@@ -1575,6 +1578,7 @@
                 message: "",
                 hintVisible: false,
                 lastOutcome: "none",
+                overheatBurst: null,
                 accumulator: 0,
                 viewMode: "portrait",
             };
@@ -1642,6 +1646,7 @@
                 state.elapsed = 0;
                 state.lastOutcome = "none";
                 state.hintVisible = false;
+                state.overheatBurst = null;
                 state.message = keepMessage ? state.message : "";
                 updateUi();
                 render();
@@ -1738,6 +1743,169 @@
                 state.hintVisible = false;
                 state.lastOutcome = outcome;
                 updateUi();
+            }
+
+            function burstJitter(seed) {
+                const value = Math.sin(seed * 12.9898) * 43758.5453;
+                return value - Math.floor(value);
+            }
+
+            function isDestructionOutcome(outcome) {
+                return outcome === "overheated" ||
+                    outcome === "hazard_collision" ||
+                    outcome === "planet_collision";
+            }
+
+            function burstPalette(kind) {
+                if (kind === "planet") {
+                    return {
+                        nose: "#ff7642",
+                        hull: "#e7f5ff",
+                        wing: "#d84732",
+                        core: "#4b5570",
+                        window: "#91dcff",
+                        glow: "#ffd36a",
+                        flashInner: "255, 248, 188",
+                        flashMid: "255, 139, 72",
+                        sparkWarm: "255, 234, 132",
+                        sparkHot: "255, 121, 62",
+                        smokeInner: "116, 100, 84",
+                        smokeOuter: "67, 58, 58",
+                        chipColors: ["#d7c9ae", "#a89476", "#efe0ba", "#8f8178"],
+                        fragmentSpeed: 1.08,
+                        sparkCount: 54,
+                        chipCount: 28,
+                    };
+                }
+                if (kind === "hazard") {
+                    return {
+                        nose: "#ff6842",
+                        hull: "#d7e1ec",
+                        wing: "#cc3e2f",
+                        core: "#535766",
+                        window: "#8ed8ff",
+                        glow: "#ffb65a",
+                        flashInner: "255, 236, 162",
+                        flashMid: "255, 118, 52",
+                        sparkWarm: "255, 222, 104",
+                        sparkHot: "255, 96, 46",
+                        smokeInner: "111, 105, 100",
+                        smokeOuter: "61, 54, 55",
+                        chipColors: ["#9c8b7a", "#7e7774", "#b8a28b", "#d3c3a5"],
+                        fragmentSpeed: 1.18,
+                        sparkCount: 58,
+                        chipCount: 34,
+                    };
+                }
+                return {
+                    nose: "#ff5d42",
+                    hull: "#dff7ff",
+                    wing: "#ff4c2f",
+                    core: "#314a70",
+                    window: "#7fc8ff",
+                    glow: "#ffd35c",
+                    flashInner: "255, 248, 178",
+                    flashMid: "255, 111, 54",
+                    sparkWarm: "255, 236, 126",
+                    sparkHot: "255, 104, 52",
+                    smokeInner: "103, 113, 130",
+                    smokeOuter: "72, 74, 88",
+                    chipColors: [],
+                    fragmentSpeed: 1,
+                    sparkCount: 62,
+                    chipCount: 0,
+                };
+            }
+
+            function spawnOverheatBurst(kind = "overheat") {
+                const palette = burstPalette(kind);
+                const speed = shipSpeed();
+                const heading = speed > 1 ? Math.atan2(state.ship.vy, state.ship.vx) : -0.35;
+                const inheritedVx = state.ship.vx * 0.08;
+                const inheritedVy = state.ship.vy * 0.08;
+                const fragmentShapes = [
+                    { color: palette.nose, glow: palette.glow, offset: 0.02, speed: 86, spin: 5.8, points: [[16, 0], [4, -7], [5, 7]] },
+                    { color: palette.hull, glow: "#ff9c42", offset: 2.72, speed: 66, spin: -4.2, points: [[6, -8], [-8, -8], [-14, -1], [0, 7]] },
+                    { color: palette.wing, glow: "#ffce57", offset: -2.55, speed: 76, spin: 4.6, points: [[-8, -8], [-19, -14], [-13, -2]] },
+                    { color: palette.wing, glow: "#ffce57", offset: 2.22, speed: 80, spin: -5.4, points: [[-8, 8], [-19, 14], [-13, 2]] },
+                    { color: palette.core, glow: "#ff7438", offset: 3.18, speed: 62, spin: 6.5, points: [[-10, -5], [-20, 0], [-10, 5], [-4, 0]] },
+                    { color: palette.window, glow: "#c9f7ff", offset: -0.86, speed: 58, spin: -3.6, points: [[-5, -5], [3, -4], [5, 2], [-2, 5]] },
+                ];
+                const fragments = fragmentShapes.map((shape, index) => {
+                    const dir = heading + shape.offset + (burstJitter(index + 4) - 0.5) * 0.42;
+                    const burstSpeed = (shape.speed + burstJitter(index + 19) * 18) * palette.fragmentSpeed;
+                    return {
+                        ...shape,
+                        x: state.ship.x,
+                        y: state.ship.y,
+                        vx: Math.cos(dir) * burstSpeed + inheritedVx,
+                        vy: Math.sin(dir) * burstSpeed + inheritedVy,
+                        rotation: heading + (burstJitter(index + 31) - 0.5) * 0.8,
+                    };
+                });
+                const sparks = Array.from({ length: palette.sparkCount }, (_, index) => {
+                    const dir = heading + Math.PI + (burstJitter(index + 100) - 0.5) * Math.PI * 1.9;
+                    const burstSpeed = 105 + burstJitter(index + 150) * 185;
+                    return {
+                        x: state.ship.x,
+                        y: state.ship.y,
+                        vx: Math.cos(dir) * burstSpeed + inheritedVx * 0.4,
+                        vy: Math.sin(dir) * burstSpeed + inheritedVy * 0.4,
+                        size: 1.8 + burstJitter(index + 200) * 3.1,
+                        life: 0.72 + burstJitter(index + 250) * 1.05,
+                        hue: burstJitter(index + 300),
+                    };
+                });
+                const chips = Array.from({ length: palette.chipCount }, (_, index) => {
+                    const dir = heading + Math.PI + (burstJitter(index + 700) - 0.5) * Math.PI * 2.25;
+                    const burstSpeed = 36 + burstJitter(index + 750) * 105;
+                    return {
+                        x: state.ship.x,
+                        y: state.ship.y,
+                        vx: Math.cos(dir) * burstSpeed + inheritedVx * 0.25,
+                        vy: Math.sin(dir) * burstSpeed + inheritedVy * 0.25,
+                        size: 2.2 + burstJitter(index + 800) * 4.8,
+                        life: 0.95 + burstJitter(index + 850) * 0.9,
+                        rotation: burstJitter(index + 900) * Math.PI,
+                        spin: -4 + burstJitter(index + 950) * 8,
+                        color: palette.chipColors[index % palette.chipColors.length],
+                    };
+                });
+                const smoke = Array.from({ length: 12 }, (_, index) => {
+                    const dir = heading + Math.PI + (burstJitter(index + 400) - 0.5) * Math.PI;
+                    const burstSpeed = 12 + burstJitter(index + 450) * 34;
+                    return {
+                        x: state.ship.x,
+                        y: state.ship.y,
+                        vx: Math.cos(dir) * burstSpeed,
+                        vy: Math.sin(dir) * burstSpeed - 10 - burstJitter(index + 500) * 18,
+                        radius: 8 + burstJitter(index + 550) * 16,
+                        delay: burstJitter(index + 600) * 0.35,
+                    };
+                });
+                state.overheatBurst = {
+                    active: true,
+                    age: 0,
+                    kind,
+                    x: state.ship.x,
+                    y: state.ship.y,
+                    heading,
+                    duration: OVERHEAT_BURST_DURATION,
+                    palette,
+                    fragments,
+                    sparks,
+                    chips,
+                    smoke,
+                };
+            }
+
+            function updateOverheatBurst(dt) {
+                if (!state.overheatBurst || !state.overheatBurst.active) return;
+                state.overheatBurst.age += dt;
+                if (state.overheatBurst.age >= state.overheatBurst.duration) {
+                    state.overheatBurst.active = false;
+                    state.overheatBurst.age = state.overheatBurst.duration;
+                }
             }
 
             function shipSpeed() {
@@ -2070,6 +2238,12 @@
                         outcome.message = state.levelIndex === levels.length - 1
                             ? copy.messages.scoreFinal(score.score, bestText)
                             : copy.messages.scoreNext(score.score, bestText);
+                    } else if (outcome.outcome === "overheated") {
+                        spawnOverheatBurst("overheat");
+                    } else if (outcome.outcome === "hazard_collision") {
+                        spawnOverheatBurst("hazard");
+                    } else if (outcome.outcome === "planet_collision") {
+                        spawnOverheatBurst("planet");
                     }
                     setMode(outcome.mode, outcome.message, outcome.outcome);
                     return;
@@ -2697,6 +2871,7 @@
             }
 
             function drawShip() {
+                if (state.overheatBurst && isDestructionOutcome(state.lastOutcome)) return;
                 ctx.save();
                 ctx.translate(state.ship.x, state.ship.y);
                 const angle = state.mode === "flying" ? Math.atan2(state.ship.vy, state.ship.vx) : -0.35;
@@ -2785,6 +2960,161 @@
                 ctx.restore();
             }
 
+            function drawOverheatBurst() {
+                const burst = state.overheatBurst;
+                if (!burst) return;
+                const t = burst.age;
+                const progress = clamp(t / burst.duration, 0, 1);
+                const flash = clamp(1 - progress * 3.2, 0, 1);
+                const palette = burst.palette || burstPalette("overheat");
+                const isImpact = burst.kind === "hazard" || burst.kind === "planet";
+
+                ctx.save();
+                ctx.globalCompositeOperation = "lighter";
+                if (flash > 0) {
+                    const radius = 34 + progress * 132;
+                    const glow = ctx.createRadialGradient(burst.x, burst.y, 0, burst.x, burst.y, radius);
+                    glow.addColorStop(0, `rgba(${palette.flashInner}, ${0.76 * flash})`);
+                    glow.addColorStop(0.28, `rgba(${palette.flashMid}, ${0.5 * flash})`);
+                    glow.addColorStop(1, "rgba(255, 60, 34, 0)");
+                    ctx.fillStyle = glow;
+                    ctx.beginPath();
+                    ctx.arc(burst.x, burst.y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = `rgba(255, 211, 92, ${0.72 * flash})`;
+                    ctx.lineWidth = 3 + flash * 6;
+                    ctx.beginPath();
+                    ctx.arc(burst.x, burst.y, 18 + progress * 120, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    if (isImpact) {
+                        ctx.lineWidth = 2.5 + flash * 3.5;
+                        ctx.strokeStyle = `rgba(${palette.flashInner}, ${0.42 * flash})`;
+                        for (let i = 0; i < 9; i += 1) {
+                            const ray = burst.heading + Math.PI + (i / 9 - 0.5) * Math.PI * 1.35;
+                            const inner = 13 + progress * 28;
+                            const outer = 56 + progress * 118 + burstJitter(i + 1200) * 28;
+                            ctx.beginPath();
+                            ctx.moveTo(burst.x + Math.cos(ray) * inner, burst.y + Math.sin(ray) * inner);
+                            ctx.lineTo(burst.x + Math.cos(ray) * outer, burst.y + Math.sin(ray) * outer);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                for (const spark of burst.sparks) {
+                    const sparkProgress = clamp(t / spark.life, 0, 1);
+                    if (sparkProgress >= 1) continue;
+                    const alpha = Math.pow(1 - sparkProgress, 1.8);
+                    const x = spark.x + spark.vx * t;
+                    const y = spark.y + spark.vy * t + 34 * t * t;
+                    const tailX = x - spark.vx * 0.045;
+                    const tailY = y - spark.vy * 0.045;
+                    ctx.strokeStyle = spark.hue > 0.55
+                        ? `rgba(${palette.sparkWarm}, ${alpha})`
+                        : `rgba(${palette.sparkHot}, ${alpha})`;
+                    ctx.lineWidth = spark.size;
+                    ctx.lineCap = "round";
+                    ctx.beginPath();
+                    ctx.moveTo(tailX, tailY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                }
+
+                for (const fragment of burst.fragments) {
+                    const fragmentAlpha = clamp(1 - progress * 0.86, 0, 1);
+                    const x = fragment.x + fragment.vx * t;
+                    const y = fragment.y + fragment.vy * t + 13 * t * t;
+                    const tailX = x - fragment.vx * 0.12;
+                    const tailY = y - fragment.vy * 0.12;
+                    ctx.strokeStyle = `rgba(255, 91, 46, ${0.72 * fragmentAlpha})`;
+                    ctx.lineWidth = 11;
+                    ctx.lineCap = "round";
+                    ctx.beginPath();
+                    ctx.moveTo(tailX, tailY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.strokeStyle = `rgba(255, 226, 96, ${0.62 * fragmentAlpha})`;
+                    ctx.lineWidth = 4.5;
+                    ctx.beginPath();
+                    ctx.moveTo((tailX + x) / 2, (tailY + y) / 2);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                ctx.save();
+                for (const chip of burst.chips || []) {
+                    const chipProgress = clamp(t / chip.life, 0, 1);
+                    if (chipProgress >= 1) continue;
+                    const alpha = Math.pow(1 - chipProgress, 1.45);
+                    const x = chip.x + chip.vx * t;
+                    const y = chip.y + chip.vy * t + 48 * t * t;
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(chip.rotation + chip.spin * t);
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = chip.color;
+                    ctx.strokeStyle = "rgba(8, 10, 18, 0.5)";
+                    ctx.lineWidth = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(-chip.size * 0.7, -chip.size * 0.45);
+                    ctx.lineTo(chip.size * 0.64, -chip.size * 0.25);
+                    ctx.lineTo(chip.size * 0.44, chip.size * 0.6);
+                    ctx.lineTo(-chip.size * 0.5, chip.size * 0.36);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                for (const puff of burst.smoke) {
+                    const localT = t - puff.delay;
+                    if (localT <= 0) continue;
+                    const smokeProgress = clamp(localT / (burst.duration - puff.delay), 0, 1);
+                    const alpha = 0.26 * Math.pow(1 - smokeProgress, 1.3);
+                    const x = puff.x + puff.vx * localT;
+                    const y = puff.y + puff.vy * localT - 8 * localT * localT;
+                    const radius = puff.radius * (0.55 + smokeProgress * 1.85);
+                    const smokeGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    smokeGradient.addColorStop(0, `rgba(${palette.smokeInner}, ${alpha})`);
+                    smokeGradient.addColorStop(0.52, `rgba(${palette.smokeOuter}, ${alpha * 0.55})`);
+                    smokeGradient.addColorStop(1, "rgba(31, 28, 34, 0)");
+                    ctx.fillStyle = smokeGradient;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                for (const fragment of burst.fragments) {
+                    const fragmentAlpha = clamp(1 - progress * 0.72, 0, 1);
+                    if (fragmentAlpha <= 0) continue;
+                    const x = fragment.x + fragment.vx * t;
+                    const y = fragment.y + fragment.vy * t + 13 * t * t;
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(fragment.rotation + fragment.spin * t);
+                    ctx.scale(1.42 * (1 - progress * 0.18), 1.42 * (1 - progress * 0.18));
+                    ctx.globalAlpha = fragmentAlpha;
+                    ctx.shadowColor = fragment.glow;
+                    ctx.shadowBlur = 12 * fragmentAlpha;
+                    ctx.fillStyle = fragment.color;
+                    ctx.strokeStyle = "rgba(6, 13, 26, 0.76)";
+                    ctx.lineWidth = 1.35;
+                    ctx.beginPath();
+                    fragment.points.forEach(([px, py], index) => {
+                        if (index === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    });
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                ctx.restore();
+            }
+
             function drawLevelLabels() {
                 const level = currentLevel();
                 ctx.save();
@@ -2832,6 +3162,7 @@
                 drawTrail();
                 drawPrediction();
                 drawShip();
+                drawOverheatBurst();
             }
 
             function readyMessageHtml(level) {
@@ -2952,6 +3283,7 @@
                     step(FIXED_DT);
                     state.accumulator -= FIXED_DT;
                 }
+                updateOverheatBurst(delta);
                 render();
                 requestAnimationFrame(frame);
             }
@@ -3071,6 +3403,15 @@
                     timeLimit: TIME_LIMIT,
                     realTimeLimit: REAL_TIME_LIMIT,
                     flightPlaybackSpeed: FLIGHT_PLAYBACK_SPEED,
+                    overheatBurst: state.overheatBurst ? {
+                        active: state.overheatBurst.active,
+                        age: Number(state.overheatBurst.age.toFixed(2)),
+                        kind: state.overheatBurst.kind,
+                        fragments: state.overheatBurst.fragments.length,
+                        sparks: state.overheatBurst.sparks.length,
+                        chips: (state.overheatBurst.chips || []).length,
+                        smoke: state.overheatBurst.smoke.length,
+                    } : null,
                     messageRestartVisible: false,
                     failureMessageVisible: isFailureMode(state.mode),
                     hintVisible: state.mode === "ready" && state.hintVisible,
@@ -3087,7 +3428,10 @@
             window.render_game_to_text = renderGameToText;
             window.advanceTime = (ms) => {
                 const steps = Math.max(1, Math.round(ms / (1000 / 60)));
-                for (let i = 0; i < steps; i += 1) step(FIXED_DT);
+                for (let i = 0; i < steps; i += 1) {
+                    step(FIXED_DT);
+                    updateOverheatBurst(FIXED_DT);
+                }
                 render();
                 return renderGameToText();
             };
