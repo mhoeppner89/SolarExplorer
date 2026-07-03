@@ -52,6 +52,7 @@ const SUN_HEAT_GAIN_RATE = numberConst("SUN_HEAT_GAIN_RATE");
 const HEAT_COOL_RATE = numberConst("HEAT_COOL_RATE");
 const SHADOW_COOL_RATE = numberConst("SHADOW_COOL_RATE");
 const DEFAULT_HEAT_RADIUS_MULTIPLIER = numberConst("DEFAULT_HEAT_RADIUS_MULTIPLIER");
+const GATE_CAPTURE_MARGIN = numberConst("GATE_CAPTURE_MARGIN");
 const SCORE_BEST_POINTS = numberConst("SCORE_BEST_POINTS");
 const SCORE_FULL_POWER_POINTS = numberConst("SCORE_FULL_POWER_POINTS");
 const SCORE_BEST_LAUNCH_SPEEDS = arrayConst("SCORE_BEST_LAUNCH_SPEEDS");
@@ -59,6 +60,8 @@ const SOURCE_PREDICTION_TIME_RATIO = numberConst("PREDICTION_TIME_RATIO");
 const SCREENSHOT_PREDICTION_TIME_RATIO = process.env.GRAVITY_SOLUTION_PREDICTION_RATIO === undefined
   ? SOURCE_PREDICTION_TIME_RATIO
   : Number(process.env.GRAVITY_SOLUTION_PREDICTION_RATIO);
+const REQUESTED_LEVELS = parseRequestedLevels(process.env.SOLUTION_LEVELS || process.env.SOLUTION_LEVEL || "");
+const ROBUST_SCORE_TOLERANCE = 5;
 const LAUNCH_DEAD_ZONE_RATIO = numberConst("LAUNCH_DEAD_ZONE_RATIO");
 const MIN_LAUNCH_RATIO = numberConst("MIN_LAUNCH_RATIO");
 const DEAD_DRAG_PULL = MAX_DRAG * LAUNCH_DEAD_ZONE_RATIO;
@@ -214,7 +217,55 @@ function applyGravity(entity, level, dt) {
   return { atmosphereTime, maxAtmosphereStrength };
 }
 
-function checkProbeOutcome(probe, level, elapsed) {
+function routeGatesFor(level) {
+  return level.gates || [];
+}
+
+function routeGateId(gate, index) {
+  return gate.id || `gate-${index + 1}`;
+}
+
+function createRouteGateState(level) {
+  return routeGatesFor(level).reduce((gateState, gate, index) => {
+    gateState[routeGateId(gate, index)] = false;
+    return gateState;
+  }, {});
+}
+
+function routeGateCollected(routeGateState, gate, index) {
+  return Boolean(routeGateState && routeGateState[routeGateId(gate, index)]);
+}
+
+function nextRequiredRouteGateIndex(level, routeGateState) {
+  return routeGatesFor(level).findIndex((gate, index) => (
+    gate.required !== false && !routeGateCollected(routeGateState, gate, index)
+  ));
+}
+
+function canCollectRouteGate(level, routeGateState, gate, index) {
+  if (!level.orderedGates || gate.required === false) return true;
+  return index === nextRequiredRouteGateIndex(level, routeGateState);
+}
+
+function updateRouteGates(probe, level, routeGateState) {
+  for (const [index, gate] of routeGatesFor(level).entries()) {
+    const id = routeGateId(gate, index);
+    if (routeGateState[id]) continue;
+    if (!canCollectRouteGate(level, routeGateState, gate, index)) continue;
+    const captureRadius = (gate.captureRadius || gate.r || 24) + SHIP_RADIUS + GATE_CAPTURE_MARGIN;
+    if (length(probe.x - gate.x, probe.y - gate.y) <= captureRadius) {
+      routeGateState[id] = true;
+    }
+  }
+}
+
+function allRequiredRouteGatesCollected(level, routeGateState) {
+  return routeGatesFor(level).every((gate, index) => (
+    gate.required === false || routeGateCollected(routeGateState, gate, index)
+  ));
+}
+
+function checkProbeOutcome(probe, level, elapsed, routeGateState = createRouteGateState(level)) {
   for (const planet of level.planets) {
     if (length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.r) {
       return "planet_collision";
@@ -231,6 +282,7 @@ function checkProbeOutcome(probe, level, elapsed) {
 
   const target = level.target;
   if (length(probe.x - target.x, probe.y - target.y) <= SHIP_RADIUS + target.r) {
+    if (!allRequiredRouteGatesCollected(level, routeGateState)) return null;
     if (target.maxSpeed && length(probe.vx, probe.vy) > target.maxSpeed) return "too_fast";
     return "target_reached";
   }
@@ -291,6 +343,7 @@ function simulate(level, pullX, pullY) {
   let maxHeatExposure = 0;
   let shadowTime = 0;
   let minTargetDistance = Infinity;
+  const routeGateState = createRouteGateState(level);
   const steps = Math.ceil(TIME_LIMIT / FIXED_DT);
 
   for (let i = 0; i < steps; i += 1) {
@@ -303,8 +356,9 @@ function simulate(level, pullX, pullY) {
     maxHeat = Math.max(maxHeat, probe.heat);
     maxHeatExposure = Math.max(maxHeatExposure, thermal.exposure);
     minTargetDistance = Math.min(minTargetDistance, length(probe.x - level.target.x, probe.y - level.target.y));
+    updateRouteGates(probe, level, routeGateState);
 
-    const outcome = checkProbeOutcome(probe, level, i * FIXED_DT);
+    const outcome = checkProbeOutcome(probe, level, i * FIXED_DT, routeGateState);
     if (outcome) {
       return {
         outcome,
@@ -393,6 +447,74 @@ function scan(level, levelIndex, ranges, radiusStep, angleStep) {
   return winners;
 }
 
+function isWin(level, radius, angleDeg) {
+  const angle = angleDeg * Math.PI / 180;
+  return simulate(level, Math.cos(angle) * radius, Math.sin(angle) * radius).outcome === "target_reached";
+}
+
+function contiguousTolerance(test, step, max) {
+  let negative = 0;
+  let positive = 0;
+  for (let delta = step; delta <= max + 1e-9; delta += step) {
+    if (!test(-delta)) break;
+    negative = delta;
+  }
+  for (let delta = step; delta <= max + 1e-9; delta += step) {
+    if (!test(delta)) break;
+    positive = delta;
+  }
+  return { negative, positive };
+}
+
+function solutionRobustness(level, solution) {
+  const angleTolerance = contiguousTolerance(
+    (delta) => isWin(level, solution.radius, solution.angleDeg + delta),
+    0.5,
+    20,
+  );
+  const speedTolerance = contiguousTolerance(
+    (percent) => isWin(level, solution.radius * (1 + percent / 100), solution.angleDeg),
+    1,
+    30,
+  );
+  const angleUsable = Math.max(angleTolerance.negative, angleTolerance.positive);
+  const speedUsable = Math.max(speedTolerance.negative, speedTolerance.positive);
+  return {
+    angleUsable,
+    speedUsable,
+    balanced: Math.min(angleUsable, speedUsable),
+    total: angleUsable + speedUsable,
+  };
+}
+
+function sortWinners(level, winners) {
+  const bestScore = Math.max(...winners.map((winner) => winner.score));
+  const robustness = new Map();
+  const robust = (winner) => {
+    const key = `${winner.radius.toFixed(3)}:${winner.angleDeg.toFixed(3)}`;
+    if (!robustness.has(key)) robustness.set(key, solutionRobustness(level, winner));
+    return robustness.get(key);
+  };
+  winners.sort((a, b) => {
+    const aNearBest = a.score >= bestScore - ROBUST_SCORE_TOLERANCE;
+    const bNearBest = b.score >= bestScore - ROBUST_SCORE_TOLERANCE;
+    if (aNearBest !== bNearBest) return bNearBest - aNearBest;
+
+    const aRobust = robust(a);
+    const bRobust = robust(b);
+    return (
+      bRobust.balanced - aRobust.balanced ||
+      bRobust.total - aRobust.total ||
+      bRobust.angleUsable - aRobust.angleUsable ||
+      bRobust.speedUsable - aRobust.speedUsable ||
+      b.score - a.score ||
+      a.launchSpeed - b.launchSpeed ||
+      a.elapsed - b.elapsed ||
+      a.arrivalSpeed - b.arrivalSpeed
+    );
+  });
+}
+
 function dedupeSolutions(solutions) {
   const seen = new Set();
   const deduped = [];
@@ -422,12 +544,7 @@ function findBestSolution(level, levelIndex) {
     ...scan(level, levelIndex, candidateRanges(winners), 0.2, 0.2),
   ]);
 
-  winners.sort((a, b) => (
-    b.score - a.score ||
-    a.launchSpeed - b.launchSpeed ||
-    a.elapsed - b.elapsed ||
-    a.arrivalSpeed - b.arrivalSpeed
-  ));
+  sortWinners(level, winners);
 
   return winners[0];
 }
@@ -585,15 +702,54 @@ function writeOutputs(solutions) {
   fs.writeFileSync(markdownPath, `${lines.join("\n")}\n`);
 }
 
+function parseRequestedLevels(value) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const levels = new Set();
+  for (const part of trimmed.split(",")) {
+    const match = part.trim().match(/^(\d+)(?:-(\d+))?$/);
+    if (!match) throw new Error(`Invalid SOLUTION_LEVELS entry: ${part}`);
+    const start = Number(match[1]);
+    const end = Number(match[2] || match[1]);
+    if (start < 1 || end < start) throw new Error(`Invalid SOLUTION_LEVELS range: ${part}`);
+    for (let level = start; level <= end; level += 1) levels.add(level);
+  }
+  return levels;
+}
+
+function mergeRequestedSolutions(solvedSolutions) {
+  if (!REQUESTED_LEVELS) return solvedSolutions;
+  if (!fs.existsSync(jsonPath)) {
+    throw new Error("Targeted logging requires an existing solutions.json to merge with.");
+  }
+  const previous = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+  const previousByLevel = new Map(previous.solutions.map((solution) => [solution.level, solution]));
+  const solvedByLevel = new Map(solvedSolutions.map((solution) => [solution.level, solution]));
+  return levels.map((level, index) => {
+    const levelNumber = index + 1;
+    if (solvedByLevel.has(levelNumber)) return solvedByLevel.get(levelNumber);
+    if (previousByLevel.has(levelNumber)) return previousByLevel.get(levelNumber);
+    throw new Error(`Missing solution for mission ${levelNumber}: ${level.name}`);
+  });
+}
+
 fs.mkdirSync(screenshotDir, { recursive: true });
 
-const solutions = levels.map((level, index) => {
+const levelEntries = levels
+  .map((level, index) => ({ level, index }))
+  .filter(({ index }) => !REQUESTED_LEVELS || REQUESTED_LEVELS.has(index + 1));
+
+if (!levelEntries.length) {
+  throw new Error("No missions selected for solution logging.");
+}
+
+const solvedSolutions = levelEntries.map(({ level, index }) => {
   console.log(`Solving mission ${index + 1}/${levels.length}: ${level.name}`);
   return findBestSolution(level, index);
 });
 
-await renderSolutionScreenshots(solutions);
-writeOutputs(solutions);
+await renderSolutionScreenshots(solvedSolutions);
+writeOutputs(mergeRequestedSolutions(solvedSolutions));
 
 console.log(`Wrote ${markdownPath}`);
 console.log(`Wrote ${jsonPath}`);

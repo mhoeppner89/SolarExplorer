@@ -234,6 +234,7 @@
         .message {
             align-self: end;
             justify-self: start;
+            box-sizing: border-box;
             max-width: min(31rem, calc(100% - 1rem));
             margin: 0 0 0.12rem;
             padding: 0.66rem 0.74rem;
@@ -358,7 +359,7 @@
             left: 50%;
             top: 50%;
             max-width: min(21rem, calc(100% - 1.5rem));
-            width: max-content;
+            width: min(21rem, calc(100% - 1.5rem));
             margin: 0;
             border-left-color: rgba(255, 107, 83, 0.92);
             text-align: center;
@@ -712,6 +713,9 @@
             const HEAT_COOL_RATE = 0.18;
             const SHADOW_COOL_RATE = 0.34;
             const OVERHEAT_BURST_DURATION = 2.2;
+            const TIMEOUT_DRIFT_DURATION = 2.6;
+            const GHOST_TRAIL_MAX_POINTS = 180;
+            const GATE_CAPTURE_MARGIN = 8;
             const DEFAULT_HEAT_RADIUS_MULTIPLIER = 2.35;
             const SCORE_BEST_POINTS = 100;
             const SCORE_FULL_POWER_POINTS = 10;
@@ -720,6 +724,7 @@
                 26.3533, 53.2557, 41.5065, 83.2326, 66.3226,
                 53.2557, 49.5223, 42.8242, 83.3424, 72.9109,
                 80.1581, 82.6836, 80.5973, 63.6872, 72.8011,
+                68.1893, 66.652, 119.2488, 43.483, 99.374,
             ];
             const SCORE_STORAGE_KEY = "gravitas-high-scores-v2";
             const HINT_UNLOCK_LEVEL_INDEX = 4;
@@ -755,6 +760,7 @@
                         time: "Restzeit",
                         speed: "Tempo",
                         target: "Ziel",
+                        gate: "Satellit",
                         gravity: "Schwerkraft",
                         hazard: "Gefahr",
                         debrisField: "Trümmerfeld",
@@ -814,7 +820,12 @@
                         "Schattennadel",
                         "Kreiselstaffel",
                         "Atmosphären-Slalom",
-                        "Dreifach-Finale"
+                        "Dreifach-Finale",
+                        "Neptun-Relais",
+                        "Bumerang-Bahn",
+                        "Polsprung",
+                        "Retrograd-Schleife",
+                        "Doppelstern-Knoten"
                     ],
                     levelHints: [
                         "Starte sehr sanft nach rechts oben. Die direkte Linie läuft links am Brocken vorbei und trifft den Zielkreis von unten.",
@@ -836,7 +847,12 @@
                         "Ziehe links an der Sonne hoch, dann quer zwischen Mars und Erde. Die obere Schleife kommt zurück in Erdes Atmosphäre und rollt langsam ins Ziel.",
                         "Von rechts unten zuerst um Neptun nach außen. Danach diagonal zwischen Jupiter und Saturn hindurch; Saturn dreht die Linie links oben ins Ziel.",
                         "Großer linker Slalom: Jupiter hebt dich außen, dann führt die Bahn durch Erdes Atmosphäre nach oben. Pluto wird von links angeflogen und bremst.",
-                        "Weit links aus dem Sonnenfeld heraus, dann diagonal durch die Lücke zwischen Saturn und Jupiter. Pluto oben rechts weich von links unten treffen."
+                        "Weit links aus dem Sonnenfeld heraus, dann diagonal durch die Lücke zwischen Saturn und Jupiter. Pluto oben rechts weich von links unten treffen.",
+                        "Sammle zuerst den Satelliten links unter Neptun. Danach zieht Neptun die Rakete wie in einer großen ersten Ablenkung rechts an sich vorbei in die Zielzone.",
+                        "Ziehe flach nach rechts. Jupiter hebt die Rakete in den hohen Bumerang; sammle oben und beim Rückfall die Relais, bevor du tief rechts einläufst.",
+                        "Starte vom oberen linken Pol in den Innenraum. Die Bahn taucht weit nach unten, sammelt das äußere Relais und steigt dann über Mars zurück zum Ziel.",
+                        "Vom oberen rechten Rand geht es erst nach links unten um Jupiter. Sammle dann das rechte Relais und lass die Bahn in einer zweiten Schleife zurückfallen.",
+                        "Ziehe zuerst die große Schleife links um Jupiter. Danach trägt Saturn die Rakete in die zweite große Schleife nach oben rechts; erst nach den Relais zurück ins Ziel fallen."
                     ],
                     statusLabels: {
                         ready: "Bereit",
@@ -856,6 +872,7 @@
                         hazardCollision: "Kollision mit Trümmern. Neue Flugbahn?",
                         overheated: "Überhitzt. Suche Schatten oder verlasse die Sonnennähe früher.",
                         tooFast: "Zu schnell am Ziel. Nutze die Schwerkraft zum Abbremsen.",
+                        gateMissing: "Sammle zuerst den Satelliten, dann öffnet sich die Zielzone.",
                         finalTarget: "Letzte Bahn erreicht. Alle Missionen geschafft.",
                         targetReached: "Mission geschafft. Bereit für den nächsten Kurs?",
                         timeout: "Das Signal ist abgelaufen. Die Rakete war zu lange unterwegs.",
@@ -881,6 +898,8 @@
                         Neptun: "Neptun",
                         Pluto: "Pluto",
                         Ringbrocken: "Ringbrocken",
+                        Relaisstein: "Relaisstein",
+                        Satellit: "Satellit",
                         Saturn: "Saturn",
                         Schattenstein: "Schattenstein",
                         Slalomtor: "Slalomtor",
@@ -903,6 +922,7 @@
                         time: "Time",
                         speed: "Speed",
                         target: "Target",
+                        gate: "Satellite",
                         gravity: "Gravity",
                         hazard: "Hazard",
                         debrisField: "Debris field",
@@ -962,7 +982,12 @@
                         "Shadow Needle",
                         "Spin Relay",
                         "Atmosphere Slalom",
-                        "Triple Finale"
+                        "Triple Finale",
+                        "Neptune Relay",
+                        "Boomerang Run",
+                        "Pole Shift",
+                        "Retrograde Loop",
+                        "Binary Knot"
                     ],
                     levelHints: [
                         "Launch very gently up and right. The direct line passes left of the rock and reaches the target circle from below.",
@@ -984,7 +1009,12 @@
                         "Pull up along the left side of the Sun, then cross between Mars and Earth. The upper loop returns into Earth's atmosphere and rolls slowly into the target.",
                         "From the lower right, go around Neptune outward first. Then pass diagonally between Jupiter and Saturn; Saturn turns the line into the upper-left target.",
                         "Make a broad left slalom: Jupiter lifts you outside, then the path runs through Earth's atmosphere upward. Approach Pluto from the left so it brakes you.",
-                        "Move far left out of the solar field, then cut diagonally through the gap between Saturn and Jupiter. Meet upper-right Pluto softly from below-left."
+                        "Move far left out of the solar field, then cut diagonally through the gap between Saturn and Jupiter. Meet upper-right Pluto softly from below-left.",
+                        "Collect the satellite below-left of Neptune first. Then Neptune bends the rocket past its right side into the target, like a larger first deflection.",
+                        "Pull almost flat to the right. Jupiter lifts the rocket into the high boomerang; collect the upper and falling relays before entering low on the right.",
+                        "Launch from the upper-left pole into the inner field. The path dives far down, collects the outer relay, then climbs back over Mars toward the target.",
+                        "From the upper-right edge, go down-left around Jupiter first. Then collect the right relay and let the path fall back through a second loop.",
+                        "Draw the first wide loop around Jupiter on the left. Then let Saturn carry the rocket into the second big loop up-right before dropping back into the target."
                     ],
                     statusLabels: {
                         ready: "Ready",
@@ -1004,6 +1034,7 @@
                         hazardCollision: "Collision with debris. Try a new flight path?",
                         overheated: "Overheated. Find shade or leave the solar heat sooner.",
                         tooFast: "Too fast at the target. Use gravity to slow down.",
+                        gateMissing: "Collect the satellite first, then the target zone opens.",
                         finalTarget: "Final path reached. All missions complete.",
                         targetReached: "Mission complete. Ready for the next course?",
                         timeout: "The signal expired. The rocket was in flight too long.",
@@ -1029,6 +1060,8 @@
                         Neptun: "Neptune",
                         Pluto: "Pluto",
                         Ringbrocken: "Ring rock",
+                        Relaisstein: "Relay rock",
+                        Satellit: "Satellite",
                         Saturn: "Saturn",
                         Schattenstein: "Shadow stone",
                         Slalomtor: "Slalom gate",
@@ -1510,6 +1543,121 @@
                     ],
                     hint: "Weit links aus dem Sonnenfeld heraus, dann diagonal durch die Lücke zwischen Saturn und Jupiter. Pluto oben rechts weich von links unten treffen.",
                 },
+                {
+                    name: "Neptun-Relais", // level 21
+                    launch: { x: 142, y: 800 },
+                    target: { x: 410, y: 240, r: 55, maxSpeed: 360 },
+                    gates: [
+                        { label: "Satellit", x: 226, y: 692, r: 24, captureRadius: 50, required: true, color: "#7de8ff" },
+                    ],
+                    planets: [
+                        { label: "Neptun", x: 300, y: 600, r: 54, mass: 0.95, softening: 168, color: "#709cff", ring: false },
+                    ],
+                    hazards: [
+                        { label: "Relaisstein", x: 178, y: 646, r: 20, color: "#61758f" },
+                        { label: "Relaisstein", x: 382, y: 482, r: 24, color: "#53627f" },
+                        { label: "Relaisstein", x: 458, y: 354, r: 21, color: "#7587a6" },
+                        { label: "Relaisstein", x: 274, y: 430, r: 20, color: "#53627f" },
+                    ],
+                    hint: "Sammle zuerst den Satelliten links unter Neptun. Danach zieht Neptun die Rakete wie in einer großen ersten Ablenkung rechts an sich vorbei in die Zielzone.",
+                },
+                {
+                    name: "Bumerang-Bahn", // level 22
+                    launch: { x: 104, y: 804 },
+                    target: { x: 430, y: 770, r: 40, maxSpeed: 190 },
+                    gates: [
+                        { label: "Satellit", x: 354, y: 420, r: 22, captureRadius: 68, required: true, color: "#7de8ff" },
+                        { label: "Satellit", x: 198, y: 670, r: 22, captureRadius: 68, required: true, color: "#a2ff7a" },
+                    ],
+                    planets: [
+                        { label: "Jupiter", x: 280, y: 596, r: 60, mass: 1.34, softening: 126, color: "#d79d55", ring: false, atmosphereRadius: 118, atmosphereDrag: 0.16, atmosphereColor: "#ffd189" },
+                        { label: "Mond", x: 402, y: 426, r: 30, mass: 0.54, softening: 86, color: "#d7deea", ring: false },
+                        { label: "Neptun", x: 152, y: 330, r: 36, mass: 0.48, softening: 96, color: "#709cff", ring: false },
+                    ],
+                    hazards: [
+                        { label: "Relaisstein", x: 194, y: 748, r: 24, color: "#53627f" },
+                        { label: "Relaisstein", x: 382, y: 686, r: 23, color: "#7587a6" },
+                        { label: "Relaisstein", x: 450, y: 556, r: 22, color: "#53627f" },
+                        { label: "Relaisstein", x: 286, y: 536, r: 18, color: "#7587a6" },
+                        { label: "Relaisstein", x: 126, y: 486, r: 22, color: "#53627f" },
+                        { label: "Relaisstein", x: 436, y: 284, r: 22, color: "#7587a6" },
+                    ],
+                    hint: "Ziehe flach nach rechts. Jupiter hebt die Rakete in den hohen Bumerang; sammle oben und beim Rückfall die Relais, bevor du tief rechts einläufst.",
+                },
+                {
+                    name: "Polsprung", // level 23
+                    launch: { x: 96, y: 238 },
+                    target: { x: 220, y: 640, r: 65, maxSpeed: 180 },
+                    orderedGates: true,
+                    gates: [
+                        { label: "Satellit", x: 492, y: 748, r: 22, captureRadius: 72, required: true, color: "#7de8ff" },
+                        { label: "Satellit", x: 224, y: 260, r: 22, captureRadius: 110, required: true, color: "#a2ff7a" },
+                    ],
+                    planets: [
+                        { label: "Saturn", x: 334, y: 410, r: 48, mass: 0.86, softening: 112, color: "#e2c987", ring: true, atmosphereRadius: 104, atmosphereDrag: 0.24, atmosphereColor: "#ffe0a5" },
+                        { label: "Mars", x: 170, y: 606, r: 36, mass: 0.68, softening: 94, color: "#ff8e68", ring: false, atmosphereRadius: 94, atmosphereDrag: 0.5, atmosphereColor: "#ffb07e" },
+                        { label: "Erde", x: 400, y: 710, r: 38, mass: 0.62, softening: 100, color: "#62a7ff", ring: false, atmosphereRadius: 118, atmosphereDrag: 0.96, atmosphereColor: "#75e8ff" },
+                    ],
+                    hazards: [
+                        { label: "Relaisstein", x: 214, y: 214, r: 22, color: "#53627f" },
+                        { label: "Relaisstein", x: 496, y: 392, r: 23, color: "#7587a6" },
+                        { label: "Relaisstein", x: 96, y: 516, r: 22, color: "#53627f" },
+                        { label: "Relaisstein", x: 318, y: 642, r: 21, color: "#7587a6" },
+                        { label: "Relaisstein", x: 250, y: 170, r: 18, color: "#53627f" },
+                        { label: "Relaisstein", x: 240, y: 120, r: 20, color: "#53627f" },
+                        { label: "Relaisstein", x: 310, y: 912, r: 22, color: "#7587a6" },
+                    ],
+                    hint: "Lass die Rakete eng um die Erde laufen und dort den ersten Satelliten sammeln. Danach steigt sie links an Saturn vorbei, lässt Saturn rechts liegen und nimmt den oberen Satelliten vor dem Ziel mit.",
+                },
+                {
+                    name: "Retrograd-Schleife", // level 24
+                    launch: { x: 438, y: 248 },
+                    target: { x: 90, y: 538, r: 34, maxSpeed: 170 },
+                    gates: [
+                        { label: "Satellit", x: 228, y: 374, r: 22, captureRadius: 50, required: true, color: "#7de8ff" },
+                        { label: "Satellit", x: 108, y: 657, r: 22, captureRadius: 48, required: true, color: "#a2ff7a" },
+                        { label: "Satellit", x: 520, y: 456, r: 22, captureRadius: 52, required: true, color: "#ffd86a" },
+                    ],
+                    planets: [
+                        { label: "Jupiter", x: 270, y: 478, r: 58, mass: 1.28, softening: 122, color: "#d79d55", ring: false, atmosphereRadius: 118, atmosphereDrag: 0.18, atmosphereColor: "#ffd189" },
+                        { label: "Neptun", x: 402, y: 662, r: 32, mass: 0.62, softening: 126, color: "#709cff", ring: false },
+                        { label: "Mond", x: 154, y: 362, r: 30, mass: 0.54, softening: 86, color: "#d7deea", ring: false },
+                    ],
+                    hazards: [
+                        { label: "Relaisstein", x: 356, y: 324, r: 22, color: "#53627f" },
+                        { label: "Relaisstein", x: 470, y: 478, r: 23, color: "#7587a6" },
+                        { label: "Relaisstein", x: 292, y: 606, r: 22, color: "#53627f" },
+                        { label: "Relaisstein", x: 42, y: 616, r: 20, color: "#7587a6" },
+                        { label: "Relaisstein", x: 204, y: 764, r: 24, color: "#53627f" },
+                        { label: "Relaisstein", x: 456, y: 742, r: 22, color: "#7587a6" },
+                    ],
+                    hint: "Vom oberen rechten Rand geht es erst nach links unten um Jupiter. Sammle dann das rechte Relais und lass die Bahn in einer zweiten Schleife zurückfallen.",
+                },
+                {
+                    name: "Doppelstern-Knoten", // level 25
+                    launch: { x: 438, y: 826 },
+                    target: { x: 334, y: 514, r: 40, maxSpeed: 260 },
+                    gates: [
+                        { label: "Satellit", x: 174, y: 346, r: 20, captureRadius: 72, required: true, color: "#a2ff7a" },
+                        { label: "Satellit", x: 394, y: 346, r: 20, captureRadius: 72, required: true, color: "#ff9bd4" },
+                    ],
+                    planets: [
+                        { label: "Jupiter", x: 270, y: 650, r: 60, mass: 1.24, softening: 126, color: "#d79d55", ring: false, atmosphereRadius: 122, atmosphereDrag: 0.18, atmosphereColor: "#ffd189" },
+                        { label: "Saturn", x: 240, y: 360, r: 46, mass: 1.08, softening: 112, color: "#e2c987", ring: true, atmosphereRadius: 118, atmosphereDrag: 0.34, atmosphereColor: "#ffe0a5" },
+                        { label: "Erde", x: 430, y: 516, r: 28, mass: 0.78, softening: 108, color: "#62a7ff", ring: false, atmosphereRadius: 106, atmosphereDrag: 0.42, atmosphereColor: "#75e8ff" },
+                        { label: "Pluto", x: 112, y: 212, r: 20, mass: 0.34, softening: 82, color: "#c6d5eb", ring: false, atmosphereRadius: 96, atmosphereDrag: 0.7, atmosphereColor: "#b8ecff" },
+                    ],
+                    hazards: [
+                        { label: "Relaisstein", x: 484, y: 706, r: 24, color: "#53627f" },
+                        { label: "Relaisstein", x: 58, y: 610, r: 23, color: "#7587a6" },
+                        { label: "Relaisstein", x: 478, y: 560, r: 22, color: "#53627f" },
+                        { label: "Relaisstein", x: 90, y: 438, r: 22, color: "#7587a6" },
+                        { label: "Relaisstein", x: 500, y: 418, r: 22, color: "#53627f" },
+                        { label: "Relaisstein", x: 246, y: 166, r: 22, color: "#7587a6" },
+                        { label: "Relaisstein", x: 504, y: 332, r: 22, color: "#53627f" },
+                    ],
+                    hint: "Ziehe zuerst die große Schleife links um Jupiter. Danach trägt Saturn die Rakete in die zweite große Schleife nach oben rechts; erst nach den Relais zurück ins Ziel fallen.",
+                },
             ];
 
             levels.forEach((level, index) => {
@@ -1562,6 +1710,9 @@
                 ship: { x: 0, y: 0, vx: 0, vy: 0, r: SHIP_RADIUS, heat: 0 },
                 drag: { active: false, x: 0, y: 0 },
                 trail: [],
+                activeRun: null,
+                ghostRun: null,
+                routeGates: {},
                 shots: 0,
                 launchSpeed: 0,
                 levelScore: 0,
@@ -1579,6 +1730,7 @@
                 hintVisible: false,
                 lastOutcome: "none",
                 overheatBurst: null,
+                timeoutDrift: null,
                 accumulator: 0,
                 viewMode: "portrait",
             };
@@ -1622,6 +1774,58 @@
                 resetLevel();
             }
 
+            function routeGatesFor(level) {
+                return level.gates || [];
+            }
+
+            function routeGateId(gate, index) {
+                return gate.id || `gate-${index + 1}`;
+            }
+
+            function createRouteGateState(level) {
+                return routeGatesFor(level).reduce((gateState, gate, index) => {
+                    gateState[routeGateId(gate, index)] = false;
+                    return gateState;
+                }, {});
+            }
+
+            function routeGateCollected(routeGateState, gate, index) {
+                return Boolean(routeGateState && routeGateState[routeGateId(gate, index)]);
+            }
+
+            function nextRequiredRouteGateIndex(level, routeGateState) {
+                return routeGatesFor(level).findIndex((gate, index) => (
+                    gate.required !== false && !routeGateCollected(routeGateState, gate, index)
+                ));
+            }
+
+            function canCollectRouteGate(level, routeGateState, gate, index) {
+                if (!level.orderedGates || gate.required === false) return true;
+                return index === nextRequiredRouteGateIndex(level, routeGateState);
+            }
+
+            function allRequiredRouteGatesCollected(level, routeGateState) {
+                return routeGatesFor(level).every((gate, index) => (
+                    gate.required === false || routeGateCollected(routeGateState, gate, index)
+                ));
+            }
+
+            function updateRouteGates(ship, level, routeGateState) {
+                if (!routeGateState) return false;
+                let changed = false;
+                routeGatesFor(level).forEach((gate, index) => {
+                    const id = routeGateId(gate, index);
+                    if (routeGateState[id]) return;
+                    if (!canCollectRouteGate(level, routeGateState, gate, index)) return;
+                    const captureRadius = (gate.captureRadius || gate.r || 24) + SHIP_RADIUS + GATE_CAPTURE_MARGIN;
+                    if (length(ship.x - gate.x, ship.y - gate.y) <= captureRadius) {
+                        routeGateState[id] = true;
+                        changed = true;
+                    }
+                });
+                return changed;
+            }
+
             function resetLevel(keepMessage = false) {
                 const level = currentLevel();
                 state.mode = "ready";
@@ -1632,6 +1836,8 @@
                 state.ship.heat = 0;
                 state.drag.active = false;
                 state.trail = [];
+                state.activeRun = null;
+                state.routeGates = createRouteGateState(level);
                 state.shots = 0;
                 state.launchSpeed = 0;
                 state.levelScore = 0;
@@ -1647,6 +1853,7 @@
                 state.lastOutcome = "none";
                 state.hintVisible = false;
                 state.overheatBurst = null;
+                state.timeoutDrift = null;
                 state.message = keepMessage ? state.message : "";
                 updateUi();
                 render();
@@ -1908,6 +2115,59 @@
                 }
             }
 
+            function spawnTimeoutDrift() {
+                const speed = shipSpeed();
+                const visibleX = clamp(state.ship.x, 30, WORLD.width - 30);
+                const visibleY = clamp(state.ship.y, 30, WORLD.height - 30);
+                state.timeoutDrift = {
+                    active: true,
+                    age: 0,
+                    duration: TIMEOUT_DRIFT_DURATION,
+                    x: visibleX,
+                    y: visibleY,
+                    vx: state.ship.vx * 0.18,
+                    vy: state.ship.vy * 0.18,
+                    heading: speed > 1 ? Math.atan2(state.ship.vy, state.ship.vx) : -0.35,
+                    spin: (burstJitter(state.elapsed + state.ship.x) - 0.5) * 0.55,
+                    seed: state.elapsed + state.ship.y,
+                };
+            }
+
+            function updateTimeoutDrift(dt) {
+                if (!state.timeoutDrift || !state.timeoutDrift.active) return;
+                const drift = state.timeoutDrift;
+                drift.age = Math.min(drift.duration, drift.age + dt);
+                drift.x += drift.vx * dt;
+                drift.y += drift.vy * dt;
+                drift.vx *= Math.pow(0.965, dt * 60);
+                drift.vy = drift.vy * Math.pow(0.965, dt * 60) + 4 * dt;
+                if (drift.age >= drift.duration) drift.active = false;
+            }
+
+            function appendActiveRunPoint(point) {
+                if (!state.activeRun) return;
+                const points = state.activeRun.points;
+                const lastPoint = points[points.length - 1];
+                if (!lastPoint || length(point.x - lastPoint.x, point.y - lastPoint.y) > 6) {
+                    points.push({ x: point.x, y: point.y });
+                    if (points.length > GHOST_TRAIL_MAX_POINTS) points.shift();
+                }
+            }
+
+            function rememberActiveRun(outcome) {
+                if (!state.activeRun) return;
+                appendActiveRunPoint(state.ship);
+                state.ghostRun = {
+                    ...state.activeRun,
+                    outcome,
+                    final: {
+                        x: state.ship.x,
+                        y: state.ship.y,
+                    },
+                };
+                state.activeRun = null;
+            }
+
             function shipSpeed() {
                 return length(state.ship.vx, state.ship.vy);
             }
@@ -2094,7 +2354,7 @@
                 return { atmosphereStrength: strongestAtmosphere };
             }
 
-            function checkShipOutcome(ship, level, elapsed) {
+            function checkShipOutcome(ship, level, elapsed, routeGateState = state.routeGates) {
                 for (const planet of level.planets) {
                     if (length(ship.x - planet.x, ship.y - planet.y) <= SHIP_RADIUS + planet.r) {
                         return { mode: "crashed", message: copy.messages.planetCollision, outcome: "planet_collision" };
@@ -2113,6 +2373,7 @@
 
                 const target = level.target;
                 if (length(ship.x - target.x, ship.y - target.y) <= SHIP_RADIUS + target.r) {
+                    if (!allRequiredRouteGatesCollected(level, routeGateState)) return null;
                     if (target.maxSpeed && length(ship.vx, ship.vy) > target.maxSpeed) {
                         return { mode: "crashed", message: copy.messages.tooFast, outcome: "too_fast" };
                     }
@@ -2141,6 +2402,7 @@
             function launchFromDrag() {
                 const launch = currentLevel().launch;
                 const launchVector = launchVectorFromDrag();
+                const dragPoint = { x: state.drag.x, y: state.drag.y };
                 state.drag.active = false;
                 if (!launchVector.canLaunch) {
                     state.ship.x = launch.x;
@@ -2156,6 +2418,7 @@
                 state.ship.vy = launchVector.dy * LAUNCH_POWER;
                 state.launchSpeed = launchVector.launchPull * LAUNCH_POWER;
                 state.levelScore = 0;
+                state.routeGates = createRouteGateState(currentLevel());
                 state.atmosphereTime = 0;
                 state.currentAtmosphereStrength = 0;
                 state.maxAtmosphereStrength = 0;
@@ -2169,6 +2432,17 @@
                 state.elapsed = 0;
                 state.shots += 1;
                 state.trail = [{ x: state.ship.x, y: state.ship.y }];
+                state.activeRun = {
+                    levelIndex: state.levelIndex,
+                    launch: { x: launch.x, y: launch.y },
+                    drag: dragPoint,
+                    aim: { x: launch.x + launchVector.dx, y: launch.y + launchVector.dy },
+                    rawPowerPercent: Math.round(launchVector.rawRatio * 100),
+                    launchPowerPercent: Math.round(launchVector.launchRatio * 100),
+                    points: [{ x: state.ship.x, y: state.ship.y }],
+                };
+                state.timeoutDrift = null;
+                state.overheatBurst = null;
                 state.hintVisible = false;
                 state.message = copy.messages.flying;
                 updateUi();
@@ -2229,8 +2503,10 @@
                     state.trail.push({ x: state.ship.x, y: state.ship.y });
                     if (state.trail.length > 170) state.trail.shift();
                 }
+                appendActiveRunPoint(state.ship);
+                updateRouteGates(state.ship, level, state.routeGates);
 
-                const outcome = checkShipOutcome(state.ship, level, state.elapsed);
+                const outcome = checkShipOutcome(state.ship, level, state.elapsed, state.routeGates);
                 if (outcome) {
                     if (outcome.outcome === "target_reached") {
                         const score = recordLevelScore();
@@ -2244,7 +2520,10 @@
                         spawnOverheatBurst("hazard");
                     } else if (outcome.outcome === "planet_collision") {
                         spawnOverheatBurst("planet");
+                    } else if (outcome.outcome === "timeout") {
+                        spawnTimeoutDrift();
                     }
+                    rememberActiveRun(outcome.outcome);
                     setMode(outcome.mode, outcome.message, outcome.outcome);
                     return;
                 }
@@ -2267,12 +2546,14 @@
                 };
                 const points = [];
                 let outcome = null;
+                const simRouteGates = createRouteGateState(level);
                 const predictionSteps = Math.ceil((TIME_LIMIT * PREDICTION_TIME_RATIO) / FIXED_DT);
                 for (let i = 0; i < predictionSteps; i += 1) {
                     applyGravity(sim, level, FIXED_DT);
                     updateShipHeat(sim, level, FIXED_DT);
+                    updateRouteGates(sim, level, simRouteGates);
                     if (i % 5 === 0) points.push({ x: sim.x, y: sim.y });
-                    outcome = checkShipOutcome(sim, level, i * FIXED_DT);
+                    outcome = checkShipOutcome(sim, level, i * FIXED_DT, simRouteGates);
                     if (outcome) break;
                 }
                 return { points, outcome: outcome ? outcome.outcome : "flight" };
@@ -2690,11 +2971,11 @@
                 ctx.restore();
             }
 
-            function drawTargetIcon(target, pulse) {
+            function drawTargetIcon(target, pulse, unlocked = true) {
                 ctx.save();
                 ctx.translate(target.x, target.y);
                 ctx.scale(pulse, pulse);
-                ctx.fillStyle = "#72f45e";
+                ctx.fillStyle = unlocked ? "#72f45e" : "#ffd36a";
                 ctx.beginPath();
                 ctx.moveTo(9, -1);
                 ctx.lineTo(-8, -11);
@@ -2702,38 +2983,41 @@
                 ctx.lineTo(-8, 11);
                 ctx.closePath();
                 ctx.fill();
-                ctx.fillStyle = "#073d2a";
+                ctx.fillStyle = unlocked ? "#073d2a" : "#50320b";
                 ctx.beginPath();
                 ctx.arc(-1, 0, 2.8, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             }
 
-            function drawTarget(target) {
+            function drawTarget(target, unlocked = true) {
                 ctx.save();
                 const pulse = 1 + Math.sin(performance.now() / 260) * 0.06;
+                const glowColor = unlocked ? "124, 242, 56" : "255, 211, 106";
+                const strokeColor = unlocked ? "rgba(124, 242, 56, 0.88)" : "rgba(255, 211, 106, 0.82)";
+                const innerStroke = unlocked ? "rgba(215, 255, 219, 0.7)" : "rgba(255, 244, 198, 0.62)";
                 const glow = ctx.createRadialGradient(target.x, target.y, target.r * 0.2, target.x, target.y, target.r * 2.1);
-                glow.addColorStop(0, "rgba(124, 242, 56, 0.34)");
-                glow.addColorStop(0.5, "rgba(124, 242, 56, 0.12)");
-                glow.addColorStop(1, "rgba(124, 242, 56, 0)");
+                glow.addColorStop(0, `rgba(${glowColor}, ${unlocked ? 0.34 : 0.22})`);
+                glow.addColorStop(0.5, `rgba(${glowColor}, ${unlocked ? 0.12 : 0.08})`);
+                glow.addColorStop(1, `rgba(${glowColor}, 0)`);
                 ctx.fillStyle = glow;
                 ctx.beginPath();
                 ctx.arc(target.x, target.y, target.r * 2.2, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.strokeStyle = "rgba(124, 242, 56, 0.88)";
+                ctx.strokeStyle = strokeColor;
                 ctx.lineWidth = 7;
-                ctx.setLineDash([24, 9]);
+                ctx.setLineDash(unlocked ? [24, 9] : [9, 11]);
                 ctx.beginPath();
                 ctx.arc(target.x, target.y, target.r * pulse, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.setLineDash([]);
-                ctx.strokeStyle = "rgba(215, 255, 219, 0.7)";
+                ctx.strokeStyle = innerStroke;
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
                 ctx.arc(target.x, target.y, target.r * 0.62, 0, Math.PI * 2);
                 ctx.stroke();
-                drawTargetIcon(target, pulse);
+                drawTargetIcon(target, pulse, unlocked);
                 if (target.maxSpeed) {
                     const label = `${copy.labels.speed} < ${target.maxSpeed}`;
                     const labelY = target.y > WORLD.height * 0.72
@@ -2746,6 +3030,233 @@
                     ctx.strokeStyle = "rgba(2, 8, 22, 0.72)";
                     ctx.strokeText(label, target.x, labelY);
                     ctx.fillText(label, target.x, labelY);
+                }
+                ctx.restore();
+            }
+
+            function drawRouteGate(gate, collected) {
+                const time = performance.now() / 1000;
+                const pulse = 1 + Math.sin(time * 2.2 + gate.x * 0.01) * 0.07;
+                const r = gate.r || 24;
+                const activeColor = gate.color || "#75e8ff";
+                const statusColor = collected ? "#7cf238" : activeColor;
+                ctx.save();
+                ctx.translate(gate.x, gate.y);
+                ctx.globalAlpha = collected ? 0.62 : 1;
+
+                const glow = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r * 2.4);
+                glow.addColorStop(0, collected ? "rgba(124, 242, 56, 0.3)" : "rgba(117, 232, 255, 0.38)");
+                glow.addColorStop(0.46, collected ? "rgba(124, 242, 56, 0.12)" : "rgba(117, 232, 255, 0.15)");
+                glow.addColorStop(1, "rgba(117, 232, 255, 0)");
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(0, 0, r * 2.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = collected ? "rgba(124, 242, 56, 0.9)" : "rgba(117, 232, 255, 0.94)";
+                ctx.lineWidth = 4;
+                ctx.setLineDash(collected ? [] : [10, 8]);
+                ctx.beginPath();
+                ctx.arc(0, 0, r * 1.15 * pulse, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.strokeStyle = collected ? "rgba(190, 255, 174, 0.72)" : "rgba(175, 236, 255, 0.58)";
+                ctx.lineWidth = 1.4;
+                ctx.beginPath();
+                ctx.arc(0, 0, r * 1.58, -Math.PI * 0.2 + time * 0.35, Math.PI * 0.3 + time * 0.35);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, 0, r * 1.58, Math.PI * 0.78 + time * 0.35, Math.PI * 1.24 + time * 0.35);
+                ctx.stroke();
+
+                ctx.rotate(-0.35 + Math.sin(time * 1.4) * 0.08);
+                ctx.strokeStyle = "rgba(225, 245, 255, 0.76)";
+                ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, r * 1.58, r * 0.5, 0, 0, Math.PI * 2);
+                ctx.stroke();
+
+                const drawPanel = (x, y, w, h) => {
+                    const panel = ctx.createLinearGradient(x, y, x + w, y + h);
+                    panel.addColorStop(0, collected ? "#b8ff91" : "#7de8ff");
+                    panel.addColorStop(0.48, collected ? "#71f247" : "#1fbddb");
+                    panel.addColorStop(1, "#163f80");
+                    ctx.fillStyle = panel;
+                    ctx.strokeStyle = "rgba(222, 248, 255, 0.74)";
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + h * 0.12);
+                    ctx.lineTo(x + w, y);
+                    ctx.lineTo(x + w, y + h);
+                    ctx.lineTo(x, y + h * 0.88);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.strokeStyle = "rgba(3, 24, 52, 0.5)";
+                    ctx.lineWidth = 1;
+                    for (let i = 1; i < 4; i += 1) {
+                        const gx = x + (w / 4) * i;
+                        ctx.beginPath();
+                        ctx.moveTo(gx, y + h * 0.08);
+                        ctx.lineTo(gx, y + h * 0.92);
+                        ctx.stroke();
+                    }
+                    for (let i = 1; i < 3; i += 1) {
+                        const gy = y + (h / 3) * i;
+                        ctx.beginPath();
+                        ctx.moveTo(x + 2, gy);
+                        ctx.lineTo(x + w - 2, gy);
+                        ctx.stroke();
+                    }
+                };
+
+                ctx.strokeStyle = "rgba(225, 245, 255, 0.78)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-r * 0.62, 0);
+                ctx.lineTo(-r * 1.0, 0);
+                ctx.moveTo(r * 0.62, 0);
+                ctx.lineTo(r * 1.0, 0);
+                ctx.stroke();
+                drawPanel(-r * 1.86, -r * 0.43, r * 0.86, r * 0.86);
+                drawPanel(r * 1.0, -r * 0.43, r * 0.86, r * 0.86);
+
+                const body = ctx.createLinearGradient(-r * 0.55, -r * 0.45, r * 0.55, r * 0.5);
+                body.addColorStop(0, "#f7fbff");
+                body.addColorStop(0.52, collected ? "#c7ffc2" : "#aeeeff");
+                body.addColorStop(1, "#38618f");
+                ctx.fillStyle = body;
+                ctx.strokeStyle = "rgba(4, 17, 34, 0.76)";
+                ctx.lineWidth = 1.8;
+                const bodyW = r * 0.9;
+                const bodyH = r * 0.76;
+                const bodyX = -bodyW / 2;
+                const bodyY = -bodyH / 2;
+                const corner = Math.max(4, r * 0.16);
+                ctx.beginPath();
+                ctx.moveTo(bodyX + corner, bodyY);
+                ctx.lineTo(bodyX + bodyW - corner, bodyY);
+                ctx.quadraticCurveTo(bodyX + bodyW, bodyY, bodyX + bodyW, bodyY + corner);
+                ctx.lineTo(bodyX + bodyW, bodyY + bodyH - corner);
+                ctx.quadraticCurveTo(bodyX + bodyW, bodyY + bodyH, bodyX + bodyW - corner, bodyY + bodyH);
+                ctx.lineTo(bodyX + corner, bodyY + bodyH);
+                ctx.quadraticCurveTo(bodyX, bodyY + bodyH, bodyX, bodyY + bodyH - corner);
+                ctx.lineTo(bodyX, bodyY + corner);
+                ctx.quadraticCurveTo(bodyX, bodyY, bodyX + corner, bodyY);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = "rgba(4, 24, 54, 0.35)";
+                ctx.fillRect(bodyX + bodyW * 0.12, bodyY + bodyH * 0.15, bodyW * 0.76, bodyH * 0.16);
+                ctx.fillStyle = statusColor;
+                ctx.beginPath();
+                ctx.arc(0, -bodyH * 0.02, r * 0.13, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "rgba(255, 255, 255, 0.76)";
+                ctx.beginPath();
+                ctx.arc(-r * 0.12, -bodyH * 0.18, r * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = "rgba(235, 249, 255, 0.82)";
+                ctx.lineWidth = 1.6;
+                ctx.beginPath();
+                ctx.moveTo(0, bodyY);
+                ctx.lineTo(r * 0.18, -r * 0.84);
+                ctx.stroke();
+                ctx.fillStyle = statusColor;
+                ctx.beginPath();
+                ctx.arc(r * 0.18, -r * 0.84, r * (0.08 + Math.max(0, pulse - 1) * 0.2), 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = "rgba(225, 245, 255, 0.82)";
+                ctx.lineWidth = 1.6;
+                ctx.beginPath();
+                ctx.moveTo(r * 0.32, bodyY + bodyH * 0.78);
+                ctx.lineTo(r * 0.72, r * 0.58);
+                ctx.stroke();
+                ctx.strokeStyle = statusColor;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(r * 0.82, r * 0.62, r * 0.18, Math.PI * 0.55, Math.PI * 1.45);
+                ctx.stroke();
+
+                if (collected) {
+                    ctx.strokeStyle = "rgba(7, 61, 42, 0.92)";
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = "round";
+                    ctx.lineJoin = "round";
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 0.22, 0);
+                    ctx.lineTo(-r * 0.04, r * 0.18);
+                    ctx.lineTo(r * 0.28, -r * 0.18);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            function drawRouteGates(level) {
+                const gates = routeGatesFor(level);
+                if (!gates.length) return;
+                for (let i = 0; i < gates.length; i += 1) {
+                    drawRouteGate(gates[i], routeGateCollected(state.routeGates, gates[i], i));
+                }
+            }
+
+            function drawGhostRun() {
+                const ghost = state.ghostRun;
+                if (!ghost || ghost.levelIndex !== state.levelIndex) return;
+                const points = ghost.points || [];
+                ctx.save();
+                ctx.lineCap = "round";
+
+                if (points.length > 1) {
+                    ctx.lineWidth = 3.5;
+                    for (let i = 1; i < points.length; i += 1) {
+                        const a = i / points.length;
+                        ctx.strokeStyle = `rgba(177, 207, 255, ${0.09 + a * 0.28})`;
+                        ctx.beginPath();
+                        ctx.moveTo(points[i - 1].x, points[i - 1].y);
+                        ctx.lineTo(points[i].x, points[i].y);
+                        ctx.stroke();
+                    }
+                }
+
+                if (ghost.launch && ghost.drag) {
+                    ctx.setLineDash([8, 8]);
+                    ctx.strokeStyle = "rgba(255, 226, 126, 0.54)";
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(ghost.launch.x, ghost.launch.y);
+                    ctx.lineTo(ghost.drag.x, ghost.drag.y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = "rgba(255, 226, 126, 0.22)";
+                    ctx.strokeStyle = "rgba(255, 226, 126, 0.84)";
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.arc(ghost.drag.x, ghost.drag.y, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+
+                if (ghost.launch && ghost.aim) {
+                    const angle = Math.atan2(ghost.aim.y - ghost.launch.y, ghost.aim.x - ghost.launch.x);
+                    ctx.strokeStyle = "rgba(119, 244, 255, 0.44)";
+                    ctx.fillStyle = "rgba(119, 244, 255, 0.5)";
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(ghost.launch.x, ghost.launch.y);
+                    ctx.lineTo(ghost.aim.x, ghost.aim.y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(ghost.aim.x, ghost.aim.y);
+                    ctx.lineTo(ghost.aim.x - Math.cos(angle - 0.55) * 11, ghost.aim.y - Math.sin(angle - 0.55) * 11);
+                    ctx.lineTo(ghost.aim.x - Math.cos(angle + 0.55) * 11, ghost.aim.y - Math.sin(angle + 0.55) * 11);
+                    ctx.closePath();
+                    ctx.fill();
                 }
                 ctx.restore();
             }
@@ -2870,16 +3381,89 @@
                 ctx.restore();
             }
 
+            function drawTimeoutDriftEffect() {
+                const drift = state.timeoutDrift && state.lastOutcome === "timeout" ? state.timeoutDrift : null;
+                if (!drift) return;
+                const t = drift.age;
+                const progress = clamp(t / drift.duration, 0, 1);
+                const flicker = 0.55 + burstJitter(Math.floor(t * 22) + drift.seed) * 0.45;
+
+                ctx.save();
+                ctx.globalCompositeOperation = "lighter";
+                const glow = ctx.createRadialGradient(drift.x, drift.y, 0, drift.x, drift.y, 58);
+                glow.addColorStop(0, `rgba(117, 232, 255, ${0.22 * flicker})`);
+                glow.addColorStop(0.45, `rgba(74, 140, 255, ${0.11 * flicker})`);
+                glow.addColorStop(1, "rgba(74, 140, 255, 0)");
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(drift.x, drift.y, 58, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let ring = 0; ring < 3; ring += 1) {
+                    const local = (progress * 1.5 + ring * 0.28) % 1;
+                    const radius = 19 + local * 76;
+                    const alpha = (1 - local) * (0.34 - ring * 0.06) * flicker;
+                    ctx.strokeStyle = `rgba(117, 232, 255, ${alpha})`;
+                    ctx.lineWidth = 2.2;
+                    ctx.setLineDash([9, 12]);
+                    ctx.beginPath();
+                    ctx.arc(drift.x, drift.y, radius, -0.35 + ring * 0.7, Math.PI * 1.55 + ring * 0.7);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+
+                ctx.strokeStyle = `rgba(255, 94, 82, ${0.6 * flicker})`;
+                ctx.lineWidth = 2.3;
+                ctx.lineCap = "round";
+                for (let i = 0; i < 7; i += 1) {
+                    const a = drift.heading + Math.PI + (i / 7 - 0.5) * 1.4 + Math.sin(t * 5 + i) * 0.12;
+                    const inner = 18 + burstJitter(i + drift.seed) * 9;
+                    const outer = inner + 9 + burstJitter(i + 19 + drift.seed) * 17;
+                    ctx.beginPath();
+                    ctx.moveTo(drift.x + Math.cos(a) * inner, drift.y + Math.sin(a) * inner);
+                    ctx.lineTo(drift.x + Math.cos(a) * outer, drift.y + Math.sin(a) * outer);
+                    ctx.stroke();
+                }
+
+                ctx.globalCompositeOperation = "source-over";
+                for (let i = 0; i < 5; i += 1) {
+                    const age = (progress + i * 0.18) % 1;
+                    const smokeAlpha = 0.16 * (1 - age);
+                    const back = drift.heading + Math.PI + (burstJitter(i + 41 + drift.seed) - 0.5) * 0.55;
+                    const distance = 18 + age * 46;
+                    const x = drift.x + Math.cos(back) * distance;
+                    const y = drift.y + Math.sin(back) * distance - age * 16;
+                    const radius = 9 + age * 22;
+                    const smoke = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    smoke.addColorStop(0, `rgba(106, 126, 154, ${smokeAlpha})`);
+                    smoke.addColorStop(1, "rgba(36, 42, 60, 0)");
+                    ctx.fillStyle = smoke;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
             function drawShip() {
                 if (state.overheatBurst && isDestructionOutcome(state.lastOutcome)) return;
+                const drift = state.timeoutDrift && state.lastOutcome === "timeout" ? state.timeoutDrift : null;
+                const shipX = drift ? drift.x : state.ship.x;
+                const shipY = drift ? drift.y : state.ship.y;
+                const powerlessAlpha = drift
+                    ? 0.68 + (burstJitter(Math.floor(drift.age * 18) + drift.seed) * 0.28)
+                    : 1;
                 ctx.save();
-                ctx.translate(state.ship.x, state.ship.y);
-                const angle = state.mode === "flying" ? Math.atan2(state.ship.vy, state.ship.vx) : -0.35;
+                ctx.translate(shipX, shipY);
+                const angle = drift
+                    ? drift.heading + drift.spin * drift.age + Math.sin(drift.age * 8) * 0.04
+                    : state.mode === "flying" ? Math.atan2(state.ship.vy, state.ship.vx) : -0.35;
                 ctx.rotate(angle);
                 ctx.scale(1.42, 1.42);
+                ctx.globalAlpha = powerlessAlpha;
 
                 const heatRatio = clamp((state.ship.heat || 0) / HEAT_LIMIT, 0, 1);
-                if (heatRatio > 0.05) {
+                if (!drift && heatRatio > 0.05) {
                     ctx.save();
                     ctx.globalAlpha = 0.28 + heatRatio * 0.45;
                     ctx.fillStyle = heatRatio > 0.72 ? "#ff563d" : "#ffb84a";
@@ -2891,7 +3475,7 @@
                     ctx.restore();
                 }
 
-                if (state.mode === "flying" || state.drag.active) {
+                if (!drift && (state.mode === "flying" || state.drag.active)) {
                     const flame = state.mode === "flying" ? 1 : 0.65;
                     ctx.fillStyle = "rgba(255, 132, 28, 0.88)";
                     ctx.beginPath();
@@ -2907,6 +3491,21 @@
                     ctx.lineTo(-10, 3);
                     ctx.closePath();
                     ctx.fill();
+                } else if (drift) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.55 + Math.sin(drift.age * 16) * 0.18;
+                    ctx.strokeStyle = "rgba(117, 232, 255, 0.72)";
+                    ctx.lineWidth = 1.5;
+                    ctx.lineCap = "round";
+                    for (let i = 0; i < 4; i += 1) {
+                        const jitter = burstJitter(i + Math.floor(drift.age * 20) + drift.seed);
+                        const y = -5 + i * 3.2;
+                        ctx.beginPath();
+                        ctx.moveTo(-11, y);
+                        ctx.lineTo(-18 - jitter * 8, y + (jitter - 0.5) * 7);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
                 }
 
                 const hull = ctx.createLinearGradient(-15, -10, 16, 9);
@@ -3124,6 +3723,10 @@
                 ctx.font = "14px Avenir Next Condensed, Trebuchet MS, sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText(copy.labels.target, level.target.x, level.target.y - level.target.r - 14);
+                for (const [index, gate] of routeGatesFor(level).entries()) {
+                    if (routeGateCollected(state.routeGates, gate, index)) continue;
+                    ctx.fillText(localizedBodyLabel(gate.label, copy.labels.gate), gate.x, gate.y - (gate.r || 24) - 16);
+                }
                 ctx.textAlign = "start";
                 for (const planet of level.planets) {
                     ctx.fillText(localizedBodyLabel(planet.label, copy.labels.gravity), planet.x - 22, planet.y + planet.r + 22);
@@ -3155,12 +3758,15 @@
                 for (const planet of level.planets) drawHeatField(planet, level);
                 for (const planet of level.planets) drawGravityField(planet);
                 for (const planet of level.planets) drawAtmosphere(planet);
-                drawTarget(level.target);
+                drawRouteGates(level);
+                drawTarget(level.target, allRequiredRouteGatesCollected(level, state.routeGates));
                 for (const planet of level.planets) drawPlanet(planet);
                 for (const hazard of level.hazards || []) drawHazard(hazard);
                 drawSlingshot();
+                drawGhostRun();
                 drawTrail();
                 drawPrediction();
+                drawTimeoutDriftEffect();
                 drawShip();
                 drawOverheatBurst();
             }
@@ -3284,6 +3890,7 @@
                     state.accumulator -= FIXED_DT;
                 }
                 updateOverheatBurst(delta);
+                updateTimeoutDrift(delta);
                 render();
                 requestAnimationFrame(frame);
             }
@@ -3333,7 +3940,19 @@
                         r: state.ship.r,
                     },
                     launch: level.launch,
-                    target: level.target,
+                    target: {
+                        ...level.target,
+                        unlocked: allRequiredRouteGatesCollected(level, state.routeGates),
+                    },
+                    gates: routeGatesFor(level).map((gate, index) => ({
+                        label: localizedBodyLabel(gate.label, copy.labels.gate),
+                        x: gate.x,
+                        y: gate.y,
+                        r: gate.r || 24,
+                        captureRadius: gate.captureRadius || gate.r || 24,
+                        required: gate.required !== false,
+                        collected: routeGateCollected(state.routeGates, gate, index),
+                    })),
                     planets: level.planets.map((planet) => ({
                         label: localizedBodyLabel(planet.label, ""),
                         x: planet.x,
@@ -3412,6 +4031,22 @@
                         chips: (state.overheatBurst.chips || []).length,
                         smoke: state.overheatBurst.smoke.length,
                     } : null,
+                    timeoutDrift: state.timeoutDrift ? {
+                        active: state.timeoutDrift.active,
+                        age: Number(state.timeoutDrift.age.toFixed(2)),
+                        x: Number(state.timeoutDrift.x.toFixed(1)),
+                        y: Number(state.timeoutDrift.y.toFixed(1)),
+                    } : null,
+                    ghostRun: state.ghostRun && state.ghostRun.levelIndex === state.levelIndex ? {
+                        outcome: state.ghostRun.outcome,
+                        points: state.ghostRun.points.length,
+                        drag: {
+                            x: Number(state.ghostRun.drag.x.toFixed(1)),
+                            y: Number(state.ghostRun.drag.y.toFixed(1)),
+                        },
+                        rawPowerPercent: state.ghostRun.rawPowerPercent,
+                        launchPowerPercent: state.ghostRun.launchPowerPercent,
+                    } : null,
                     messageRestartVisible: false,
                     failureMessageVisible: isFailureMode(state.mode),
                     hintVisible: state.mode === "ready" && state.hintVisible,
@@ -3431,6 +4066,7 @@
                 for (let i = 0; i < steps; i += 1) {
                     step(FIXED_DT);
                     updateOverheatBurst(FIXED_DT);
+                    updateTimeoutDrift(FIXED_DT);
                 }
                 render();
                 return renderGameToText();

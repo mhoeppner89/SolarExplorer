@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-27T11:09:42.143Z",
+  "generatedAt": "2026-07-03T20:59:40.061Z",
   "source": "gravity_sling.html",
   "method": "Deterministic physics search ranked by the in-game score formula; screenshots show the aiming drag for the chosen solution.",
   "constants": {
@@ -33,7 +33,12 @@
       82.6836,
       80.5973,
       63.6872,
-      72.8011
+      72.8011,
+      68.1893,
+      66.652,
+      119.2488,
+      43.483,
+      99.374
     ],
     "launchDeadZoneRatio": 0.05,
     "minLaunchRatio": 0.1,
@@ -1276,6 +1281,316 @@
           "inShadow": false,
           "source": "",
           "time": 2.67
+        }
+      }
+    },
+    {
+      "level": 21,
+      "name": "Neptun-Relais",
+      "score": 100,
+      "powerPercent": 35,
+      "radius": 62.10000000000003,
+      "launchRadius": 40.710000000000015,
+      "angleDeg": 174.79999999999959,
+      "pull": {
+        "x": -61.84442115405176,
+        "y": 5.628283230282606
+      },
+      "drag": {
+        "x": 203.84442115405176,
+        "y": 794.3717167697174
+      },
+      "launch": {
+        "x": 142,
+        "y": 800
+      },
+      "target": {
+        "x": 410,
+        "y": 240,
+        "r": 55,
+        "maxSpeed": 360
+      },
+      "launchSpeed": 68.18925000000003,
+      "outcome": "target_reached",
+      "elapsed": 24.583333333333332,
+      "x": 378.4543904688783,
+      "y": 296.8066097544002,
+      "arrivalSpeed": 40.736280471359706,
+      "atmosphereTime": 0,
+      "maxAtmosphereStrength": 0,
+      "heatTime": 0,
+      "maxHeat": 0,
+      "maxHeatExposure": 0,
+      "shadowTime": 0,
+      "minTargetDistance": 64.97781461759631,
+      "screenshot": "screenshots/level-21.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 24.6,
+        "speed": 40.7,
+        "score": 100,
+        "atmosphere": {
+          "currentStrength": 0,
+          "maxStrength": 0,
+          "time": 0
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 0
+        }
+      }
+    },
+    {
+      "level": 22,
+      "name": "Bumerang-Bahn",
+      "score": 100,
+      "powerPercent": 34,
+      "radius": 60.70000000000009,
+      "launchRadius": 39.79222222222228,
+      "angleDeg": 32.099999999999966,
+      "pull": {
+        "x": 51.42030062789581,
+        "y": 32.25589377674765
+      },
+      "drag": {
+        "x": 52.57969937210419,
+        "y": 771.7441062232524
+      },
+      "launch": {
+        "x": 104,
+        "y": 804
+      },
+      "target": {
+        "x": 430,
+        "y": 770,
+        "r": 40,
+        "maxSpeed": 190
+      },
+      "launchSpeed": 66.65197222222231,
+      "outcome": "target_reached",
+      "elapsed": 12.466666666666667,
+      "x": 396.44445093563013,
+      "y": 733.1849087989593,
+      "arrivalSpeed": 94.58435147886783,
+      "atmosphereTime": 2.116666666666664,
+      "maxAtmosphereStrength": 0.6650816332533367,
+      "heatTime": 0,
+      "maxHeat": 0,
+      "maxHeatExposure": 0,
+      "shadowTime": 0,
+      "minTargetDistance": 49.81290809772379,
+      "screenshot": "screenshots/level-22.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 12.48,
+        "speed": 94.6,
+        "score": 100,
+        "atmosphere": {
+          "currentStrength": 0,
+          "maxStrength": 0.665,
+          "time": 2.12
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 0
+        }
+      }
+    },
+    {
+      "level": 23,
+      "name": "Polsprung",
+      "score": 98,
+      "powerPercent": 61,
+      "radius": 110.39999999999999,
+      "launchRadius": 72.37333333333333,
+      "angleDeg": 56.50000000000013,
+      "pull": {
+        "x": 60.93384317845102,
+        "y": 92.06099475621549
+      },
+      "drag": {
+        "x": 35.06615682154898,
+        "y": 145.9390052437845
+      },
+      "launch": {
+        "x": 96,
+        "y": 238
+      },
+      "target": {
+        "x": 220,
+        "y": 640,
+        "r": 65,
+        "maxSpeed": 180
+      },
+      "launchSpeed": 121.22533333333334,
+      "outcome": "target_reached",
+      "elapsed": 14,
+      "x": 288.9583805770503,
+      "y": 611.9397894614722,
+      "arrivalSpeed": 145.96938192621906,
+      "atmosphereTime": 4.649999999999989,
+      "maxAtmosphereStrength": 0.991640992808774,
+      "heatTime": 0,
+      "maxHeat": 0,
+      "maxHeatExposure": 0,
+      "shadowTime": 0,
+      "minTargetDistance": 52.903080478415546,
+      "screenshot": "screenshots/level-23.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 14.02,
+        "speed": 146,
+        "score": 98,
+        "atmosphere": {
+          "currentStrength": 0,
+          "maxStrength": 0.992,
+          "time": 4.65
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 0
+        }
+      }
+    },
+    {
+      "level": 24,
+      "name": "Retrograd-Schleife",
+      "score": 100,
+      "powerPercent": 22,
+      "radius": 39.600000000000044,
+      "launchRadius": 25.96000000000003,
+      "angleDeg": -145.1000000000006,
+      "pull": {
+        "x": -32.47801428460165,
+        "y": -22.656976588442138
+      },
+      "drag": {
+        "x": 470.47801428460167,
+        "y": 270.65697658844215
+      },
+      "launch": {
+        "x": 438,
+        "y": 248
+      },
+      "target": {
+        "x": 90,
+        "y": 538,
+        "r": 34,
+        "maxSpeed": 170
+      },
+      "launchSpeed": 43.48300000000005,
+      "outcome": "target_reached",
+      "elapsed": 13.316666666666666,
+      "x": 122.56384267388229,
+      "y": 509.73274333495635,
+      "arrivalSpeed": 137.56950821903106,
+      "atmosphereTime": 1.566666666666666,
+      "maxAtmosphereStrength": 0.9990137975591481,
+      "heatTime": 0,
+      "maxHeat": 0,
+      "maxHeatExposure": 0,
+      "shadowTime": 0,
+      "minTargetDistance": 20.15569017367993,
+      "screenshot": "screenshots/level-24.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 13.33,
+        "speed": 137.6,
+        "score": 100,
+        "atmosphere": {
+          "currentStrength": 0,
+          "maxStrength": 0.999,
+          "time": 1.57
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 0
+        }
+      }
+    },
+    {
+      "level": 25,
+      "name": "Doppelstern-Knoten",
+      "score": 100,
+      "powerPercent": 50,
+      "radius": 90.49999999999999,
+      "launchRadius": 59.32777777777776,
+      "angleDeg": 119.49999999999999,
+      "pull": {
+        "x": -44.56433218936376,
+        "y": 78.76719048256092
+      },
+      "drag": {
+        "x": 482.56433218936377,
+        "y": 747.2328095174391
+      },
+      "launch": {
+        "x": 438,
+        "y": 826
+      },
+      "target": {
+        "x": 334,
+        "y": 514,
+        "r": 40,
+        "maxSpeed": 260
+      },
+      "launchSpeed": 99.37402777777775,
+      "outcome": "target_reached",
+      "elapsed": 9.483333333333333,
+      "x": 288.5070765541906,
+      "y": 530.0440241924241,
+      "arrivalSpeed": 179.5680165483366,
+      "atmosphereTime": 3.9333333333333242,
+      "maxAtmosphereStrength": 0.9981106092854167,
+      "heatTime": 0,
+      "maxHeat": 0,
+      "maxHeatExposure": 0,
+      "shadowTime": 0,
+      "minTargetDistance": 48.23916247130921,
+      "screenshot": "screenshots/level-25.png",
+      "browserReplay": {
+        "mode": "won",
+        "outcome": "target_reached",
+        "elapsed": 9.5,
+        "speed": 179.6,
+        "score": 100,
+        "atmosphere": {
+          "currentStrength": 0,
+          "maxStrength": 0.998,
+          "time": 3.93
+        },
+        "heat": {
+          "level": 0,
+          "percent": 0,
+          "peak": 0,
+          "exposure": 0,
+          "inShadow": false,
+          "source": "",
+          "time": 0
         }
       }
     }

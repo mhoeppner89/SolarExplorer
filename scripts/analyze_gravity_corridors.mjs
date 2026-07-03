@@ -48,6 +48,7 @@ const SUN_HEAT_GAIN_RATE = numberConst("SUN_HEAT_GAIN_RATE");
 const HEAT_COOL_RATE = numberConst("HEAT_COOL_RATE");
 const SHADOW_COOL_RATE = numberConst("SHADOW_COOL_RATE");
 const DEFAULT_HEAT_RADIUS_MULTIPLIER = numberConst("DEFAULT_HEAT_RADIUS_MULTIPLIER");
+const GATE_CAPTURE_MARGIN = numberConst("GATE_CAPTURE_MARGIN");
 const SCORE_BEST_POINTS = numberConst("SCORE_BEST_POINTS");
 const SCORE_FULL_POWER_POINTS = numberConst("SCORE_FULL_POWER_POINTS");
 const SCORE_BEST_LAUNCH_SPEEDS = arrayConst("SCORE_BEST_LAUNCH_SPEEDS");
@@ -68,6 +69,7 @@ const loggedSolutions = loggedData.solutions.map((solution) => ({
     : solution.pull,
 }));
 const IGNORE_HAZARDS = process.env.IGNORE_HAZARDS === "1";
+const IGNORE_GATES = process.env.IGNORE_GATES === "1";
 const FIND_BEST = process.env.FIND_BEST === "1";
 const FIND_LEVEL = Number(process.env.FIND_LEVEL || 0);
 const TRACE_LEVEL = Number(process.env.TRACE_LEVEL || 0);
@@ -75,6 +77,8 @@ const CANDIDATE_LEVEL = Number(process.env.CANDIDATE_LEVEL || 0);
 const OUTCOME_LEVEL = Number(process.env.OUTCOME_LEVEL || 0);
 const TRACE_RADIUS = Number(process.env.TRACE_RADIUS || 0);
 const TRACE_ANGLE = Number(process.env.TRACE_ANGLE || 0);
+const LOCK_TARGET = process.env.LOCK_TARGET === "1";
+const ROBUST_SCORE_TOLERANCE = 5;
 
 function length(x, y) {
   return Math.hypot(x, y);
@@ -213,7 +217,56 @@ function applyGravity(entity, level, dt) {
   entity.y += entity.vy * dt;
 }
 
-function checkProbeOutcome(probe, level, elapsed) {
+function routeGatesFor(level) {
+  return level.gates || [];
+}
+
+function routeGateId(gate, index) {
+  return gate.id || `gate-${index + 1}`;
+}
+
+function createRouteGateState(level) {
+  return routeGatesFor(level).reduce((gateState, gate, index) => {
+    gateState[routeGateId(gate, index)] = false;
+    return gateState;
+  }, {});
+}
+
+function routeGateCollected(routeGateState, gate, index) {
+  return Boolean(routeGateState && routeGateState[routeGateId(gate, index)]);
+}
+
+function nextRequiredRouteGateIndex(level, routeGateState) {
+  return routeGatesFor(level).findIndex((gate, index) => (
+    gate.required !== false && !routeGateCollected(routeGateState, gate, index)
+  ));
+}
+
+function canCollectRouteGate(level, routeGateState, gate, index) {
+  if (!level.orderedGates || gate.required === false) return true;
+  return index === nextRequiredRouteGateIndex(level, routeGateState);
+}
+
+function updateRouteGates(probe, level, routeGateState) {
+  for (const [index, gate] of routeGatesFor(level).entries()) {
+    const id = routeGateId(gate, index);
+    if (routeGateState[id]) continue;
+    if (!canCollectRouteGate(level, routeGateState, gate, index)) continue;
+    const captureRadius = (gate.captureRadius || gate.r || 24) + SHIP_RADIUS + GATE_CAPTURE_MARGIN;
+    if (length(probe.x - gate.x, probe.y - gate.y) <= captureRadius) {
+      routeGateState[id] = true;
+    }
+  }
+}
+
+function allRequiredRouteGatesCollected(level, routeGateState) {
+  if (IGNORE_GATES) return true;
+  return routeGatesFor(level).every((gate, index) => (
+    gate.required === false || routeGateCollected(routeGateState, gate, index)
+  ));
+}
+
+function checkProbeOutcome(probe, level, elapsed, routeGateState = createRouteGateState(level)) {
   for (const [index, planet] of level.planets.entries()) {
     if (length(probe.x - planet.x, probe.y - planet.y) <= SHIP_RADIUS + planet.r) {
       return `planet_${index + 1}`;
@@ -232,6 +285,8 @@ function checkProbeOutcome(probe, level, elapsed) {
 
   const target = level.target;
   if (length(probe.x - target.x, probe.y - target.y) <= SHIP_RADIUS + target.r) {
+    if (LOCK_TARGET) return null;
+    if (!allRequiredRouteGatesCollected(level, routeGateState)) return null;
     if (target.maxSpeed && length(probe.vx, probe.vy) > target.maxSpeed) return "too_fast";
     return "target_reached";
   }
@@ -266,11 +321,13 @@ function simulate(level, radius, angleDeg) {
     vy: Math.sin(angle) * effectiveRadius * LAUNCH_POWER,
     heat: 0,
   };
+  const routeGateState = createRouteGateState(level);
   const steps = Math.ceil(TIME_LIMIT / FIXED_DT);
   for (let i = 0; i < steps; i += 1) {
     applyGravity(probe, level, FIXED_DT);
     updateProbeHeat(probe, level, FIXED_DT);
-    const outcome = checkProbeOutcome(probe, level, i * FIXED_DT);
+    updateRouteGates(probe, level, routeGateState);
+    const outcome = checkProbeOutcome(probe, level, i * FIXED_DT, routeGateState);
     if (outcome) {
       return {
         outcome,
@@ -294,6 +351,7 @@ function tracePath(level, radius, angleDeg, sampleEvery = 0.5) {
     vy: Math.sin(angle) * effectiveRadius * LAUNCH_POWER,
     heat: 0,
   };
+  const routeGateState = createRouteGateState(level);
   const samples = [];
   let nextSample = 0;
   const steps = Math.ceil(TIME_LIMIT / FIXED_DT);
@@ -311,7 +369,8 @@ function tracePath(level, radius, angleDeg, sampleEvery = 0.5) {
     }
     applyGravity(probe, level, FIXED_DT);
     updateProbeHeat(probe, level, FIXED_DT);
-    const outcome = checkProbeOutcome(probe, level, elapsed);
+    updateRouteGates(probe, level, routeGateState);
+    const outcome = checkProbeOutcome(probe, level, elapsed, routeGateState);
     if (outcome) {
       samples.push({
         t: elapsed,
@@ -411,17 +470,61 @@ function findBestSolution(level, levelIndex) {
     ...winners,
     ...scan(level, levelIndex, candidateRanges(winners), 0.2, 0.2),
   ]);
-  winners.sort((a, b) => (
-    b.score - a.score ||
-    a.launchSpeed - b.launchSpeed ||
-    a.elapsed - b.elapsed ||
-    a.arrivalSpeed - b.arrivalSpeed
-  ));
+  sortWinners(level, winners);
   return winners[0];
 }
 
 function isWin(level, radius, angleDeg) {
   return simulate(level, radius, angleDeg).outcome === "target_reached";
+}
+
+function solutionRobustness(level, solution) {
+  const angleTolerance = contiguousTolerance(
+    (delta) => isWin(level, solution.radius, solution.angleDeg + delta),
+    0.5,
+    20,
+  );
+  const speedTolerance = contiguousTolerance(
+    (percent) => isWin(level, solution.radius * (1 + percent / 100), solution.angleDeg),
+    1,
+    30,
+  );
+  const angleUsable = Math.max(angleTolerance.negative, angleTolerance.positive);
+  const speedUsable = Math.max(speedTolerance.negative, speedTolerance.positive);
+  return {
+    angleUsable,
+    speedUsable,
+    balanced: Math.min(angleUsable, speedUsable),
+    total: angleUsable + speedUsable,
+  };
+}
+
+function sortWinners(level, winners) {
+  const bestScore = Math.max(...winners.map((winner) => winner.score));
+  const robustness = new Map();
+  const robust = (winner) => {
+    const key = `${winner.radius.toFixed(3)}:${winner.angleDeg.toFixed(3)}`;
+    if (!robustness.has(key)) robustness.set(key, solutionRobustness(level, winner));
+    return robustness.get(key);
+  };
+  winners.sort((a, b) => {
+    const aNearBest = a.score >= bestScore - ROBUST_SCORE_TOLERANCE;
+    const bNearBest = b.score >= bestScore - ROBUST_SCORE_TOLERANCE;
+    if (aNearBest !== bNearBest) return bNearBest - aNearBest;
+
+    const aRobust = robust(a);
+    const bRobust = robust(b);
+    return (
+      bRobust.balanced - aRobust.balanced ||
+      bRobust.total - aRobust.total ||
+      bRobust.angleUsable - aRobust.angleUsable ||
+      bRobust.speedUsable - aRobust.speedUsable ||
+      b.score - a.score ||
+      a.launchSpeed - b.launchSpeed ||
+      a.elapsed - b.elapsed ||
+      a.arrivalSpeed - b.arrivalSpeed
+    );
+  });
 }
 
 function contiguousTolerance(test, step, max) {

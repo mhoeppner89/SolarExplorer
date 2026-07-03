@@ -1,6 +1,6 @@
 # Gravitas Optimal Solutions
 
-Generated from `gravity_sling.html` at `2026-06-27T11:09:42.143Z`.
+Generated from `gravity_sling.html` at `2026-07-03T20:59:40.061Z`.
 
 The solver ranks winning shots by the same score formula as the game: the logged best launch speed for each mission is worth 100 points, a 100% launch is worth 10 points, and intermediate launch speeds are linearly scaled between those anchors.
 
@@ -305,3 +305,78 @@ Screenshot prediction ratio: `1` (source game ratio: `0.1`).
 - Atmosphere time: `2.20s`; max strength `0.879`
 - Heat: peak `13%`; exposed `2.67s`; shadow `1.73s`
 - Browser replay: `target_reached`, score `100`, speed `127.8`
+
+## Mission 21: Neptun-Relais
+
+![Mission 21 solution](screenshots/level-21.png)
+
+- Score: `100`
+- Drag handle: `x 203.8, y 794.4`
+- From launch: 61.8 px right, 5.6 px up (35% power)
+- Launch point: `x 142.0, y 800.0`
+- Pull vector: `x -61.8, y 5.6`
+- Launch speed: `68.2`
+- Arrival: `target_reached` at `24.58s`, speed `40.7`
+- Atmosphere time: `0.00s`; max strength `0.000`
+- Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
+- Browser replay: `target_reached`, score `100`, speed `40.7`
+
+## Mission 22: Bumerang-Bahn
+
+![Mission 22 solution](screenshots/level-22.png)
+
+- Score: `100`
+- Drag handle: `x 52.6, y 771.7`
+- From launch: 51.4 px left, 32.3 px up (34% power)
+- Launch point: `x 104.0, y 804.0`
+- Pull vector: `x 51.4, y 32.3`
+- Launch speed: `66.7`
+- Arrival: `target_reached` at `12.47s`, speed `94.6`
+- Atmosphere time: `2.12s`; max strength `0.665`
+- Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
+- Browser replay: `target_reached`, score `100`, speed `94.6`
+
+## Mission 23: Polsprung
+
+![Mission 23 solution](screenshots/level-23.png)
+
+- Score: `98`
+- Drag handle: `x 35.1, y 145.9`
+- From launch: 60.9 px left, 92.1 px up (61% power)
+- Launch point: `x 96.0, y 238.0`
+- Pull vector: `x 60.9, y 92.1`
+- Launch speed: `121.2`
+- Arrival: `target_reached` at `14.00s`, speed `146.0`
+- Atmosphere time: `4.65s`; max strength `0.992`
+- Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
+- Browser replay: `target_reached`, score `98`, speed `146.0`
+
+## Mission 24: Retrograd-Schleife
+
+![Mission 24 solution](screenshots/level-24.png)
+
+- Score: `100`
+- Drag handle: `x 470.5, y 270.7`
+- From launch: 32.5 px right, 22.7 px down (22% power)
+- Launch point: `x 438.0, y 248.0`
+- Pull vector: `x -32.5, y -22.7`
+- Launch speed: `43.5`
+- Arrival: `target_reached` at `13.32s`, speed `137.6`
+- Atmosphere time: `1.57s`; max strength `0.999`
+- Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
+- Browser replay: `target_reached`, score `100`, speed `137.6`
+
+## Mission 25: Doppelstern-Knoten
+
+![Mission 25 solution](screenshots/level-25.png)
+
+- Score: `100`
+- Drag handle: `x 482.6, y 747.2`
+- From launch: 44.6 px right, 78.8 px up (50% power)
+- Launch point: `x 438.0, y 826.0`
+- Pull vector: `x -44.6, y 78.8`
+- Launch speed: `99.4`
+- Arrival: `target_reached` at `9.48s`, speed `179.6`
+- Atmosphere time: `3.93s`; max strength `0.998`
+- Heat: peak `0%`; exposed `0.00s`; shadow `0.00s`
+- Browser replay: `target_reached`, score `100`, speed `179.6`
