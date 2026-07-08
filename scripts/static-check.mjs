@@ -9,7 +9,8 @@ const coreHtmlFiles = [
   "memory_deutsch.html"
 ];
 const optionalGameFiles = [
-  "gravity_sling.html"
+  "gravity_sling.html",
+  "kaskade.html"
 ];
 const htmlFiles = [
   ...coreHtmlFiles,
@@ -94,10 +95,14 @@ const memory = exists("memory_deutsch.html")
 const gravitySling = exists("gravity_sling.html")
   ? fs.readFileSync(path.join(root, "gravity_sling.html"), "utf8")
   : "";
+const kaskade = exists("kaskade.html")
+  ? fs.readFileSync(path.join(root, "kaskade.html"), "utf8")
+  : "";
 const germanTextFiles = {
   "index.html": exists("index.html") ? fs.readFileSync(path.join(root, "index.html"), "utf8") : "",
   "memory_deutsch.html": memory,
-  "solarexplorer_deutsch.html": germanExplorer
+  "solarexplorer_deutsch.html": germanExplorer,
+  "kaskade.html": kaskade
 };
 const fallbackSpellings = ["Zurueck", "fuer", "spaeter", "Himmelskoerper", "raeume", "Waehle"];
 
@@ -133,6 +138,21 @@ if (gravitySling) {
 
   if (!gravitySling.includes("window.advanceTime")) {
     fail("Gravitas game does not expose window.advanceTime.");
+  }
+}
+
+if (kaskade) {
+  const index = germanTextFiles["index.html"];
+  if (!index.includes('href="kaskade.html"') && !index.includes("href='kaskade.html'")) {
+    fail("Index page must link Minispiel 4 to kaskade.html.");
+  }
+
+  if (!kaskade.includes("window.render_game_to_text")) {
+    fail("Kaskade game does not expose window.render_game_to_text.");
+  }
+
+  if (!kaskade.includes("window.advanceTime")) {
+    fail("Kaskade game does not expose window.advanceTime.");
   }
 }
 

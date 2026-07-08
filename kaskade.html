@@ -1,0 +1,1817 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Kaskade - Solar Explorer</title>
+    <link rel="icon" href="data:," />
+    <style>
+        :root {
+            color-scheme: dark;
+            --ink: #f7fbff;
+            --muted: #b7c8dd;
+            --panel: rgba(9, 19, 35, 0.82);
+            --line: rgba(184, 221, 255, 0.24);
+            --green: #8ef088;
+            --cyan: #61d8ff;
+            --amber: #ffcf6d;
+            --red: #ff6969;
+            --blue: #6e9cff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            width: 100vw;
+            min-height: 100dvh;
+            display: grid;
+            place-items: center;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 22% 15%, rgba(36, 108, 168, 0.42), transparent 34%),
+                radial-gradient(circle at 78% 78%, rgba(115, 61, 145, 0.34), transparent 40%),
+                linear-gradient(155deg, #030711 0%, #08172a 48%, #101b36 100%);
+            font-family: "Avenir Next Condensed", "Gill Sans", "Trebuchet MS", sans-serif;
+            touch-action: none;
+        }
+
+        .game-shell {
+            position: relative;
+            width: min(100vw, calc(100dvh * 9 / 16));
+            height: min(100dvh, calc(100vw * 16 / 9));
+            max-width: 540px;
+            max-height: 960px;
+            overflow: hidden;
+            border: 1px solid rgba(191, 222, 255, 0.26);
+            border-radius: clamp(0px, 2.4vw, 18px);
+            background: #050b17;
+            box-shadow:
+                0 26px 70px rgba(0, 0, 0, 0.48),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+            isolation: isolate;
+        }
+
+        canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        .topbar,
+        .hud,
+        .message,
+        .level-banner {
+            position: absolute;
+            z-index: 3;
+        }
+
+        .topbar {
+            top: max(0.5rem, env(safe-area-inset-top));
+            left: 0.55rem;
+            right: 0.55rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            align-items: center;
+            gap: 0.38rem;
+            pointer-events: none;
+        }
+
+        .icon-button,
+        .start-button {
+            appearance: none;
+            border: 1px solid rgba(222, 242, 255, 0.32);
+            color: var(--ink);
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+                rgba(7, 18, 34, 0.76);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                0 10px 24px rgba(0, 0, 0, 0.28);
+            font: inherit;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .icon-button {
+            width: 2.45rem;
+            aspect-ratio: 1 / 1;
+            border-radius: 999px;
+            display: inline-grid;
+            place-items: center;
+            text-decoration: none;
+            font-size: 1.05rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .icon-button:hover,
+        .icon-button:focus-visible,
+        .start-button:hover,
+        .start-button:focus-visible {
+            border-color: rgba(255, 255, 255, 0.62);
+            outline: none;
+        }
+
+        .title-chip {
+            min-width: 0;
+            padding: 0.52rem 0.68rem;
+            border: 1px solid rgba(179, 218, 255, 0.22);
+            border-radius: 999px;
+            color: #dff5ff;
+            background: rgba(7, 18, 34, 0.62);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            font-size: clamp(0.73rem, 2.2vw, 0.88rem);
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hud {
+            top: 3.55rem;
+            left: 0.58rem;
+            right: 0.58rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.45rem;
+            align-items: start;
+            pointer-events: none;
+        }
+
+        .score-stack {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.38rem;
+            min-width: 0;
+        }
+
+        .chip {
+            min-width: 0;
+            padding: 0.44rem 0.56rem;
+            border: 1px solid rgba(179, 218, 255, 0.2);
+            border-radius: 0.7rem;
+            background: rgba(7, 18, 34, 0.62);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .chip small {
+            display: block;
+            color: var(--muted);
+            font-size: 0.6rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .chip strong {
+            display: block;
+            margin-top: 0.04rem;
+            color: var(--ink);
+            font-size: clamp(0.88rem, 3vw, 1.12rem);
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .shield-panel {
+            display: grid;
+            justify-items: end;
+            gap: 0.32rem;
+        }
+
+        .shield-row {
+            display: flex;
+            gap: 0.24rem;
+        }
+
+        .shield-dot {
+            width: 0.72rem;
+            aspect-ratio: 1 / 1;
+            border-radius: 999px;
+            background: radial-gradient(circle at 35% 30%, #f7ffff 0%, #8ae9ff 38%, #246fbd 100%);
+            box-shadow: 0 0 12px rgba(97, 216, 255, 0.76);
+            opacity: 0.28;
+        }
+
+        .shield-dot.is-live {
+            opacity: 1;
+        }
+
+        .phase-pill {
+            min-width: 5.8rem;
+            padding: 0.4rem 0.52rem;
+            border: 1px solid rgba(179, 218, 255, 0.2);
+            border-radius: 999px;
+            background: rgba(7, 18, 34, 0.62);
+            color: #e6f6ff;
+            font-size: 0.72rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-align: center;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .message {
+            left: 50%;
+            top: 50%;
+            width: min(86%, 24rem);
+            transform: translate(-50%, -50%) scale(0.96);
+            display: grid;
+            gap: 0.72rem;
+            padding: clamp(1rem, 4vw, 1.35rem);
+            border: 1px solid rgba(213, 238, 255, 0.28);
+            border-radius: 1rem;
+            background:
+                linear-gradient(145deg, rgba(18, 38, 66, 0.92), rgba(7, 18, 34, 0.78)),
+                var(--panel);
+            box-shadow:
+                0 28px 62px rgba(0, 0, 0, 0.46),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .message.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .message[hidden] {
+            display: none;
+        }
+
+        .message h1 {
+            margin: 0;
+            font-family: "Copperplate", "Avenir Next Condensed", "Trebuchet MS", sans-serif;
+            font-size: clamp(1.35rem, 6vw, 2rem);
+            line-height: 1.06;
+            letter-spacing: 0.01em;
+        }
+
+        .message p {
+            margin: 0;
+            color: #d8e8fb;
+            font-size: clamp(0.88rem, 3.2vw, 1.02rem);
+            line-height: 1.36;
+        }
+
+        .message .stat-line {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.42rem;
+        }
+
+        .message .stat-line span {
+            padding: 0.48rem 0.38rem;
+            border: 1px solid rgba(190, 224, 255, 0.2);
+            border-radius: 0.62rem;
+            background: rgba(255, 255, 255, 0.06);
+            color: #f7fbff;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .start-button {
+            min-height: 2.8rem;
+            border-radius: 999px;
+            color: #06111f;
+            background: linear-gradient(145deg, #b8ffd7, #61d8ff);
+            font-size: 0.92rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .level-banner {
+            left: 50%;
+            bottom: 1.1rem;
+            transform: translateX(-50%);
+            width: max-content;
+            max-width: 84%;
+            padding: 0.48rem 0.72rem;
+            border: 1px solid rgba(196, 231, 255, 0.24);
+            border-radius: 999px;
+            background: rgba(7, 18, 34, 0.7);
+            color: #e9f7ff;
+            font-size: 0.76rem;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .level-banner.is-visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 390px) {
+            .topbar {
+                gap: 0.28rem;
+            }
+
+            .icon-button {
+                width: 2.25rem;
+            }
+
+            .hud {
+                top: 3.25rem;
+                grid-template-columns: 1fr;
+            }
+
+            .shield-panel {
+                justify-items: start;
+                grid-template-columns: auto auto;
+                align-items: center;
+            }
+
+            .score-stack {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .chip {
+                padding: 0.38rem 0.42rem;
+            }
+
+            .chip small {
+                font-size: 0.54rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="game-shell" id="gameShell" aria-label="Kaskade Spiel">
+        <canvas id="game" width="540" height="960"></canvas>
+
+        <nav class="topbar" aria-label="Spielsteuerung">
+            <a id="backButton" class="icon-button" href="index.html" aria-label="Zurück zur Spielstation" title="Zurück">‹</a>
+            <div class="title-chip" id="titleChip">Kaskade</div>
+            <button id="pauseButton" class="icon-button" type="button" aria-label="Pause" title="Pause">Ⅱ</button>
+            <button id="restartButton" class="icon-button" type="button" aria-label="Neu starten" title="Neu starten">↻</button>
+        </nav>
+
+        <section class="hud" aria-label="Status">
+            <div class="score-stack">
+                <div class="chip">
+                    <small id="scoreLabel">Punkte</small>
+                    <strong id="scoreValue">0</strong>
+                </div>
+                <div class="chip">
+                    <small id="bestLabel">Bestwert</small>
+                    <strong id="bestValue">0</strong>
+                </div>
+                <div class="chip">
+                    <small id="levelLabel">Level</small>
+                    <strong id="levelValue">1</strong>
+                </div>
+            </div>
+            <div class="shield-panel">
+                <div class="phase-pill" id="phasePill">Wolke</div>
+                <div class="shield-row" id="shieldRow" aria-label="Schilde">
+                    <span class="shield-dot is-live"></span>
+                    <span class="shield-dot is-live"></span>
+                    <span class="shield-dot is-live"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="message is-visible" id="messagePanel" aria-live="polite">
+            <h1 id="messageTitle">Kaskade</h1>
+            <p id="messageCopy">Steuere das Raumschiff durch Trümmerwolken. Wenn Teile kollidieren, entstehen neue Splitter.</p>
+            <div class="stat-line" id="messageStats">
+                <span id="statA">3 Schilde</span>
+                <span id="statB">Wellen</span>
+                <span id="statC">Kaskaden</span>
+            </div>
+            <button id="startButton" class="start-button" type="button">Start</button>
+        </section>
+
+        <div class="level-banner" id="levelBanner">Level 1</div>
+    </main>
+
+    <script>
+        (() => {
+            const WORLD = { width: 540, height: 960 };
+            const PLAY_TOP = 92;
+            const PLAY_BOTTOM = 924;
+            const PLAY_LEFT = 26;
+            const PLAY_RIGHT = WORLD.width - 26;
+            const PLAYER_RADIUS = 18;
+            const PLAYER_MAX_SPEED = 292;
+            const PLAYER_ACCEL = 1320;
+            const PLAYER_DRAG = 5.2;
+            const MAX_DEBRIS = 132;
+            const MAX_PARTICLES = 260;
+            const FIXED_DT = 1 / 60;
+            const DEBRIS_EXIT_MARGIN = 34;
+            const LANGUAGE_STORAGE_KEY = "solarExplorer.language";
+            const BEST_STORAGE_KEY = "solarExplorer.kaskade.best.v1";
+            const supportedLanguages = new Set(["de", "en"]);
+
+            const copyByLanguage = {
+                de: {
+                    documentTitle: "Kaskade - Solar Explorer",
+                    shellAria: "Kaskade Spiel",
+                    controlsAria: "Spielsteuerung",
+                    statusAria: "Status",
+                    back: "Zurück zur Spielstation",
+                    restart: "Neu starten",
+                    pause: "Pause",
+                    resume: "Weiter",
+                    score: "Punkte",
+                    best: "Bestwert",
+                    level: "Level",
+                    shieldAria: "Schilde",
+                    phaseCloud: "Wolke",
+                    phaseCalm: "Atempause",
+                    readyTitle: "Kaskade",
+                    readyCopy: "Steuere das Raumschiff durch erkennbare Trümmerwellen. Jede Welle hat eigene Gefahren und Kaskaden.",
+                    readyA: "3 Schilde",
+                    readyB: "Wellen",
+                    readyC: "Kaskaden",
+                    start: "Start",
+                    pausedTitle: "Pause",
+                    pausedCopy: "Halte kurz die Umlaufbahn an. Drücke Weiter, um die Kaskade fortzusetzen.",
+                    gameOverTitle: "Signal verloren",
+                    gameOverCopy: "Das Raumschiff wurde von zu vielen Splittern getroffen. Je länger du überlebst, desto schneller wächst dein Punktestand.",
+                    again: "Nochmal",
+                    waveNames: {
+                        shardRain: "Splitterregen",
+                        crosswind: "Seitenwind",
+                        panelDrift: "Taumelfeld",
+                        cascadeBurst: "Kaskadenstoß",
+                        satelliteBreakup: "Satellitenbruch"
+                    },
+                    bannerCloud: (level, wave) => `Level ${level}: ${wave}`,
+                    bannerCalm: (level) => `Level ${level + 1} wird vorbereitet`,
+                    controls: "Ziehen zum Steuern · WASD/Pfeile · P Pause · F Vollbild"
+                },
+                en: {
+                    documentTitle: "Kaskade - Solar Explorer",
+                    shellAria: "Kaskade game",
+                    controlsAria: "Game controls",
+                    statusAria: "Status",
+                    back: "Back to game station",
+                    restart: "Restart",
+                    pause: "Pause",
+                    resume: "Resume",
+                    score: "Score",
+                    best: "Best",
+                    level: "Level",
+                    shieldAria: "Shields",
+                    phaseCloud: "Cloud",
+                    phaseCalm: "Breather",
+                    readyTitle: "Kaskade",
+                    readyCopy: "Pilot the spacecraft through readable debris waves. Every wave has its own hazards and cascade rhythm.",
+                    readyA: "3 shields",
+                    readyB: "Waves",
+                    readyC: "Cascades",
+                    start: "Start",
+                    pausedTitle: "Paused",
+                    pausedCopy: "Hold the orbit for a moment. Press Resume to keep riding the cascade.",
+                    gameOverTitle: "Signal Lost",
+                    gameOverCopy: "The spacecraft took too many fragment hits. Survive longer to grow your score faster.",
+                    again: "Again",
+                    waveNames: {
+                        shardRain: "Shard Rain",
+                        crosswind: "Crosswind",
+                        panelDrift: "Tumble Field",
+                        cascadeBurst: "Cascade Burst",
+                        satelliteBreakup: "Satellite Breakup"
+                    },
+                    bannerCloud: (level, wave) => `Level ${level}: ${wave}`,
+                    bannerCalm: (level) => `Level ${level + 1} forming`,
+                    controls: "Drag to steer · WASD/arrows · P pause · F fullscreen"
+                }
+            };
+
+            const WAVE_PATTERNS = [
+                {
+                    key: "shardRain",
+                    spawnScale: 1.16,
+                    sideChance: 0.02,
+                    burstChance: 0.06,
+                    burstCount: 2,
+                    weights: { shard: 0.58, panel: 0.14, chunk: 0.28, satellite: 0 }
+                },
+                {
+                    key: "crosswind",
+                    spawnScale: 0.9,
+                    sideChance: 0.62,
+                    burstChance: 0.08,
+                    burstCount: 1,
+                    weights: { shard: 0.34, panel: 0.34, chunk: 0.22, satellite: 0.1 }
+                },
+                {
+                    key: "panelDrift",
+                    spawnScale: 1.0,
+                    sideChance: 0.22,
+                    burstChance: 0.1,
+                    burstCount: 1,
+                    weights: { shard: 0.16, panel: 0.54, chunk: 0.24, satellite: 0.06 }
+                },
+                {
+                    key: "cascadeBurst",
+                    spawnScale: 0.86,
+                    sideChance: 0.18,
+                    burstChance: 0.28,
+                    burstCount: 2,
+                    weights: { shard: 0.24, panel: 0.16, chunk: 0.44, satellite: 0.16 }
+                },
+                {
+                    key: "satelliteBreakup",
+                    spawnScale: 1.04,
+                    sideChance: 0.16,
+                    burstChance: 0.14,
+                    burstCount: 1,
+                    weights: { shard: 0.2, panel: 0.18, chunk: 0.22, satellite: 0.4 }
+                }
+            ];
+
+            const canvas = document.getElementById("game");
+            const ctx = canvas.getContext("2d");
+            const shell = document.getElementById("gameShell");
+            const backButton = document.getElementById("backButton");
+            const pauseButton = document.getElementById("pauseButton");
+            const restartButton = document.getElementById("restartButton");
+            const startButton = document.getElementById("startButton");
+            const scoreLabel = document.getElementById("scoreLabel");
+            const scoreValue = document.getElementById("scoreValue");
+            const bestLabel = document.getElementById("bestLabel");
+            const bestValue = document.getElementById("bestValue");
+            const levelLabel = document.getElementById("levelLabel");
+            const levelValue = document.getElementById("levelValue");
+            const phasePill = document.getElementById("phasePill");
+            const shieldRow = document.getElementById("shieldRow");
+            const messagePanel = document.getElementById("messagePanel");
+            const messageTitle = document.getElementById("messageTitle");
+            const messageCopy = document.getElementById("messageCopy");
+            const messageStats = document.getElementById("messageStats");
+            const statA = document.getElementById("statA");
+            const statB = document.getElementById("statB");
+            const statC = document.getElementById("statC");
+            const levelBanner = document.getElementById("levelBanner");
+
+            function preferredLanguage() {
+                const queryLang = new URLSearchParams(window.location.search).get("lang");
+                if (supportedLanguages.has(queryLang)) return queryLang;
+                try {
+                    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+                    if (supportedLanguages.has(stored)) return stored;
+                } catch (error) {
+                    // Query parameters still work when storage is unavailable.
+                }
+                return "de";
+            }
+
+            function rememberLanguage(language) {
+                try {
+                    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+                } catch (error) {
+                    // Storage can be disabled in embedded browser contexts.
+                }
+            }
+
+            function localizedUrl(path, language) {
+                const url = new URL(path, window.location.href);
+                url.searchParams.set("lang", language);
+                return `${url.pathname.split("/").pop()}${url.search}`;
+            }
+
+            let language = preferredLanguage();
+            rememberLanguage(language);
+            let copy = copyByLanguage[language];
+
+            function mulberry32(seed) {
+                return () => {
+                    seed |= 0;
+                    seed = seed + 0x6D2B79F5 | 0;
+                    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            }
+
+            const stars = Array.from({ length: 142 }, (_, index) => {
+                const rand = mulberry32(9001 + index * 37);
+                return {
+                    x: rand() * WORLD.width,
+                    y: rand() * WORLD.height,
+                    r: 0.6 + rand() * 1.7,
+                    speed: 8 + rand() * 34,
+                    alpha: 0.25 + rand() * 0.65,
+                    hue: rand() > 0.74 ? "rgba(133, 215, 255," : "rgba(255, 255, 255,"
+                };
+            });
+
+            const keys = new Set();
+            const state = {
+                mode: "ready",
+                level: 1,
+                phase: "cloud",
+                phaseTimer: 0,
+                phaseDuration: 12,
+                spawnTimer: 0,
+                cascadeTimer: 0,
+                score: 0,
+                best: 0,
+                survivalTime: 0,
+                shields: 3,
+                shake: 0,
+                bannerTimer: 0,
+                recentCascades: 0,
+                rngSeed: 424242,
+                rng: mulberry32(424242),
+                player: {
+                    x: WORLD.width * 0.5,
+                    y: 760,
+                    vx: 0,
+                    vy: 0,
+                    invulnerable: 0,
+                    thrust: 0,
+                    angle: -Math.PI / 2
+                },
+                joystick: {
+                    active: false,
+                    id: null,
+                    originX: 0,
+                    originY: 0,
+                    x: 0,
+                    y: 0
+                },
+                debris: [],
+                particles: [],
+                lastInput: { x: 0, y: 0 }
+            };
+
+            function loadBest() {
+                try {
+                    const value = Number(localStorage.getItem(BEST_STORAGE_KEY) || "0");
+                    state.best = Number.isFinite(value) ? value : 0;
+                } catch (error) {
+                    state.best = 0;
+                }
+            }
+
+            function saveBest() {
+                if (Math.floor(state.score) <= state.best) return;
+                state.best = Math.floor(state.score);
+                try {
+                    localStorage.setItem(BEST_STORAGE_KEY, String(state.best));
+                } catch (error) {
+                    // Best score remains visible for the current run.
+                }
+            }
+
+            function rand(min = 0, max = 1) {
+                return min + (max - min) * state.rng();
+            }
+
+            function currentWavePattern(level = state.level) {
+                return WAVE_PATTERNS[(level - 1) % WAVE_PATTERNS.length];
+            }
+
+            function currentWaveName(level = state.level) {
+                return copy.waveNames[currentWavePattern(level).key];
+            }
+
+            function chooseDebrisKind(pattern = currentWavePattern()) {
+                const roll = rand();
+                let cursor = 0;
+                for (const [kind, weight] of Object.entries(pattern.weights)) {
+                    cursor += weight;
+                    if (roll <= cursor) return kind;
+                }
+                return "chunk";
+            }
+
+            function resetGame() {
+                state.mode = "ready";
+                state.level = 1;
+                state.phase = "cloud";
+                state.phaseTimer = 0;
+                state.phaseDuration = 12;
+                state.spawnTimer = 0.3;
+                state.cascadeTimer = 0;
+                state.score = 0;
+                state.survivalTime = 0;
+                state.shields = 3;
+                state.shake = 0;
+                state.bannerTimer = 0;
+                state.recentCascades = 0;
+                state.rngSeed = 424242 + Math.floor(performance.now()) % 100000;
+                state.rng = mulberry32(state.rngSeed);
+                state.player.x = WORLD.width * 0.5;
+                state.player.y = 760;
+                state.player.vx = 0;
+                state.player.vy = 0;
+                state.player.invulnerable = 0;
+                state.player.thrust = 0;
+                state.player.angle = -Math.PI / 2;
+                state.joystick.active = false;
+                state.joystick.id = null;
+                state.debris.length = 0;
+                state.particles.length = 0;
+                state.lastInput.x = 0;
+                state.lastInput.y = 0;
+                showReadyMessage();
+                updateHud();
+                render();
+            }
+
+            function startGame() {
+                if (state.mode === "playing") return;
+                if (state.mode === "gameover" || state.mode === "ready") {
+                    state.mode = "playing";
+                    state.phase = "cloud";
+                    state.phaseTimer = 0;
+                    state.phaseDuration = cloudDurationForLevel(state.level);
+                    state.spawnTimer = 0.15;
+                    state.bannerTimer = 1.8;
+                    messagePanel.classList.remove("is-visible");
+                    messagePanel.hidden = true;
+                    levelBanner.textContent = copy.bannerCloud(state.level, currentWaveName());
+                    levelBanner.classList.add("is-visible");
+                    return;
+                }
+                if (state.mode === "paused") {
+                    state.mode = "playing";
+                    messagePanel.classList.remove("is-visible");
+                    messagePanel.hidden = true;
+                }
+            }
+
+            function restartGame() {
+                resetGame();
+                startGame();
+            }
+
+            function togglePause() {
+                if (state.mode === "ready") {
+                    startGame();
+                    return;
+                }
+                if (state.mode === "gameover") {
+                    restartGame();
+                    return;
+                }
+                if (state.mode === "paused") {
+                    state.mode = "playing";
+                    messagePanel.classList.remove("is-visible");
+                    messagePanel.hidden = true;
+                } else if (state.mode === "playing") {
+                    state.mode = "paused";
+                    showPausedMessage();
+                }
+                updateHud();
+            }
+
+            function cloudDurationForLevel(level) {
+                return Math.min(19, 10.5 + level * 0.62);
+            }
+
+            function calmDurationForLevel(level) {
+                return Math.max(2.15, 3.25 - level * 0.06);
+            }
+
+            function spawnIntervalForLevel(level) {
+                return Math.max(0.13, 0.64 - level * 0.038);
+            }
+
+            function showReadyMessage() {
+                messagePanel.hidden = false;
+                messageTitle.textContent = copy.readyTitle;
+                messageCopy.textContent = copy.readyCopy;
+                statA.textContent = copy.readyA;
+                statB.textContent = copy.readyB;
+                statC.textContent = copy.readyC;
+                messageStats.hidden = false;
+                startButton.textContent = copy.start;
+                messagePanel.classList.add("is-visible");
+            }
+
+            function showPausedMessage() {
+                messagePanel.hidden = false;
+                messageTitle.textContent = copy.pausedTitle;
+                messageCopy.textContent = copy.pausedCopy;
+                statA.textContent = `${Math.floor(state.score)}`;
+                statB.textContent = `${copy.level} ${state.level}`;
+                statC.textContent = `${state.shields}/3`;
+                messageStats.hidden = false;
+                startButton.textContent = copy.resume;
+                messagePanel.classList.add("is-visible");
+            }
+
+            function showGameOverMessage() {
+                saveBest();
+                messagePanel.hidden = false;
+                messageTitle.textContent = copy.gameOverTitle;
+                messageCopy.textContent = copy.gameOverCopy;
+                statA.textContent = `${Math.floor(state.score)}`;
+                statB.textContent = `${copy.level} ${state.level}`;
+                statC.textContent = `${Math.floor(state.survivalTime)}s`;
+                messageStats.hidden = false;
+                startButton.textContent = copy.again;
+                messagePanel.classList.add("is-visible");
+            }
+
+            function updateHud() {
+                scoreValue.textContent = String(Math.floor(state.score));
+                bestValue.textContent = String(Math.max(state.best, Math.floor(state.score)));
+                levelValue.textContent = String(state.level);
+                phasePill.textContent = state.phase === "cloud" ? currentWaveName() : copy.phaseCalm;
+                pauseButton.textContent = state.mode === "paused" ? "▶" : "Ⅱ";
+                pauseButton.setAttribute("aria-label", state.mode === "paused" ? copy.resume : copy.pause);
+                pauseButton.title = state.mode === "paused" ? copy.resume : copy.pause;
+                [...shieldRow.children].forEach((dot, index) => {
+                    dot.classList.toggle("is-live", index < state.shields);
+                });
+            }
+
+            function applyLanguage(nextLanguage) {
+                language = nextLanguage;
+                copy = copyByLanguage[language];
+                document.documentElement.lang = language;
+                document.title = copy.documentTitle;
+                shell.setAttribute("aria-label", copy.shellAria);
+                document.querySelector(".topbar").setAttribute("aria-label", copy.controlsAria);
+                document.querySelector(".hud").setAttribute("aria-label", copy.statusAria);
+                backButton.href = localizedUrl("index.html", language);
+                backButton.setAttribute("aria-label", copy.back);
+                backButton.title = copy.back;
+                restartButton.setAttribute("aria-label", copy.restart);
+                restartButton.title = copy.restart;
+                scoreLabel.textContent = copy.score;
+                bestLabel.textContent = copy.best;
+                levelLabel.textContent = copy.level;
+                shieldRow.setAttribute("aria-label", copy.shieldAria);
+                if (state.mode === "ready") showReadyMessage();
+                if (state.mode === "paused") showPausedMessage();
+                if (state.mode === "gameover") showGameOverMessage();
+                updateHud();
+            }
+
+            function spawnDebris(options = {}) {
+                if (state.debris.length >= MAX_DEBRIS) return null;
+                const level = state.level;
+                const pattern = options.pattern || currentWavePattern();
+                const kind = options.kind || chooseDebrisKind(pattern);
+                const size = options.size || (
+                    kind === "shard" ? 1 :
+                    kind === "panel" ? 2 :
+                    kind === "satellite" ? 3 :
+                    rand() < Math.min(0.58, 0.34 + level * 0.018) ? 3 : 2
+                );
+                const radius = options.radius || (
+                    kind === "shard" ? rand(5.5, 9.2) :
+                    kind === "panel" ? rand(12, 18) :
+                    kind === "satellite" ? rand(18, 24) :
+                    size === 3 ? rand(18, 27) : rand(12, 18)
+                );
+                const speed = options.speed || (
+                    kind === "shard" ? rand(156 + level * 18, 232 + level * 22) :
+                    kind === "panel" ? rand(96 + level * 8, 146 + level * 12) :
+                    kind === "satellite" ? rand(86 + level * 7, 132 + level * 10) :
+                    rand(104 + level * 10, 168 + level * 15)
+                );
+                const drift = Math.sin(level * 1.83) * (24 + level * 2);
+                const fromSide = options.fromSide ?? (rand() < pattern.sideChance);
+                let x;
+                let y;
+                let vx;
+                let vy;
+                if (options.x !== undefined) {
+                    x = options.x;
+                    y = options.y;
+                    vx = options.vx;
+                    vy = options.vy;
+                } else if (fromSide) {
+                    const left = rand() < 0.5;
+                    x = left ? -radius - 12 : WORLD.width + radius + 12;
+                    y = rand(PLAY_TOP + 6, WORLD.height * 0.34);
+                    vx = (left ? 1 : -1) * rand(48 + level * 4, 102 + level * 6);
+                    vy = kind === "shard" ? rand(142 + level * 12, 210 + level * 14) : rand(92 + level * 8, 158 + level * 11);
+                } else {
+                    x = rand(28, WORLD.width - 28);
+                    y = -radius - rand(8, 110);
+                    vx = drift + rand(-42 - level * 2, 42 + level * 2);
+                    vy = speed;
+                    if (pattern.key === "shardRain") {
+                        vx *= 0.42;
+                    } else if (pattern.key === "crosswind") {
+                        vx += rand() < 0.5 ? -rand(36, 80 + level * 4) : rand(36, 80 + level * 4);
+                    } else if (pattern.key === "panelDrift") {
+                        vx += Math.sin(x * 0.018) * 38;
+                    }
+                }
+
+                const debris = {
+                    kind,
+                    waveKey: pattern.key,
+                    x,
+                    y,
+                    vx,
+                    vy,
+                    r: radius,
+                    size,
+                    age: 0,
+                    spin: kind === "panel" ? rand(-4.6, 4.6) : kind === "shard" ? rand(-2.2, 2.2) : rand(-3.2, 3.2),
+                    rot: rand(0, Math.PI * 2),
+                    seed: rand(0, 1000),
+                    fuse: kind === "satellite" ? rand(1.9, 3.25) : 0,
+                    weave: kind === "panel" ? rand(0.7, 1.4) * (rand() < 0.5 ? -1 : 1) : 0,
+                    flash: 0,
+                    scoredNear: false
+                };
+                state.debris.push(debris);
+                return debris;
+            }
+
+            function spawnFragment(source, angle, power, sizeOverride, kindOverride) {
+                const size = sizeOverride || Math.max(1, source.size - 1);
+                const radius = Math.max(4.5, source.r * rand(0.42, 0.62));
+                const vx = source.vx * 0.46 + Math.cos(angle) * power;
+                const vy = Math.max(54 + state.level * 5, source.vy * 0.5 + Math.sin(angle) * power);
+                const kind = kindOverride || (size <= 1 ? "shard" : source.kind === "satellite" ? "panel" : "chunk");
+                return spawnDebris({
+                    x: source.x + Math.cos(angle) * source.r * 0.34,
+                    y: source.y + Math.sin(angle) * source.r * 0.34,
+                    vx,
+                    vy,
+                    kind,
+                    size,
+                    radius,
+                    speed: power
+                });
+            }
+
+            function splitDebris(debris, reason = "cascade") {
+                if (state.debris.length >= MAX_DEBRIS - 2 || debris.size <= 1) {
+                    debris.flash = 0.22;
+                    return 0;
+                }
+                const count = debris.kind === "satellite" ? 4 : debris.size === 3 ? 3 : 2;
+                const base = Math.PI / 2 + rand(-0.26, 0.26);
+                for (let i = 0; i < count; i += 1) {
+                    const angle = base + (i - (count - 1) / 2) * rand(0.44, 0.84) + rand(-0.18, 0.18);
+                    const fragmentKind = debris.kind === "satellite"
+                        ? (i % 3 === 0 ? "panel" : "shard")
+                        : undefined;
+                    spawnFragment(debris, angle, rand(72, 150 + state.level * 8), undefined, fragmentKind);
+                }
+                createBurst(debris.x, debris.y, reason === "hit" ? "#ffcf6d" : debris.kind === "satellite" ? "#ff7d6e" : "#a7ecff", 12 + count * 4, 120);
+                debris.remove = true;
+                state.recentCascades += 1;
+                return count;
+            }
+
+            function createBurst(x, y, color, count, speed = 90) {
+                for (let i = 0; i < count && state.particles.length < MAX_PARTICLES; i += 1) {
+                    const angle = rand(0, Math.PI * 2);
+                    const power = rand(speed * 0.25, speed);
+                    state.particles.push({
+                        x,
+                        y,
+                        vx: Math.cos(angle) * power,
+                        vy: Math.sin(angle) * power,
+                        r: rand(1.4, 4.8),
+                        life: rand(0.32, 0.84),
+                        maxLife: rand(0.5, 1.0),
+                        color
+                    });
+                }
+            }
+
+            function updateInput(dt) {
+                let ax = 0;
+                let ay = 0;
+                if (keys.has("ArrowLeft") || keys.has("a")) ax -= 1;
+                if (keys.has("ArrowRight") || keys.has("d")) ax += 1;
+                if (keys.has("ArrowUp") || keys.has("w")) ay -= 1;
+                if (keys.has("ArrowDown") || keys.has("s")) ay += 1;
+
+                if (state.joystick.active) {
+                    const dx = state.joystick.x - state.joystick.originX;
+                    const dy = state.joystick.y - state.joystick.originY;
+                    const length = Math.hypot(dx, dy);
+                    const max = 84;
+                    if (length > 4) {
+                        ax += dx / Math.max(max, length);
+                        ay += dy / Math.max(max, length);
+                    }
+                }
+
+                const mag = Math.hypot(ax, ay);
+                if (mag > 1) {
+                    ax /= mag;
+                    ay /= mag;
+                }
+                state.lastInput.x = ax;
+                state.lastInput.y = ay;
+
+                const player = state.player;
+                if (mag > 0.02) {
+                    player.vx += ax * PLAYER_ACCEL * dt;
+                    player.vy += ay * PLAYER_ACCEL * dt;
+                    player.thrust = Math.min(1, player.thrust + dt * 7);
+                    player.angle = Math.atan2(ay, ax);
+                } else {
+                    player.thrust = Math.max(0, player.thrust - dt * 4.5);
+                }
+
+                const speed = Math.hypot(player.vx, player.vy);
+                if (speed > PLAYER_MAX_SPEED) {
+                    player.vx = player.vx / speed * PLAYER_MAX_SPEED;
+                    player.vy = player.vy / speed * PLAYER_MAX_SPEED;
+                }
+
+                const drag = Math.max(0, 1 - PLAYER_DRAG * dt);
+                player.vx *= drag;
+                player.vy *= drag;
+                player.x += player.vx * dt;
+                player.y += player.vy * dt;
+
+                if (player.x < PLAY_LEFT + PLAYER_RADIUS) {
+                    player.x = PLAY_LEFT + PLAYER_RADIUS;
+                    player.vx = Math.max(0, player.vx) * 0.45;
+                }
+                if (player.x > PLAY_RIGHT - PLAYER_RADIUS) {
+                    player.x = PLAY_RIGHT - PLAYER_RADIUS;
+                    player.vx = Math.min(0, player.vx) * 0.45;
+                }
+                const topLimit = playerTopLimit();
+                if (player.y < topLimit + PLAYER_RADIUS) {
+                    player.y = topLimit + PLAYER_RADIUS;
+                    player.vy = Math.max(0, player.vy) * 0.45;
+                }
+                if (player.y > PLAY_BOTTOM - PLAYER_RADIUS) {
+                    player.y = PLAY_BOTTOM - PLAYER_RADIUS;
+                    player.vy = Math.min(0, player.vy) * 0.45;
+                }
+            }
+
+            function playerTopLimit() {
+                const canvasRect = canvas.getBoundingClientRect();
+                const hudRect = document.querySelector(".hud").getBoundingClientRect();
+                if (!canvasRect.height) return PLAY_TOP;
+                const hudBottomWorld = (hudRect.bottom - canvasRect.top) / canvasRect.height * WORLD.height;
+                return Math.max(PLAY_TOP, hudBottomWorld + 28);
+            }
+
+            function updatePhase(dt) {
+                state.phaseTimer += dt;
+                if (state.phase === "cloud" && state.phaseTimer >= state.phaseDuration) {
+                    state.phase = "calm";
+                    state.phaseTimer = 0;
+                    state.phaseDuration = calmDurationForLevel(state.level);
+                    state.bannerTimer = 1.35;
+                    levelBanner.textContent = copy.bannerCalm(state.level);
+                    levelBanner.classList.add("is-visible");
+                } else if (state.phase === "calm" && state.phaseTimer >= state.phaseDuration) {
+                    state.level += 1;
+                    state.phase = "cloud";
+                    state.phaseTimer = 0;
+                    state.phaseDuration = cloudDurationForLevel(state.level);
+                    state.spawnTimer = Math.min(state.spawnTimer, 0.22);
+                    state.bannerTimer = 1.55;
+                    levelBanner.textContent = copy.bannerCloud(state.level, currentWaveName());
+                    levelBanner.classList.add("is-visible");
+                    if (state.shields < 3 && state.level % 3 === 0) {
+                        state.shields += 1;
+                        createBurst(state.player.x, state.player.y, "#61d8ff", 26, 130);
+                    }
+                }
+            }
+
+            function updateSpawning(dt) {
+                state.spawnTimer -= dt;
+                const calmFactor = state.phase === "calm" ? 2.65 : 1;
+                if (state.spawnTimer <= 0) {
+                    const pattern = currentWavePattern();
+                    spawnDebris({ pattern });
+                    if (rand() < pattern.burstChance + Math.min(0.1, state.level * 0.008)) {
+                        for (let i = 0; i < pattern.burstCount; i += 1) {
+                            spawnDebris({
+                                pattern,
+                                fromSide: pattern.key === "crosswind" ? true : undefined
+                            });
+                        }
+                    }
+                    state.spawnTimer += spawnIntervalForLevel(state.level) * pattern.spawnScale * calmFactor * rand(0.74, 1.28);
+                }
+            }
+
+            function updateDebris(dt) {
+                for (const debris of state.debris) {
+                    if (debris.kind === "satellite") {
+                        debris.fuse -= dt;
+                        if (debris.fuse < 0.82) {
+                            debris.flash = Math.max(debris.flash, 0.08);
+                        }
+                        if (debris.fuse <= 0) {
+                            splitDebris(debris, "cascade");
+                            continue;
+                        }
+                    }
+                    if (debris.kind === "panel") {
+                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * 22 * dt;
+                    }
+                    debris.x += debris.vx * dt;
+                    debris.y += debris.vy * dt;
+                    debris.age += dt;
+                    debris.vx *= Math.max(0, 1 - 0.52 * dt);
+                    debris.vy *= Math.max(0, 1 - 0.03 * dt);
+                    const kindSpeedBonus = debris.kind === "shard" ? 42 : debris.kind === "satellite" ? -8 : debris.kind === "chunk" ? 10 : 0;
+                    const minimumDownSpeed = 58 + state.level * 7 + debris.size * 8 + kindSpeedBonus;
+                    if (debris.vy < minimumDownSpeed) {
+                        debris.vy += (minimumDownSpeed - debris.vy) * Math.min(1, dt * 2.8);
+                    }
+                    debris.rot += debris.spin * dt;
+                    debris.flash = Math.max(0, debris.flash - dt);
+                    if (
+                        debris.y > WORLD.height + debris.r + DEBRIS_EXIT_MARGIN ||
+                        debris.x < -debris.r - 100 ||
+                        debris.x > WORLD.width + debris.r + 100 ||
+                        (debris.age > 11 && debris.y > PLAY_BOTTOM)
+                    ) {
+                        debris.remove = true;
+                    }
+                }
+                handleDebrisCollisions();
+                handlePlayerCollisions();
+                state.debris = state.debris.filter((debris) => !debris.remove);
+            }
+
+            function handleDebrisCollisions() {
+                state.cascadeTimer -= FIXED_DT;
+                if (state.cascadeTimer > 0 || state.debris.length < 2) return;
+                let checks = 0;
+                const maxChecks = Math.min(760, state.debris.length * 8);
+                for (let i = 0; i < state.debris.length && checks < maxChecks; i += 1) {
+                    const a = state.debris[i];
+                    if (a.remove || a.size <= 1) continue;
+                    for (let j = i + 1; j < state.debris.length && checks < maxChecks; j += 1) {
+                        checks += 1;
+                        const b = state.debris[j];
+                        if (b.remove) continue;
+                        const dx = a.x - b.x;
+                        const dy = a.y - b.y;
+                        const rr = (a.r + b.r) * 0.72;
+                        if (dx * dx + dy * dy > rr * rr) continue;
+                        const rvx = a.vx - b.vx;
+                        const rvy = a.vy - b.vy;
+                        const relative = Math.hypot(rvx, rvy);
+                        const chance = 0.28 + Math.min(0.24, state.level * 0.014);
+                        if (relative > 58 && rand() < chance) {
+                            splitDebris(a.size >= b.size ? a : b, "cascade");
+                            state.cascadeTimer = Math.max(0.025, 0.12 - state.level * 0.004);
+                            return;
+                        }
+                        a.vx += dx * 0.018;
+                        a.vy += dy * 0.018;
+                        b.vx -= dx * 0.018;
+                        b.vy -= dy * 0.018;
+                    }
+                }
+            }
+
+            function handlePlayerCollisions() {
+                const player = state.player;
+                player.invulnerable = Math.max(0, player.invulnerable - FIXED_DT);
+                for (const debris of state.debris) {
+                    const dx = player.x - debris.x;
+                    const dy = player.y - debris.y;
+                    const hitRadius = PLAYER_RADIUS + debris.r * 0.78;
+                    const distanceSq = dx * dx + dy * dy;
+                    if (!debris.scoredNear && distanceSq < (hitRadius + 24) * (hitRadius + 24) && distanceSq > hitRadius * hitRadius) {
+                        debris.scoredNear = true;
+                        state.score += 2 + state.level * 0.35;
+                    }
+                    if (distanceSq > hitRadius * hitRadius) continue;
+                    if (player.invulnerable > 0) {
+                        debris.vx -= dx * 2.4;
+                        debris.vy -= dy * 2.4;
+                        continue;
+                    }
+                    state.shields -= 1;
+                    state.shake = 0.36;
+                    player.invulnerable = 1.35;
+                    createBurst(player.x, player.y, state.shields <= 0 ? "#ff6969" : "#61d8ff", state.shields <= 0 ? 58 : 34, 210);
+                    splitDebris(debris, "hit");
+                    debris.remove = true;
+                    if (state.shields <= 0) {
+                        state.mode = "gameover";
+                        state.joystick.active = false;
+                        showGameOverMessage();
+                    }
+                    updateHud();
+                    return;
+                }
+            }
+
+            function updateParticles(dt) {
+                for (const particle of state.particles) {
+                    particle.x += particle.vx * dt;
+                    particle.y += particle.vy * dt;
+                    particle.vx *= 0.982;
+                    particle.vy *= 0.982;
+                    particle.life -= dt;
+                }
+                state.particles = state.particles.filter((particle) => particle.life > 0);
+            }
+
+            function update(dt) {
+                if (state.mode !== "playing") {
+                    updateParticles(dt);
+                    return;
+                }
+                state.survivalTime += dt;
+                state.score += dt * (9.4 + state.level * 1.55 + state.debris.length * 0.018);
+                updatePhase(dt);
+                updateSpawning(dt);
+                updateInput(dt);
+                updateDebris(dt);
+                updateParticles(dt);
+                state.shake = Math.max(0, state.shake - dt * 2.8);
+                state.bannerTimer = Math.max(0, state.bannerTimer - dt);
+                if (state.bannerTimer <= 0) levelBanner.classList.remove("is-visible");
+                updateHud();
+            }
+
+            function drawBackground() {
+                const gradient = ctx.createLinearGradient(0, 0, WORLD.width, WORLD.height);
+                gradient.addColorStop(0, "#061226");
+                gradient.addColorStop(0.48, "#071a31");
+                gradient.addColorStop(1, "#111735");
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+                const time = state.survivalTime;
+                ctx.save();
+                for (const star of stars) {
+                    const y = (star.y + time * star.speed) % WORLD.height;
+                    ctx.fillStyle = `${star.hue}${star.alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(star.x, y, star.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+
+                ctx.save();
+                ctx.globalAlpha = 0.34;
+                const aurora = ctx.createRadialGradient(WORLD.width * 0.52, WORLD.height + 160, 40, WORLD.width * 0.52, WORLD.height + 160, 520);
+                aurora.addColorStop(0, "rgba(111, 226, 178, 0.46)");
+                aurora.addColorStop(0.5, "rgba(81, 155, 255, 0.16)");
+                aurora.addColorStop(1, "rgba(81, 155, 255, 0)");
+                ctx.fillStyle = aurora;
+                ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+                ctx.globalAlpha = 0.22;
+                ctx.strokeStyle = "#9cd6ff";
+                ctx.lineWidth = 1.2;
+                for (let i = 0; i < 5; i += 1) {
+                    ctx.beginPath();
+                    ctx.ellipse(WORLD.width * 0.5, WORLD.height + 150 + i * 24, 340 + i * 42, 92 + i * 15, -0.05, Math.PI * 1.05, Math.PI * 1.95);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            function drawDebris(debris) {
+                ctx.save();
+                ctx.translate(debris.x, debris.y);
+                ctx.rotate(debris.rot);
+                const warning = debris.kind === "satellite" && debris.fuse < 0.85;
+                ctx.globalAlpha = debris.flash > 0 || warning ? 1 : 0.92;
+                const r = debris.r;
+                const metal = debris.kind === "chunk" ? "#aeb9c2" : debris.kind === "panel" ? "#7f96a5" : debris.kind === "satellite" ? "#d6c29b" : "#dbe7f2";
+                ctx.fillStyle = metal;
+                ctx.strokeStyle = debris.flash > 0 ? "#ffffff" : "rgba(9, 16, 28, 0.72)";
+                ctx.lineWidth = Math.max(1.4, r * 0.12);
+
+                if (debris.kind === "chunk") {
+                    ctx.beginPath();
+                    for (let i = 0; i < 8; i += 1) {
+                        const angle = i / 8 * Math.PI * 2;
+                        const wobble = 0.72 + 0.28 * Math.sin(debris.seed + i * 1.7);
+                        const px = Math.cos(angle) * r * wobble;
+                        const py = Math.sin(angle) * r * (0.66 + 0.22 * Math.cos(debris.seed + i));
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.strokeStyle = "rgba(255, 238, 185, 0.35)";
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 0.44, -r * 0.18);
+                    ctx.lineTo(r * 0.48, r * 0.12);
+                    ctx.stroke();
+                } else if (debris.kind === "panel") {
+                    ctx.fillRect(-r * 1.24, -r * 0.42, r * 2.48, r * 0.84);
+                    ctx.strokeRect(-r * 1.24, -r * 0.42, r * 2.48, r * 0.84);
+                    ctx.fillStyle = "rgba(78, 155, 223, 0.78)";
+                    for (let i = -2; i <= 1; i += 1) {
+                        ctx.fillRect(i * r * 0.52 + r * 0.04, -r * 0.25, r * 0.38, r * 0.5);
+                    }
+                    ctx.strokeStyle = "rgba(209, 236, 255, 0.42)";
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 1.1, 0);
+                    ctx.lineTo(r * 1.1, 0);
+                    ctx.stroke();
+                } else if (debris.kind === "shard") {
+                    ctx.fillStyle = "#dcefff";
+                    ctx.beginPath();
+                    ctx.moveTo(0, -r * 1.65);
+                    ctx.lineTo(r * 0.46, r * 0.18);
+                    ctx.lineTo(0, r * 1.25);
+                    ctx.lineTo(-r * 0.38, r * 0.05);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.strokeStyle = "rgba(97, 216, 255, 0.78)";
+                    ctx.beginPath();
+                    ctx.moveTo(0, -r);
+                    ctx.lineTo(0, r * 0.72);
+                    ctx.stroke();
+                } else {
+                    if (warning) {
+                        ctx.save();
+                        ctx.rotate(-debris.rot);
+                        ctx.globalAlpha = 0.35 + 0.28 * Math.sin(state.survivalTime * 18);
+                        ctx.strokeStyle = "#ff7d6e";
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, r * 1.55, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                    ctx.fillStyle = "#d6c29b";
+                    ctx.fillRect(-r * 0.52, -r * 0.52, r * 1.04, r * 1.04);
+                    ctx.strokeRect(-r * 0.52, -r * 0.52, r * 1.04, r * 1.04);
+                    ctx.fillStyle = "#5d9bff";
+                    ctx.fillRect(-r * 1.7, -r * 0.34, r * 0.9, r * 0.68);
+                    ctx.fillRect(r * 0.8, -r * 0.34, r * 0.9, r * 0.68);
+                    ctx.strokeRect(-r * 1.7, -r * 0.34, r * 0.9, r * 0.68);
+                    ctx.strokeRect(r * 0.8, -r * 0.34, r * 0.9, r * 0.68);
+                    ctx.strokeStyle = "rgba(255, 240, 190, 0.8)";
+                    ctx.beginPath();
+                    ctx.moveTo(0, -r * 0.52);
+                    ctx.lineTo(0, -r * 1.18);
+                    ctx.moveTo(0, -r * 1.18);
+                    ctx.lineTo(r * 0.38, -r * 1.46);
+                    ctx.stroke();
+                    ctx.fillStyle = warning ? "#ff6969" : "#8ef088";
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            function drawPlayer() {
+                const player = state.player;
+                const flicker = player.invulnerable > 0 && Math.floor(player.invulnerable * 18) % 2 === 0;
+                if (flicker && state.mode === "playing") return;
+                const input = state.lastInput;
+
+                function drawFlame(points, power) {
+                    if (power <= 0.04 || state.mode !== "playing") return;
+                    ctx.save();
+                    ctx.globalCompositeOperation = "lighter";
+                    const gradient = ctx.createLinearGradient(points[0].x, points[0].y, points[1].x, points[1].y);
+                    gradient.addColorStop(0, "rgba(255, 246, 168, 0.96)");
+                    gradient.addColorStop(0.45, "rgba(97, 216, 255, 0.82)");
+                    gradient.addColorStop(1, "rgba(97, 216, 255, 0)");
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+                    ctx.lineTo(points[1].x, points[1].y);
+                    ctx.lineTo(points[2].x, points[2].y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                ctx.save();
+                ctx.translate(player.x, player.y);
+
+                const sidePower = Math.min(1, Math.abs(input.x));
+                const verticalPower = Math.min(1, Math.abs(input.y));
+                drawFlame([{ x: -18, y: -5 }, { x: -40 - sidePower * 18, y: 1 }, { x: -18, y: 9 }], input.x > 0 ? sidePower : 0);
+                drawFlame([{ x: 18, y: -5 }, { x: 40 + sidePower * 18, y: 1 }, { x: 18, y: 9 }], input.x < 0 ? sidePower : 0);
+                drawFlame([{ x: -5, y: -18 }, { x: 0, y: -36 - verticalPower * 12 }, { x: 5, y: -18 }], input.y > 0 ? verticalPower : 0);
+                drawFlame([{ x: -7, y: 19 }, { x: 0, y: 40 + verticalPower * 13 }, { x: 7, y: 19 }], input.y < 0 ? verticalPower : 0);
+
+                ctx.fillStyle = "#294063";
+                ctx.strokeStyle = "rgba(3, 10, 22, 0.78)";
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                ctx.moveTo(-31, 5);
+                ctx.lineTo(-12, -3);
+                ctx.lineTo(-12, 13);
+                ctx.lineTo(-31, 16);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(31, 5);
+                ctx.lineTo(12, -3);
+                ctx.lineTo(12, 13);
+                ctx.lineTo(31, 16);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = "#7ab8ff";
+                ctx.fillRect(-28, 7, 14, 5);
+                ctx.fillRect(14, 7, 14, 5);
+
+                const hull = ctx.createLinearGradient(-14, -24, 14, 24);
+                hull.addColorStop(0, "#ffffff");
+                hull.addColorStop(0.38, "#d9f8ff");
+                hull.addColorStop(1, "#86acd1");
+                ctx.fillStyle = hull;
+                ctx.strokeStyle = "rgba(3, 10, 22, 0.78)";
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                ctx.moveTo(0, -27);
+                ctx.bezierCurveTo(13, -17, 15, 3, 11, 18);
+                ctx.quadraticCurveTo(0, 26, -11, 18);
+                ctx.bezierCurveTo(-15, 3, -13, -17, 0, -27);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = "#123052";
+                ctx.beginPath();
+                ctx.ellipse(0, -9, 8, 11, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#61d8ff";
+                ctx.beginPath();
+                ctx.ellipse(0, -10, 5, 7, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = "#182842";
+                ctx.fillRect(-5, 17, 10, 8);
+                ctx.fillRect(-20, -2, 7, 9);
+                ctx.fillRect(13, -2, 7, 9);
+                ctx.fillRect(-4, -25, 8, 6);
+                ctx.strokeStyle = "rgba(151, 224, 255, 0.7)";
+                ctx.lineWidth = 1.4;
+                ctx.strokeRect(-5, 17, 10, 8);
+                ctx.strokeRect(-20, -2, 7, 9);
+                ctx.strokeRect(13, -2, 7, 9);
+                ctx.strokeRect(-4, -25, 8, 6);
+
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, -24);
+                ctx.lineTo(0, 19);
+                ctx.moveTo(-8, 5);
+                ctx.lineTo(8, 5);
+                ctx.stroke();
+                ctx.restore();
+
+                if (state.shields > 0) {
+                    ctx.save();
+                    ctx.translate(player.x, player.y);
+                    ctx.globalAlpha = 0.18 + 0.08 * Math.sin(state.survivalTime * 7);
+                    ctx.strokeStyle = state.shields === 1 ? "#ffcf6d" : "#61d8ff";
+                    ctx.lineWidth = 2.4;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, PLAYER_RADIUS + 13, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            function drawJoystick() {
+                if (!state.joystick.active) return;
+                const joy = state.joystick;
+                const dx = joy.x - joy.originX;
+                const dy = joy.y - joy.originY;
+                const length = Math.hypot(dx, dy);
+                const max = 84;
+                const scale = length > max ? max / length : 1;
+                const knobX = joy.originX + dx * scale;
+                const knobY = joy.originY + dy * scale;
+                ctx.save();
+                ctx.globalAlpha = 0.64;
+                ctx.strokeStyle = "rgba(210, 240, 255, 0.42)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(joy.originX, joy.originY, max, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = "rgba(97, 216, 255, 0.18)";
+                ctx.beginPath();
+                ctx.arc(knobX, knobY, 22, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawParticles() {
+                ctx.save();
+                ctx.globalCompositeOperation = "lighter";
+                for (const particle of state.particles) {
+                    const alpha = Math.max(0, particle.life / particle.maxLife);
+                    ctx.globalAlpha = Math.min(1, alpha);
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.r * (0.6 + alpha), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            function drawCloudWarnings() {
+                if (state.phase !== "cloud") return;
+                const intensity = Math.min(0.34, 0.1 + state.level * 0.012);
+                const wave = currentWavePattern();
+                ctx.save();
+                ctx.globalAlpha = intensity * (0.65 + 0.35 * Math.sin(state.survivalTime * 4));
+                ctx.fillStyle = "rgba(255, 207, 109, 0.18)";
+                ctx.fillRect(0, PLAY_TOP, WORLD.width, 7);
+                ctx.fillStyle = "rgba(255, 105, 105, 0.12)";
+                ctx.fillRect(0, PLAY_TOP + 8, WORLD.width, 4);
+                ctx.globalAlpha = 0.22 + intensity;
+                ctx.lineWidth = 2;
+                if (wave.key === "shardRain") {
+                    ctx.strokeStyle = "rgba(142, 232, 255, 0.72)";
+                    for (let x = 54; x < WORLD.width; x += 58) {
+                        const offset = Math.sin(state.survivalTime * 4 + x) * 8;
+                        ctx.beginPath();
+                        ctx.moveTo(x + offset, PLAY_TOP + 18);
+                        ctx.lineTo(x + offset * 0.35, PLAY_TOP + 54);
+                        ctx.stroke();
+                    }
+                } else if (wave.key === "crosswind") {
+                    ctx.strokeStyle = "rgba(255, 207, 109, 0.7)";
+                    for (let y = PLAY_TOP + 28; y < PLAY_TOP + 120; y += 28) {
+                        ctx.beginPath();
+                        ctx.moveTo(20, y);
+                        ctx.lineTo(46, y + 9);
+                        ctx.lineTo(20, y + 18);
+                        ctx.moveTo(WORLD.width - 20, y);
+                        ctx.lineTo(WORLD.width - 46, y + 9);
+                        ctx.lineTo(WORLD.width - 20, y + 18);
+                        ctx.stroke();
+                    }
+                } else if (wave.key === "panelDrift") {
+                    ctx.strokeStyle = "rgba(126, 174, 255, 0.58)";
+                    for (let i = 0; i < 3; i += 1) {
+                        ctx.beginPath();
+                        for (let x = 24; x <= WORLD.width - 24; x += 18) {
+                            const y = PLAY_TOP + 32 + i * 26 + Math.sin(x * 0.035 + state.survivalTime * 2.2 + i) * 8;
+                            if (x === 24) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                    }
+                } else if (wave.key === "cascadeBurst") {
+                    ctx.strokeStyle = "rgba(255, 148, 116, 0.62)";
+                    for (let i = 0; i < 4; i += 1) {
+                        const x = 84 + i * 120;
+                        const r = 8 + ((state.survivalTime * 18 + i * 8) % 24);
+                        ctx.beginPath();
+                        ctx.arc(x, PLAY_TOP + 42, r, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                } else {
+                    ctx.strokeStyle = "rgba(255, 105, 105, 0.7)";
+                    ctx.fillStyle = "rgba(255, 105, 105, 0.22)";
+                    for (let x = 72; x < WORLD.width; x += 132) {
+                        ctx.beginPath();
+                        ctx.arc(x, PLAY_TOP + 40, 13 + Math.sin(state.survivalTime * 9 + x) * 3, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                }
+                ctx.restore();
+            }
+
+            function render() {
+                const scaleX = canvas.width / WORLD.width;
+                const scaleY = canvas.height / WORLD.height;
+                ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
+                ctx.clearRect(0, 0, WORLD.width, WORLD.height);
+                const shakeX = state.shake > 0 ? Math.sin(state.survivalTime * 91.7) * 5 * state.shake : 0;
+                const shakeY = state.shake > 0 ? Math.cos(state.survivalTime * 73.3) * 5 * state.shake : 0;
+                ctx.save();
+                ctx.translate(shakeX, shakeY);
+                drawBackground();
+                drawCloudWarnings();
+                for (const debris of state.debris) drawDebris(debris);
+                drawParticles();
+                if (state.mode !== "gameover" || state.shields > 0) drawPlayer();
+                drawJoystick();
+                ctx.restore();
+            }
+
+            function frame(now) {
+                if (!frame.last) frame.last = now;
+                const dt = Math.min(0.05, (now - frame.last) / 1000);
+                frame.last = now;
+                update(dt);
+                render();
+                requestAnimationFrame(frame);
+            }
+
+            function resizeCanvas() {
+                const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+                const rect = shell.getBoundingClientRect();
+                canvas.width = Math.max(1, Math.round(rect.width * dpr));
+                canvas.height = Math.max(1, Math.round(rect.height * dpr));
+                render();
+            }
+
+            function eventToWorld(event) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: (event.clientX - rect.left) / rect.width * WORLD.width,
+                    y: (event.clientY - rect.top) / rect.height * WORLD.height
+                };
+            }
+
+            function onPointerDown(event) {
+                if (event.target !== canvas) return;
+                if (state.mode === "ready") {
+                    startGame();
+                } else if (state.mode === "gameover") {
+                    restartGame();
+                }
+                if (state.mode !== "playing") return;
+                const point = eventToWorld(event);
+                state.joystick.active = true;
+                state.joystick.id = event.pointerId;
+                state.joystick.originX = point.x;
+                state.joystick.originY = point.y;
+                state.joystick.x = point.x;
+                state.joystick.y = point.y;
+                canvas.setPointerCapture(event.pointerId);
+            }
+
+            function onPointerMove(event) {
+                if (!state.joystick.active || state.joystick.id !== event.pointerId) return;
+                const point = eventToWorld(event);
+                state.joystick.x = point.x;
+                state.joystick.y = point.y;
+            }
+
+            function onPointerUp(event) {
+                if (state.joystick.id === event.pointerId) {
+                    state.joystick.active = false;
+                    state.joystick.id = null;
+                    try {
+                        canvas.releasePointerCapture(event.pointerId);
+                    } catch (error) {
+                        // Some browser drivers release capture automatically.
+                    }
+                }
+            }
+
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    shell.requestFullscreen?.();
+                } else {
+                    document.exitFullscreen?.();
+                }
+            }
+
+            function renderGameToText() {
+                const relevantDebris = state.debris
+                    .slice()
+                    .sort((a, b) => Math.hypot(a.x - state.player.x, a.y - state.player.y) - Math.hypot(b.x - state.player.x, b.y - state.player.y))
+                    .slice(0, 14)
+                    .map((debris) => ({
+                        x: Number(debris.x.toFixed(1)),
+                        y: Number(debris.y.toFixed(1)),
+                        vx: Number(debris.vx.toFixed(1)),
+                        vy: Number(debris.vy.toFixed(1)),
+                        r: Number(debris.r.toFixed(1)),
+                        size: debris.size,
+                        kind: debris.kind,
+                        wave: debris.waveKey,
+                        fuse: debris.kind === "satellite" ? Number(debris.fuse.toFixed(2)) : null
+                    }));
+                return JSON.stringify({
+                    mode: state.mode,
+                    coordinates: `world units; origin top-left; x right; y down; canvas world ${WORLD.width}x${WORLD.height}`,
+                    level: state.level,
+                    phase: state.phase,
+                    wave: {
+                        key: currentWavePattern().key,
+                        name: currentWaveName()
+                    },
+                    phaseRemaining: Number(Math.max(0, state.phaseDuration - state.phaseTimer).toFixed(2)),
+                    score: Math.floor(state.score),
+                    best: Math.max(state.best, Math.floor(state.score)),
+                    survivalTime: Number(state.survivalTime.toFixed(2)),
+                    shields: state.shields,
+                    player: {
+                        x: Number(state.player.x.toFixed(1)),
+                        y: Number(state.player.y.toFixed(1)),
+                        vx: Number(state.player.vx.toFixed(1)),
+                        vy: Number(state.player.vy.toFixed(1)),
+                        r: PLAYER_RADIUS,
+                        invulnerable: Number(state.player.invulnerable.toFixed(2))
+                    },
+                    input: {
+                        keyboard: [...keys],
+                        joystick: state.joystick.active,
+                        vector: {
+                            x: Number(state.lastInput.x.toFixed(2)),
+                            y: Number(state.lastInput.y.toFixed(2))
+                        }
+                    },
+                    debrisCount: state.debris.length,
+                    nearestDebris: relevantDebris,
+                    particles: state.particles.length,
+                    recentCascades: state.recentCascades,
+                    controls: copy.controls
+                });
+            }
+
+            window.render_game_to_text = renderGameToText;
+            window.advanceTime = (ms) => {
+                const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+                for (let i = 0; i < steps; i += 1) update(FIXED_DT);
+                render();
+            };
+
+            startButton.addEventListener("click", () => {
+                if (state.mode === "gameover") {
+                    restartGame();
+                } else {
+                    startGame();
+                }
+            });
+            restartButton.addEventListener("click", restartGame);
+            pauseButton.addEventListener("click", togglePause);
+            canvas.addEventListener("pointerdown", onPointerDown);
+            canvas.addEventListener("pointermove", onPointerMove);
+            canvas.addEventListener("pointerup", onPointerUp);
+            canvas.addEventListener("pointercancel", onPointerUp);
+
+            window.addEventListener("keydown", (event) => {
+                const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+                if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " ", "Spacebar"].includes(event.key)) {
+                    event.preventDefault();
+                }
+                if (key === " " || key === "Enter") {
+                    if (state.mode === "ready") startGame();
+                    else if (state.mode === "gameover") restartGame();
+                } else if (key === "p") {
+                    togglePause();
+                } else if (key === "f") {
+                    toggleFullscreen();
+                } else {
+                    keys.add(key);
+                }
+            });
+            window.addEventListener("keyup", (event) => {
+                const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+                keys.delete(key);
+            });
+            window.addEventListener("blur", () => {
+                keys.clear();
+                state.joystick.active = false;
+            });
+            window.addEventListener("resize", resizeCanvas);
+            window.visualViewport?.addEventListener("resize", resizeCanvas);
+            document.addEventListener("fullscreenchange", resizeCanvas);
+
+            loadBest();
+            applyLanguage(language);
+            resetGame();
+            resizeCanvas();
+            requestAnimationFrame(frame);
+        })();
+    </script>
+</body>
+
+</html>

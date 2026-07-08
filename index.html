@@ -369,7 +369,7 @@
         <header class="hero">
             <p class="kicker" data-i18n="kicker">Solar Explorer Spielstation</p>
             <h1 data-i18n="heading">Wähle dein Minispiel</h1>
-            <p class="subtitle" data-i18n="subtitle">Vier Missionen starten hier. Drei Abenteuer sind bereits spielbar, eine weitere Mission folgt bald.</p>
+            <p class="subtitle" data-i18n="subtitle">Vier Missionen starten hier. Alle Abenteuer sind spielbar.</p>
         </header>
 
         <div class="orbit-display" aria-hidden="true">
@@ -398,12 +398,12 @@
                 <span class="desc" data-i18n="gravitasDesc">Ziehe eine Rakete auf Kurs und nutze Planeten als Schwerkraft-Schleuder.</span>
                 <span class="status" data-i18n="gravitasStatus">Jetzt spielen</span>
             </a>
-            <div class="choice placeholder" aria-disabled="true">
-                <span class="eyebrow" data-i18n="placeholderEyebrow">Minispiel 4</span>
-                <span class="title" data-i18n="placeholderTitle">Kommt bald</span>
-                <span class="desc" data-i18n="placeholderDesc">Noch eine Mission ist geplant und bekommt hier später ihren Startplatz.</span>
-                <span class="status" data-i18n="placeholderStatus">Kommt bald</span>
-            </div>
+            <a class="choice active" href="kaskade.html" data-game-link="kaskade">
+                <span class="eyebrow" data-i18n="kaskadeEyebrow">Minispiel 4</span>
+                <span class="title">Kaskade</span>
+                <span class="desc" data-i18n="kaskadeDesc">Steuere ein Raumschiff durch wachsende Trümmerwolken und überlebe die Kettenreaktion.</span>
+                <span class="status" data-i18n="kaskadeStatus">Jetzt spielen</span>
+            </a>
         </div>
     </main>
     <script>
@@ -416,7 +416,7 @@
                 switchLabel: "Switch to English",
                 kicker: "Solar Explorer Spielstation",
                 heading: "Wähle dein Minispiel",
-                subtitle: "Vier Missionen starten hier. Drei Abenteuer sind bereits spielbar, eine weitere Mission folgt bald.",
+                subtitle: "Vier Missionen starten hier. Alle Abenteuer sind spielbar.",
                 choicesLabel: "Minispiel-Auswahl",
                 explorerEyebrow: "Jetzt spielbar",
                 explorerDesc: "Starte die Reise durch das Sonnensystem und entdecke Planeten, Monde und Zwergplaneten.",
@@ -427,10 +427,9 @@
                 gravitasEyebrow: "Minispiel 3",
                 gravitasDesc: "Ziehe eine Rakete auf Kurs und nutze Planeten als Schwerkraft-Schleuder.",
                 gravitasStatus: "Jetzt spielen",
-                placeholderEyebrow: "Minispiel 4",
-                placeholderTitle: "Kommt bald",
-                placeholderDesc: "Noch eine Mission ist geplant und bekommt hier später ihren Startplatz.",
-                placeholderStatus: "Kommt bald"
+                kaskadeEyebrow: "Minispiel 4",
+                kaskadeDesc: "Steuere ein Raumschiff durch wachsende Trümmerwolken und überlebe die Kettenreaktion.",
+                kaskadeStatus: "Jetzt spielen"
             },
             en: {
                 title: "Solar Explorer - Minigames",
@@ -438,7 +437,7 @@
                 switchLabel: "Zur deutschen Version wechseln",
                 kicker: "Solar Explorer Game Station",
                 heading: "Choose Your Minigame",
-                subtitle: "Four missions launch from here. Three adventures are playable now, with one more mission coming soon.",
+                subtitle: "Four missions launch from here. Every adventure is playable.",
                 choicesLabel: "Minigame selection",
                 explorerEyebrow: "Playable now",
                 explorerDesc: "Start a journey through the solar system and discover planets, moons, and dwarf planets.",
@@ -449,16 +448,16 @@
                 gravitasEyebrow: "Minigame 3",
                 gravitasDesc: "Pull a rocket onto course and use planets as gravity slingshots.",
                 gravitasStatus: "Play now",
-                placeholderEyebrow: "Minigame 4",
-                placeholderTitle: "Coming soon",
-                placeholderDesc: "Another mission is planned and will get its launch spot here later.",
-                placeholderStatus: "Coming soon"
+                kaskadeEyebrow: "Minigame 4",
+                kaskadeDesc: "Pilot a spacecraft through growing debris clouds and survive the chain reaction.",
+                kaskadeStatus: "Play now"
             }
         };
         const gameLinks = {
             explorer: "solarexplorer_deutsch.html",
             memory: "memory_deutsch.html",
-            gravitas: "gravity_sling.html"
+            gravitas: "gravity_sling.html",
+            kaskade: "kaskade.html"
         };
 
         function preferredLanguage() {

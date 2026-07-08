@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T20:59:40.061Z",
+  "generatedAt": "2026-07-08T09:46:32.703Z",
   "source": "gravity_sling.html",
   "method": "Deterministic physics search ranked by the in-game score formula; screenshots show the aiming drag for the chosen solution.",
   "constants": {
@@ -55,18 +55,18 @@
     {
       "level": 1,
       "name": "Direkter Flug",
-      "score": 100,
-      "powerPercent": 10,
-      "radius": 18,
-      "launchRadius": 11.8,
-      "angleDeg": -65.59999999999987,
+      "score": 99,
+      "powerPercent": 11,
+      "radius": 18.999999999999993,
+      "launchRadius": 12.45555555555555,
+      "angleDeg": -69.79999999999994,
       "pull": {
-        "x": 7.4358797368417875,
-        "y": -16.39230589451117
+        "x": 6.560665780972175,
+        "y": -17.831367432431552
       },
       "drag": {
-        "x": 134.5641202631582,
-        "y": 816.3923058945112
+        "x": 135.4393342190278,
+        "y": 817.8313674324315
       },
       "launch": {
         "x": 142,
@@ -77,26 +77,26 @@
         "y": 214,
         "r": 40
       },
-      "launchSpeed": 19.765,
+      "launchSpeed": 20.863055555555547,
       "outcome": "target_reached",
-      "elapsed": 29.983333333333334,
-      "x": 386.9502716644691,
-      "y": 260.01012332492564,
-      "arrivalSpeed": 19.764999999999997,
+      "elapsed": 29.716666666666665,
+      "x": 356.1982051324676,
+      "y": 217.82632638260748,
+      "arrivalSpeed": 20.863055555555547,
       "atmosphereTime": 0,
       "maxAtmosphereStrength": 0,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 49.79782724208353,
+      "minTargetDistance": 49.94856900466734,
       "screenshot": "screenshots/level-01.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 30,
-        "speed": 19.8,
-        "score": 100,
+        "elapsed": 29.73,
+        "speed": 20.9,
+        "score": 99,
         "atmosphere": {
           "currentStrength": 0,
           "maxStrength": 0,
@@ -116,18 +116,18 @@
     {
       "level": 2,
       "name": "Erste Ablenkung",
-      "score": 100,
-      "powerPercent": 34,
-      "radius": 61.10000000000003,
-      "launchRadius": 40.054444444444464,
-      "angleDeg": 177.59999999999943,
+      "score": 97,
+      "powerPercent": 36,
+      "radius": 65.3000000000001,
+      "launchRadius": 42.807777777777844,
+      "angleDeg": 166.99999999999994,
       "pull": {
-        "x": -61.046404919040256,
-        "y": 2.558602442854734
+        "x": -63.62636523047594,
+        "y": 14.689303848654475
       },
       "drag": {
-        "x": 203.04640491904024,
-        "y": 797.4413975571453
+        "x": 205.62636523047593,
+        "y": 785.3106961513455
       },
       "launch": {
         "x": 142,
@@ -138,26 +138,26 @@
         "y": 240,
         "r": 60
       },
-      "launchSpeed": 67.09119444444448,
+      "launchSpeed": 71.70302777777789,
       "outcome": "target_reached",
-      "elapsed": 23.883333333333333,
-      "x": 382.503480505891,
-      "y": 304.354499043005,
-      "arrivalSpeed": 42.31047424875492,
+      "elapsed": 27.016666666666666,
+      "x": 351.9866485388177,
+      "y": 279.10718329557085,
+      "arrivalSpeed": 40.47034664453759,
       "atmosphereTime": 0,
       "maxAtmosphereStrength": 0,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 69.98257019691437,
+      "minTargetDistance": 69.96371011511638,
       "screenshot": "screenshots/level-02.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 23.9,
-        "speed": 42.3,
-        "score": 100,
+        "elapsed": 27.03,
+        "speed": 40.5,
+        "score": 97,
         "atmosphere": {
           "currentStrength": 0,
           "maxStrength": 0,
@@ -177,18 +177,18 @@
     {
       "level": 3,
       "name": "Atmosphären-Fenster",
-      "score": 100,
-      "powerPercent": 17,
-      "radius": 30.499999999999968,
-      "launchRadius": 19.994444444444422,
-      "angleDeg": 25.399999999999977,
+      "score": 97,
+      "powerPercent": 20,
+      "radius": 35.5,
+      "launchRadius": 23.272222222222222,
+      "angleDeg": -146.00000000000003,
       "pull": {
-        "x": 27.551726432330657,
-        "y": 13.082521568795926
+        "x": -29.43083382570399,
+        "y": -19.8513480732115
       },
       "drag": {
-        "x": 78.44827356766935,
-        "y": 706.917478431204
+        "x": 135.43083382570398,
+        "y": 739.8513480732115
       },
       "launch": {
         "x": 106,
@@ -199,30 +199,30 @@
         "y": 275,
         "r": 34
       },
-      "launchSpeed": 33.49069444444441,
+      "launchSpeed": 38.98097222222222,
       "outcome": "target_reached",
-      "elapsed": 15.583333333333334,
-      "x": 384.9673119007756,
-      "y": 298.5408190026947,
-      "arrivalSpeed": 73.4466922007327,
-      "atmosphereTime": 1.6999999999999988,
-      "maxAtmosphereStrength": 0.32649291620670484,
+      "elapsed": 7.6,
+      "x": 400.99689401138863,
+      "y": 313.2906010164996,
+      "arrivalSpeed": 130.12052981937356,
+      "atmosphereTime": 0.09999999999999999,
+      "maxAtmosphereStrength": 0.0011456965152656878,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 43.881546772784446,
+      "minTargetDistance": 43.67265262579778,
       "screenshot": "screenshots/level-03.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 15.6,
-        "speed": 73.4,
-        "score": 100,
+        "elapsed": 7.62,
+        "speed": 130.1,
+        "score": 97,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.326,
-          "time": 1.7
+          "maxStrength": 0.001,
+          "time": 0.1
         },
         "heat": {
           "level": 0,
@@ -238,18 +238,18 @@
     {
       "level": 4,
       "name": "Sonnen-Schwung",
-      "score": 100,
-      "powerPercent": 23,
-      "radius": 41.30000000000005,
-      "launchRadius": 27.074444444444474,
-      "angleDeg": -161.00000000000088,
+      "score": 99,
+      "powerPercent": 24,
+      "radius": 42.99999999999999,
+      "launchRadius": 28.188888888888883,
+      "angleDeg": 177.00000000000006,
       "pull": {
-        "x": -39.04991717225204,
-        "y": -13.445964779079995
+        "x": -42.94106999444667,
+        "y": 2.2504461184465536
       },
       "drag": {
-        "x": 167.04991717225204,
-        "y": 833.44596477908
+        "x": 170.94106999444668,
+        "y": 817.7495538815534
       },
       "launch": {
         "x": 128,
@@ -260,26 +260,26 @@
         "y": 168,
         "r": 34
       },
-      "launchSpeed": 45.349694444444495,
+      "launchSpeed": 47.21638888888888,
       "outcome": "target_reached",
-      "elapsed": 23.516666666666666,
-      "x": 373.6626591024114,
-      "y": 195.4275309044552,
-      "arrivalSpeed": 49.98128696783609,
+      "elapsed": 25.383333333333333,
+      "x": 370.1846722226431,
+      "y": 190.48655749365778,
+      "arrivalSpeed": 49.91020982813281,
       "atmosphereTime": 0,
       "maxAtmosphereStrength": 0,
-      "heatTime": 6.783333333333315,
-      "maxHeat": 0.7509924222346591,
-      "maxHeatExposure": 0.8846994883074724,
+      "heatTime": 6.5333333333333155,
+      "maxHeat": 0.7809972036647187,
+      "maxHeatExposure": 0.9749158968878429,
       "shadowTime": 0,
-      "minTargetDistance": 43.94681366643157,
+      "minTargetDistance": 43.99595757367395,
       "screenshot": "screenshots/level-04.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 23.53,
-        "speed": 50,
-        "score": 100,
+        "elapsed": 25.4,
+        "speed": 49.9,
+        "score": 99,
         "atmosphere": {
           "currentStrength": 0,
           "maxStrength": 0,
@@ -288,29 +288,29 @@
         "heat": {
           "level": 0,
           "percent": 0,
-          "peak": 0.751,
+          "peak": 0.781,
           "exposure": 0,
           "inShadow": false,
           "source": "",
-          "time": 6.78
+          "time": 6.53
         }
       }
     },
     {
       "level": 5,
       "name": "Doppelpass",
-      "score": 100,
-      "powerPercent": 25,
-      "radius": 45.600000000000044,
-      "launchRadius": 29.893333333333363,
-      "angleDeg": 28.49999999999997,
+      "score": 98,
+      "powerPercent": 27,
+      "radius": 48.400000000000084,
+      "launchRadius": 31.728888888888942,
+      "angleDeg": 31.199999999999953,
       "pull": {
-        "x": 40.074060337385674,
-        "y": 21.758439467838144
+        "x": 41.399630191768615,
+        "y": 25.072507253659516
       },
       "drag": {
-        "x": 67.92593966261433,
-        "y": 708.2415605321619
+        "x": 66.60036980823139,
+        "y": 704.9274927463405
       },
       "launch": {
         "x": 108,
@@ -321,26 +321,26 @@
         "y": 235,
         "r": 34
       },
-      "launchSpeed": 50.071333333333385,
+      "launchSpeed": 53.14588888888898,
       "outcome": "target_reached",
-      "elapsed": 5.416666666666667,
-      "x": 383.5743346828087,
-      "y": 259.58486405984763,
-      "arrivalSpeed": 129.46284800681147,
+      "elapsed": 5.516666666666667,
+      "x": 382.43259747540446,
+      "y": 256.51469399171265,
+      "arrivalSpeed": 128.403634045949,
       "atmosphereTime": 0,
       "maxAtmosphereStrength": 0,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 43.94592853315563,
+      "minTargetDistance": 43.29193677813483,
       "screenshot": "screenshots/level-05.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 5.43,
-        "speed": 129.5,
-        "score": 100,
+        "elapsed": 5.53,
+        "speed": 128.4,
+        "score": 98,
         "atmosphere": {
           "currentStrength": 0,
           "maxStrength": 0,
@@ -361,17 +361,17 @@
       "level": 6,
       "name": "Saturn-Lücke",
       "score": 100,
-      "powerPercent": 13,
-      "radius": 23.99999999999997,
-      "launchRadius": 15.733333333333313,
-      "angleDeg": -165.1000000000006,
+      "powerPercent": 14,
+      "radius": 24.399999999999977,
+      "launchRadius": 15.99555555555554,
+      "angleDeg": -151.9000000000009,
       "pull": {
-        "x": -23.193025903711945,
-        "y": -6.171187035712464
+        "x": -21.52389553083125,
+        "y": -11.492689901753264
       },
       "drag": {
-        "x": 149.19302590371194,
-        "y": 796.1711870357125
+        "x": 147.52389553083125,
+        "y": 801.4926899017532
       },
       "launch": {
         "x": 126,
@@ -382,30 +382,30 @@
         "y": 380,
         "r": 35
       },
-      "launchSpeed": 26.3533333333333,
+      "launchSpeed": 26.79255555555553,
       "outcome": "target_reached",
-      "elapsed": 12.766666666666666,
-      "x": 403.1907527707643,
-      "y": 335.8771990879225,
-      "arrivalSpeed": 87.22717915396913,
-      "atmosphereTime": 0.7166666666666672,
-      "maxAtmosphereStrength": 0.7598711282119781,
+      "elapsed": 12.15,
+      "x": 389.7997472860143,
+      "y": 338.9806578646884,
+      "arrivalSpeed": 95.09910977708746,
+      "atmosphereTime": 0.733333333333334,
+      "maxAtmosphereStrength": 0.7772067405438373,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 44.38412350422995,
+      "minTargetDistance": 44.87577997168065,
       "screenshot": "screenshots/level-06.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 12.78,
-        "speed": 87.2,
+        "elapsed": 12.17,
+        "speed": 95.1,
         "score": 100,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.76,
-          "time": 0.72
+          "maxStrength": 0.777,
+          "time": 0.73
         },
         "heat": {
           "level": 0,
@@ -421,18 +421,18 @@
     {
       "level": 7,
       "name": "Äußere Bahn",
-      "score": 100,
-      "powerPercent": 27,
-      "radius": 48.5,
-      "launchRadius": 31.794444444444444,
-      "angleDeg": 41,
+      "score": 99,
+      "powerPercent": 28,
+      "radius": 49.60000000000008,
+      "launchRadius": 32.51555555555561,
+      "angleDeg": 54.30000000000023,
       "pull": {
-        "x": 36.603414640804445,
-        "y": 31.8188629060396
+        "x": 28.94364408326332,
+        "y": 40.27934293383377
       },
       "drag": {
-        "x": 63.396585359195555,
-        "y": 668.1811370939604
+        "x": 71.05635591673668,
+        "y": 659.7206570661663
       },
       "launch": {
         "x": 100,
@@ -443,26 +443,26 @@
         "y": 260,
         "r": 34
       },
-      "launchSpeed": 53.255694444444444,
+      "launchSpeed": 54.463555555555644,
       "outcome": "target_reached",
-      "elapsed": 7.733333333333333,
-      "x": 470.3541203879321,
-      "y": 248.8889827242983,
-      "arrivalSpeed": 71.14144019314622,
+      "elapsed": 7.833333333333333,
+      "x": 456.6912309170671,
+      "y": 226.77053856880863,
+      "arrivalSpeed": 62.014432460591344,
       "atmosphereTime": 0,
       "maxAtmosphereStrength": 0,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 43.78728375609049,
+      "minTargetDistance": 43.90197989320644,
       "screenshot": "screenshots/level-07.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 7.75,
-        "speed": 71.1,
-        "score": 100,
+        "elapsed": 7.85,
+        "speed": 62,
+        "score": 99,
         "atmosphere": {
           "currentStrength": 0,
           "maxStrength": 0,
@@ -484,16 +484,16 @@
       "name": "Einfangen bei Pluto",
       "score": 100,
       "powerPercent": 21,
-      "radius": 37.800000000000054,
-      "launchRadius": 24.780000000000037,
-      "angleDeg": 24.999999999999964,
+      "radius": 38.20000000000007,
+      "launchRadius": 25.042222222222264,
+      "angleDeg": 40.0000000000001,
       "pull": {
-        "x": 34.25843434998543,
-        "y": 15.974970293798442
+        "x": 29.26289772714497,
+        "y": 24.554486690025897
       },
       "drag": {
-        "x": 93.74156565001456,
-        "y": 799.0250297062015
+        "x": 98.73710227285503,
+        "y": 790.4455133099741
       },
       "launch": {
         "x": 128,
@@ -505,57 +505,57 @@
         "r": 45,
         "maxSpeed": 360
       },
-      "launchSpeed": 41.50650000000006,
+      "launchSpeed": 41.945722222222294,
       "outcome": "target_reached",
-      "elapsed": 12.716666666666667,
-      "x": 401.63808934596295,
-      "y": 195.8029426221454,
-      "arrivalSpeed": 131.35636301355254,
-      "atmosphereTime": 0.13333333333333333,
-      "maxAtmosphereStrength": 0.265410598661557,
-      "heatTime": 3.3666666666666596,
-      "maxHeat": 0.7056681126824768,
-      "maxHeatExposure": 0.9999955250946988,
+      "elapsed": 13.549999999999999,
+      "x": 373.51749687461,
+      "y": 208.5334349567594,
+      "arrivalSpeed": 134.47875626221276,
+      "atmosphereTime": 0.11666666666666665,
+      "maxAtmosphereStrength": 0.2749337618241928,
+      "heatTime": 3.349999999999993,
+      "maxHeat": 0.7034396450457728,
+      "maxHeatExposure": 0.99964099093232,
       "shadowTime": 0,
-      "minTargetDistance": 54.56917569093759,
+      "minTargetDistance": 53.93068735217301,
       "screenshot": "screenshots/level-08.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 12.73,
-        "speed": 131.4,
+        "elapsed": 13.57,
+        "speed": 134.5,
         "score": 100,
         "atmosphere": {
-          "currentStrength": 0.265,
-          "maxStrength": 0.265,
-          "time": 0.13
+          "currentStrength": 0.275,
+          "maxStrength": 0.275,
+          "time": 0.12
         },
         "heat": {
           "level": 0,
           "percent": 0,
-          "peak": 0.706,
+          "peak": 0.703,
           "exposure": 0,
           "inShadow": false,
           "source": "",
-          "time": 3.37
+          "time": 3.35
         }
       }
     },
     {
       "level": 9,
       "name": "Drei-Körper-Kanal",
-      "score": 100,
-      "powerPercent": 42,
-      "radius": 75.80000000000004,
-      "launchRadius": 49.691111111111134,
-      "angleDeg": -138.90000000000077,
+      "score": 96,
+      "powerPercent": 44,
+      "radius": 80,
+      "launchRadius": 52.44444444444444,
+      "angleDeg": -120.00000000000001,
       "pull": {
-        "x": -57.12010513646486,
-        "y": -49.82904363119172
+        "x": -39.999999999999986,
+        "y": -69.2820323027551
       },
       "drag": {
-        "x": 161.12010513646487,
-        "y": 854.8290436311918
+        "x": 144,
+        "y": 874.282032302755
       },
       "launch": {
         "x": 104,
@@ -566,26 +566,26 @@
         "y": 190,
         "r": 35
       },
-      "launchSpeed": 83.23261111111115,
+      "launchSpeed": 87.84444444444445,
       "outcome": "target_reached",
-      "elapsed": 5.933333333333334,
-      "x": 422.88661452314864,
-      "y": 234.86890362534817,
-      "arrivalSpeed": 59.127566279150265,
+      "elapsed": 5.25,
+      "x": 417.78351359991103,
+      "y": 234.75844929847196,
+      "arrivalSpeed": 69.032141761076,
       "atmosphereTime": 0,
       "maxAtmosphereStrength": 0,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 44.96166206832254,
+      "minTargetDistance": 44.81329708429926,
       "screenshot": "screenshots/level-09.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 5.95,
-        "speed": 59.1,
-        "score": 100,
+        "elapsed": 5.27,
+        "speed": 69,
+        "score": 96,
         "atmosphere": {
           "currentStrength": 0,
           "maxStrength": 0,
@@ -605,18 +605,18 @@
     {
       "level": 10,
       "name": "Finaler Sonnenbogen",
-      "score": 100,
-      "powerPercent": 34,
-      "radius": 60.40000000000006,
-      "launchRadius": 39.59555555555559,
-      "angleDeg": 59.90000000000014,
+      "score": 99,
+      "powerPercent": 35,
+      "radius": 62.10000000000009,
+      "launchRadius": 40.71000000000006,
+      "angleDeg": 54.90000000000006,
       "pull": {
-        "x": 30.291248524431126,
-        "y": 52.255145802410276
+        "x": 35.7078261518876,
+        "y": 50.80709745209406
       },
       "drag": {
-        "x": 89.70875147556887,
-        "y": 777.7448541975897
+        "x": 84.2921738481124,
+        "y": 779.192902547906
       },
       "launch": {
         "x": 120,
@@ -628,57 +628,57 @@
         "r": 33,
         "maxSpeed": 380
       },
-      "launchSpeed": 66.32255555555562,
+      "launchSpeed": 68.1892500000001,
       "outcome": "target_reached",
-      "elapsed": 6.766666666666667,
-      "x": 386.9625889725037,
-      "y": 194.23554077116341,
-      "arrivalSpeed": 147.7118645434288,
-      "atmosphereTime": 0.35,
-      "maxAtmosphereStrength": 0.4844313931207546,
-      "heatTime": 5.749999999999985,
-      "maxHeat": 0.9431693388103155,
-      "maxHeatExposure": 0.9997871794484948,
+      "elapsed": 6.6499999999999995,
+      "x": 385.3181306504955,
+      "y": 194.77808859224038,
+      "arrivalSpeed": 147.3173421366256,
+      "atmosphereTime": 0.7166666666666672,
+      "maxAtmosphereStrength": 0.44106860566246625,
+      "heatTime": 5.666666666666652,
+      "maxHeat": 0.9287847198409719,
+      "maxHeatExposure": 0.977998038906753,
       "shadowTime": 0,
-      "minTargetDistance": 41.23801085440307,
+      "minTargetDistance": 42.15394218856036,
       "screenshot": "screenshots/level-10.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 6.78,
-        "speed": 147.7,
-        "score": 100,
+        "elapsed": 6.67,
+        "speed": 147.3,
+        "score": 99,
         "atmosphere": {
-          "currentStrength": 0.484,
-          "maxStrength": 0.484,
-          "time": 0.35
+          "currentStrength": 0.441,
+          "maxStrength": 0.441,
+          "time": 0.72
         },
         "heat": {
-          "level": 0.757,
-          "percent": 76,
-          "peak": 0.943,
+          "level": 0.749,
+          "percent": 75,
+          "peak": 0.929,
           "exposure": 0,
           "inShadow": false,
           "source": "",
-          "time": 5.75
+          "time": 5.67
         }
       }
     },
     {
       "level": 11,
       "name": "Orbit-Schleuse",
-      "score": 100,
-      "powerPercent": 27,
-      "radius": 48.499999999999986,
-      "launchRadius": 31.794444444444437,
-      "angleDeg": -154.00000000000003,
+      "score": 99,
+      "powerPercent": 28,
+      "radius": 50.49999999999999,
+      "launchRadius": 33.10555555555555,
+      "angleDeg": -138.50000000000003,
       "pull": {
-        "x": -43.591511245509594,
-        "y": -21.261000619270245
+        "x": -37.82226389984461,
+        "y": -33.462312434894734
       },
       "drag": {
-        "x": 159.5915112455096,
-        "y": 836.2610006192702
+        "x": 153.82226389984461,
+        "y": 848.4623124348948
       },
       "launch": {
         "x": 116,
@@ -690,30 +690,30 @@
         "r": 38,
         "maxSpeed": 120
       },
-      "launchSpeed": 53.25569444444444,
+      "launchSpeed": 55.451805555555545,
       "outcome": "target_reached",
-      "elapsed": 7.8999999999999995,
-      "x": 406.42663641465373,
-      "y": 664.0183853563185,
-      "arrivalSpeed": 93.29650373707082,
-      "atmosphereTime": 1.2166666666666672,
-      "maxAtmosphereStrength": 0.9223778546667772,
+      "elapsed": 7.7,
+      "x": 408.33615059728044,
+      "y": 663.509231914007,
+      "arrivalSpeed": 97.60487754719755,
+      "atmosphereTime": 1.2000000000000006,
+      "maxAtmosphereStrength": 0.8504693562381688,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 47.9431442884176,
+      "minTargetDistance": 47.93158562070425,
       "screenshot": "screenshots/level-11.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 7.92,
-        "speed": 93.3,
-        "score": 100,
+        "elapsed": 7.72,
+        "speed": 97.6,
+        "score": 99,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.922,
-          "time": 1.22
+          "maxStrength": 0.85,
+          "time": 1.2
         },
         "heat": {
           "level": 0,
@@ -729,18 +729,18 @@
     {
       "level": 12,
       "name": "Kometenschweif",
-      "score": 100,
-      "powerPercent": 25,
-      "radius": 45.10000000000006,
-      "launchRadius": 29.56555555555559,
-      "angleDeg": -156.00000000000045,
+      "score": 97,
+      "powerPercent": 27,
+      "radius": 49.40000000000011,
+      "launchRadius": 32.38444444444452,
+      "angleDeg": -159.00000000000023,
       "pull": {
-        "x": -41.200900139681494,
-        "y": -18.34382260271829
+        "x": -46.11887306896193,
+        "y": -17.703376707537707
       },
       "drag": {
-        "x": 151.2009001396815,
-        "y": 842.3438226027183
+        "x": 156.11887306896193,
+        "y": 841.7033767075377
       },
       "launch": {
         "x": 110,
@@ -752,39 +752,39 @@
         "r": 33,
         "maxSpeed": 260
       },
-      "launchSpeed": 49.52230555555562,
+      "launchSpeed": 54.24394444444457,
       "outcome": "target_reached",
-      "elapsed": 8.95,
-      "x": 461.85439660024895,
-      "y": 165.18532227848806,
-      "arrivalSpeed": 80.56056060596163,
-      "atmosphereTime": 0.9166666666666679,
-      "maxAtmosphereStrength": 0.29567285410952215,
-      "heatTime": 1.483333333333333,
-      "maxHeat": 0.5264577486251631,
-      "maxHeatExposure": 0.8899928281553378,
-      "shadowTime": 1.1333333333333342,
-      "minTargetDistance": 42.904887360831054,
+      "elapsed": 9,
+      "x": 470.28612131870136,
+      "y": 177.88563800221385,
+      "arrivalSpeed": 80.60214173828285,
+      "atmosphereTime": 0.966666666666668,
+      "maxAtmosphereStrength": 0.34792895265241075,
+      "heatTime": 1.6166666666666658,
+      "maxHeat": 0.51987890154753,
+      "maxHeatExposure": 0.791282203827653,
+      "shadowTime": 1.0000000000000013,
+      "minTargetDistance": 42.35513187580884,
       "screenshot": "screenshots/level-12.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 8.97,
+        "elapsed": 9.02,
         "speed": 80.6,
-        "score": 100,
+        "score": 97,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.296,
-          "time": 0.92
+          "maxStrength": 0.348,
+          "time": 0.97
         },
         "heat": {
           "level": 0,
           "percent": 0,
-          "peak": 0.526,
+          "peak": 0.52,
           "exposure": 0,
           "inShadow": false,
           "source": "",
-          "time": 1.48
+          "time": 1.62
         }
       }
     },
@@ -793,16 +793,16 @@
       "name": "Bremskorridor",
       "score": 100,
       "powerPercent": 22,
-      "radius": 38.99999999999999,
-      "launchRadius": 25.56666666666666,
-      "angleDeg": -144,
+      "radius": 39.49999999999999,
+      "launchRadius": 25.894444444444442,
+      "angleDeg": -137.99999999999997,
       "pull": {
-        "x": -31.55166278062294,
-        "y": -22.923624839406454
+        "x": -29.354220606357064,
+        "y": -26.430658951174905
       },
       "drag": {
-        "x": 149.55166278062293,
-        "y": 842.9236248394064
+        "x": 147.35422060635707,
+        "y": 846.4306589511749
       },
       "launch": {
         "x": 118,
@@ -814,30 +814,30 @@
         "r": 32,
         "maxSpeed": 150
       },
-      "launchSpeed": 42.824166666666656,
+      "launchSpeed": 43.373194444444444,
       "outcome": "target_reached",
-      "elapsed": 6.25,
-      "x": 454.1728328726918,
-      "y": 316.3237524375475,
-      "arrivalSpeed": 107.1422337748287,
-      "atmosphereTime": 1.6166666666666658,
-      "maxAtmosphereStrength": 0.9969084627567433,
+      "elapsed": 6.1,
+      "x": 454.99480071574607,
+      "y": 315.351553842854,
+      "arrivalSpeed": 104.17748521448806,
+      "atmosphereTime": 1.6666666666666656,
+      "maxAtmosphereStrength": 0.9983957302406727,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 41.98149390487597,
+      "minTargetDistance": 41.67812623610435,
       "screenshot": "screenshots/level-13.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 6.27,
-        "speed": 107.1,
+        "elapsed": 6.12,
+        "speed": 104.2,
         "score": 100,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.997,
-          "time": 1.62
+          "maxStrength": 0.998,
+          "time": 1.67
         },
         "heat": {
           "level": 0,
@@ -853,18 +853,18 @@
     {
       "level": 14,
       "name": "Mondstaffel",
-      "score": 100,
-      "powerPercent": 42,
-      "radius": 75.90000000000005,
-      "launchRadius": 49.756666666666696,
-      "angleDeg": -171.6000000000006,
+      "score": 99,
+      "powerPercent": 43,
+      "radius": 77.20000000000009,
+      "launchRadius": 50.60888888888895,
+      "angleDeg": -176.00000000000023,
       "pull": {
-        "x": -75.08577007189098,
-        "y": -11.087701867886272
+        "x": -77.01194468005855,
+        "y": -5.385199773046188
       },
       "drag": {
-        "x": 179.08577007189098,
-        "y": 823.0877018678863
+        "x": 181.01194468005855,
+        "y": 817.3851997730462
       },
       "launch": {
         "x": 104,
@@ -876,30 +876,30 @@
         "r": 30,
         "maxSpeed": 190
       },
-      "launchSpeed": 83.34241666666672,
+      "launchSpeed": 84.76988888888899,
       "outcome": "target_reached",
-      "elapsed": 6.033333333333333,
-      "x": 430.0529258453537,
-      "y": 250.7107409822858,
-      "arrivalSpeed": 171.26570495077206,
-      "atmosphereTime": 0.18333333333333332,
-      "maxAtmosphereStrength": 0.596932943615861,
+      "elapsed": 6.416666666666667,
+      "x": 449.7467820926034,
+      "y": 238.5679144712097,
+      "arrivalSpeed": 163.80647585692648,
+      "atmosphereTime": 0.2833333333333333,
+      "maxAtmosphereStrength": 0.6565436693930989,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 39.99478447810167,
+      "minTargetDistance": 39.883895549636854,
       "screenshot": "screenshots/level-14.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 6.05,
-        "speed": 171.3,
-        "score": 100,
+        "elapsed": 6.43,
+        "speed": 163.8,
+        "score": 99,
         "atmosphere": {
-          "currentStrength": 0.597,
-          "maxStrength": 0.597,
-          "time": 0.18
+          "currentStrength": 0.657,
+          "maxStrength": 0.657,
+          "time": 0.28
         },
         "heat": {
           "level": 0,
@@ -915,18 +915,18 @@
     {
       "level": 15,
       "name": "Resonanz-Finale",
-      "score": 100,
+      "score": 99,
       "powerPercent": 37,
-      "radius": 66.40000000000003,
-      "launchRadius": 43.528888888888915,
-      "angleDeg": -147.80000000000084,
+      "radius": 67.30000000000008,
+      "launchRadius": 44.11888888888894,
+      "angleDeg": -155.90000000000006,
       "pull": {
-        "x": -56.1872262308708,
-        "y": -35.38298473109568
+        "x": -61.43374012778388,
+        "y": -27.480639983667196
       },
       "drag": {
-        "x": 168.1872262308708,
-        "y": 859.3829847310957
+        "x": 173.4337401277839,
+        "y": 851.4806399836672
       },
       "launch": {
         "x": 112,
@@ -938,30 +938,30 @@
         "r": 34,
         "maxSpeed": 125
       },
-      "launchSpeed": 72.91088888888893,
+      "launchSpeed": 73.89913888888897,
       "outcome": "target_reached",
-      "elapsed": 15.316666666666666,
-      "x": 386.410128438388,
-      "y": 787.7933435728471,
-      "arrivalSpeed": 99.82850019192358,
-      "atmosphereTime": 1.8499999999999983,
-      "maxAtmosphereStrength": 0.8430201061854071,
+      "elapsed": 15.166666666666666,
+      "x": 379.0252726019725,
+      "y": 775.674777976162,
+      "arrivalSpeed": 102.45846250909976,
+      "atmosphereTime": 1.816666666666665,
+      "maxAtmosphereStrength": 0.8385907449909575,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 43.59758500747387,
+      "minTargetDistance": 43.87057043103767,
       "screenshot": "screenshots/level-15.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 15.33,
-        "speed": 99.8,
-        "score": 100,
+        "elapsed": 15.18,
+        "speed": 102.5,
+        "score": 99,
         "atmosphere": {
-          "currentStrength": 0.843,
-          "maxStrength": 0.843,
-          "time": 1.85
+          "currentStrength": 0.839,
+          "maxStrength": 0.839,
+          "time": 1.82
         },
         "heat": {
           "level": 0,
@@ -977,18 +977,18 @@
     {
       "level": 16,
       "name": "Jupiter-Saturn-Weiche",
-      "score": 100,
-      "powerPercent": 41,
-      "radius": 73,
-      "launchRadius": 47.855555555555554,
-      "angleDeg": 16.5,
+      "score": 97,
+      "powerPercent": 42,
+      "radius": 75.99999999999999,
+      "launchRadius": 49.822222222222216,
+      "angleDeg": 24,
       "pull": {
-        "x": 69.9938406453781,
-        "y": 20.733120163386353
+        "x": 69.42945478083766,
+        "y": 30.91198487376081
       },
       "drag": {
-        "x": 34.0061593546219,
-        "y": 803.2668798366136
+        "x": 34.57054521916234,
+        "y": 793.0880151262392
       },
       "launch": {
         "x": 104,
@@ -1000,26 +1000,26 @@
         "r": 36,
         "maxSpeed": 210
       },
-      "launchSpeed": 80.15805555555555,
+      "launchSpeed": 83.45222222222222,
       "outcome": "target_reached",
-      "elapsed": 8.866666666666667,
-      "x": 383.4100623943894,
-      "y": 190.25188962194665,
-      "arrivalSpeed": 171.71304863918814,
+      "elapsed": 9.4,
+      "x": 383.68111863247157,
+      "y": 192.89602949457415,
+      "arrivalSpeed": 175.53576513267163,
       "atmosphereTime": 0,
       "maxAtmosphereStrength": 0,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 45.25810148584167,
+      "minTargetDistance": 44.61181189538613,
       "screenshot": "screenshots/level-16.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 8.88,
-        "speed": 171.7,
-        "score": 100,
+        "elapsed": 9.42,
+        "speed": 175.5,
+        "score": 97,
         "atmosphere": {
           "currentStrength": 0,
           "maxStrength": 0,
@@ -1039,18 +1039,18 @@
     {
       "level": 17,
       "name": "Schattennadel",
-      "score": 100,
+      "score": 99,
       "powerPercent": 42,
-      "radius": 75.30000000000003,
-      "launchRadius": 49.36333333333335,
-      "angleDeg": -159.60000000000062,
+      "radius": 76.49999999999999,
+      "launchRadius": 50.14999999999999,
+      "angleDeg": -149,
       "pull": {
-        "x": -70.57733380873974,
-        "y": -26.247475163331956
+        "x": -65.57329850371158,
+        "y": -39.40041273061916
       },
       "drag": {
-        "x": 188.57733380873975,
-        "y": 858.247475163332
+        "x": 183.57329850371158,
+        "y": 871.4004127306191
       },
       "launch": {
         "x": 118,
@@ -1062,57 +1062,57 @@
         "r": 33,
         "maxSpeed": 180
       },
-      "launchSpeed": 82.68358333333336,
+      "launchSpeed": 84.00124999999998,
       "outcome": "target_reached",
-      "elapsed": 10.65,
-      "x": 461.39202814626566,
-      "y": 236.53546647748104,
-      "arrivalSpeed": 119.68521008544916,
-      "atmosphereTime": 0.6666666666666671,
-      "maxAtmosphereStrength": 0.5055374343335698,
-      "heatTime": 3.3666666666666596,
-      "maxHeat": 0.17438007370737124,
-      "maxHeatExposure": 0.3647072657898691,
-      "shadowTime": 2.083333333333331,
-      "minTargetDistance": 42.46386687214763,
+      "elapsed": 10.6,
+      "x": 456.6190434621403,
+      "y": 230.1793716749094,
+      "arrivalSpeed": 123.58320734926016,
+      "atmosphereTime": 0.6166666666666669,
+      "maxAtmosphereStrength": 0.4416917494045794,
+      "heatTime": 3.016666666666661,
+      "maxHeat": 0.1845732935679208,
+      "maxHeatExposure": 0.41406871804272116,
+      "shadowTime": 1.9166666666666647,
+      "minTargetDistance": 42.74103059402797,
       "screenshot": "screenshots/level-17.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 10.67,
-        "speed": 119.7,
-        "score": 100,
+        "elapsed": 10.62,
+        "speed": 123.6,
+        "score": 99,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.506,
-          "time": 0.67
+          "maxStrength": 0.442,
+          "time": 0.62
         },
         "heat": {
           "level": 0,
           "percent": 0,
-          "peak": 0.174,
+          "peak": 0.185,
           "exposure": 0,
           "inShadow": false,
           "source": "",
-          "time": 3.37
+          "time": 3.02
         }
       }
     },
     {
       "level": 18,
       "name": "Kreiselstaffel",
-      "score": 100,
-      "powerPercent": 41,
-      "radius": 73.40000000000005,
-      "launchRadius": 48.11777777777781,
-      "angleDeg": -10.900000000000034,
+      "score": 95,
+      "powerPercent": 44,
+      "radius": 79.5,
+      "launchRadius": 52.11666666666667,
+      "angleDeg": -3.5,
       "pull": {
-        "x": 72.075769511919,
-        "y": -13.879605515458074
+        "x": 79.35171647453842,
+        "y": -4.853358893021121
       },
       "drag": {
-        "x": 305.924230488081,
-        "y": 837.879605515458
+        "x": 298.6482835254616,
+        "y": 828.8533588930211
       },
       "launch": {
         "x": 378,
@@ -1124,30 +1124,30 @@
         "r": 34,
         "maxSpeed": 220
       },
-      "launchSpeed": 80.59727777777783,
+      "launchSpeed": 87.29541666666667,
       "outcome": "target_reached",
-      "elapsed": 5.7,
-      "x": 90.53443442840289,
-      "y": 237.60354162901768,
-      "arrivalSpeed": 34.46247900883939,
-      "atmosphereTime": 1.2166666666666672,
-      "maxAtmosphereStrength": 0.5298194003118096,
+      "elapsed": 6.333333333333333,
+      "x": 66.35525316616783,
+      "y": 251.08771624297805,
+      "arrivalSpeed": 32.2221998587434,
+      "atmosphereTime": 1.016666666666668,
+      "maxAtmosphereStrength": 0.5139165136134316,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 43.98703332298088,
+      "minTargetDistance": 43.8903354567512,
       "screenshot": "screenshots/level-18.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 5.72,
-        "speed": 34.5,
-        "score": 100,
+        "elapsed": 6.35,
+        "speed": 32.2,
+        "score": 95,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.53,
-          "time": 1.22
+          "maxStrength": 0.514,
+          "time": 1.02
         },
         "heat": {
           "level": 0,
@@ -1164,17 +1164,17 @@
       "level": 19,
       "name": "Atmosphären-Slalom",
       "score": 100,
-      "powerPercent": 32,
-      "radius": 57.99999999999998,
-      "launchRadius": 38.022222222222204,
-      "angleDeg": 7.499999999999999,
+      "powerPercent": 33,
+      "radius": 58.60000000000006,
+      "launchRadius": 38.41555555555559,
+      "angleDeg": 12.099999999999989,
       "pull": {
-        "x": 57.50380195968099,
-        "y": 7.57051914876299
+        "x": 57.29809767405438,
+        "y": 12.283647786163959
       },
       "drag": {
-        "x": 42.49619804031901,
-        "y": 802.429480851237
+        "x": 42.70190232594562,
+        "y": 797.716352213836
       },
       "launch": {
         "x": 100,
@@ -1186,30 +1186,30 @@
         "r": 34,
         "maxSpeed": 165
       },
-      "launchSpeed": 63.687222222222196,
+      "launchSpeed": 64.34605555555562,
       "outcome": "target_reached",
-      "elapsed": 7.45,
-      "x": 389.4635366983542,
-      "y": 209.1513864702567,
-      "arrivalSpeed": 118.60839167080235,
-      "atmosphereTime": 1.5499999999999994,
-      "maxAtmosphereStrength": 0.8383446054987629,
+      "elapsed": 7.583333333333333,
+      "x": 389.76546790384145,
+      "y": 207.99669996506623,
+      "arrivalSpeed": 119.31450617164872,
+      "atmosphereTime": 1.5166666666666662,
+      "maxAtmosphereStrength": 0.8384928801117306,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 43.44707897673925,
+      "minTargetDistance": 43.40301502165895,
       "screenshot": "screenshots/level-19.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 7.47,
-        "speed": 118.6,
+        "elapsed": 7.6,
+        "speed": 119.3,
         "score": 100,
         "atmosphere": {
           "currentStrength": 0.838,
           "maxStrength": 0.838,
-          "time": 1.55
+          "time": 1.52
         },
         "heat": {
           "level": 0,
@@ -1227,16 +1227,16 @@
       "name": "Dreifach-Finale",
       "score": 100,
       "powerPercent": 37,
-      "radius": 66.30000000000003,
-      "launchRadius": 43.463333333333345,
-      "angleDeg": -149.50000000000028,
+      "radius": 66.90000000000006,
+      "launchRadius": 43.85666666666671,
+      "angleDeg": -142.00000000000094,
       "pull": {
-        "x": -57.126013337273356,
-        "y": -33.64979346429442
+        "x": -52.71791941629042,
+        "y": -41.18775269928572
       },
       "drag": {
-        "x": 169.12601333727335,
-        "y": 867.6497934642944
+        "x": 164.7179194162904,
+        "y": 875.1877526992857
       },
       "launch": {
         "x": 112,
@@ -1248,57 +1248,57 @@
         "r": 30,
         "maxSpeed": 135
       },
-      "launchSpeed": 72.80108333333335,
+      "launchSpeed": 73.45991666666674,
       "outcome": "target_reached",
       "elapsed": 8.85,
-      "x": 440.9167858228543,
-      "y": 211.37553787099966,
-      "arrivalSpeed": 127.80187676394817,
-      "atmosphereTime": 2.199999999999997,
-      "maxAtmosphereStrength": 0.8787404892189056,
-      "heatTime": 2.666666666666662,
-      "maxHeat": 0.12951887639551973,
-      "maxHeatExposure": 0.6286848435396057,
-      "shadowTime": 1.733333333333332,
-      "minTargetDistance": 39.38830356003786,
+      "x": 434.4938710991943,
+      "y": 215.22246195498184,
+      "arrivalSpeed": 127.1654663645638,
+      "atmosphereTime": 2.1833333333333305,
+      "maxAtmosphereStrength": 0.8761012224194493,
+      "heatTime": 2.533333333333329,
+      "maxHeat": 0.12778556828909515,
+      "maxHeatExposure": 0.6479618940021932,
+      "shadowTime": 1.6666666666666656,
+      "minTargetDistance": 39.94476152676505,
       "screenshot": "screenshots/level-20.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
         "elapsed": 8.87,
-        "speed": 127.8,
+        "speed": 127.2,
         "score": 100,
         "atmosphere": {
-          "currentStrength": 0.879,
-          "maxStrength": 0.879,
-          "time": 2.2
+          "currentStrength": 0.876,
+          "maxStrength": 0.876,
+          "time": 2.18
         },
         "heat": {
           "level": 0,
           "percent": 0,
-          "peak": 0.13,
+          "peak": 0.128,
           "exposure": 0,
           "inShadow": false,
           "source": "",
-          "time": 2.67
+          "time": 2.53
         }
       }
     },
     {
       "level": 21,
       "name": "Neptun-Relais",
-      "score": 100,
-      "powerPercent": 35,
-      "radius": 62.10000000000003,
-      "launchRadius": 40.710000000000015,
-      "angleDeg": 174.79999999999959,
+      "score": 97,
+      "powerPercent": 37,
+      "radius": 65.90000000000009,
+      "launchRadius": 43.20111111111117,
+      "angleDeg": 166.6999999999999,
       "pull": {
-        "x": -61.84442115405176,
-        "y": 5.628283230282606
+        "x": -64.13248771601019,
+        "y": 15.160277680696211
       },
       "drag": {
-        "x": 203.84442115405176,
-        "y": 794.3717167697174
+        "x": 206.1324877160102,
+        "y": 784.8397223193037
       },
       "launch": {
         "x": 142,
@@ -1310,26 +1310,26 @@
         "r": 55,
         "maxSpeed": 360
       },
-      "launchSpeed": 68.18925000000003,
+      "launchSpeed": 72.36186111111121,
       "outcome": "target_reached",
-      "elapsed": 24.583333333333332,
-      "x": 378.4543904688783,
-      "y": 296.8066097544002,
-      "arrivalSpeed": 40.736280471359706,
+      "elapsed": 27.4,
+      "x": 358.29199250477734,
+      "y": 279.325599149026,
+      "arrivalSpeed": 41.19360389142258,
       "atmosphereTime": 0,
       "maxAtmosphereStrength": 0,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 64.97781461759631,
+      "minTargetDistance": 64.96322642507742,
       "screenshot": "screenshots/level-21.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 24.6,
-        "speed": 40.7,
-        "score": 100,
+        "elapsed": 27.42,
+        "speed": 41.2,
+        "score": 97,
         "atmosphere": {
           "currentStrength": 0,
           "maxStrength": 0,
@@ -1411,53 +1411,53 @@
     {
       "level": 23,
       "name": "Polsprung",
-      "score": 98,
-      "powerPercent": 61,
-      "radius": 110.39999999999999,
-      "launchRadius": 72.37333333333333,
-      "angleDeg": 56.50000000000013,
+      "score": 96,
+      "powerPercent": 62,
+      "radius": 111.40000000000013,
+      "launchRadius": 73.02888888888897,
+      "angleDeg": -129.10000000000045,
       "pull": {
-        "x": 60.93384317845102,
-        "y": 92.06099475621549
+        "x": -70.25728494784603,
+        "y": -86.45156974721279
       },
       "drag": {
-        "x": 35.06615682154898,
-        "y": 145.9390052437845
+        "x": 176.25728494784602,
+        "y": 334.4515697472128
       },
       "launch": {
-        "x": 96,
-        "y": 238
+        "x": 106,
+        "y": 248
       },
       "target": {
         "x": 220,
         "y": 640,
         "r": 65,
-        "maxSpeed": 180
+        "maxSpeed": 250
       },
-      "launchSpeed": 121.22533333333334,
+      "launchSpeed": 122.32338888888903,
       "outcome": "target_reached",
-      "elapsed": 14,
-      "x": 288.9583805770503,
-      "y": 611.9397894614722,
-      "arrivalSpeed": 145.96938192621906,
-      "atmosphereTime": 4.649999999999989,
-      "maxAtmosphereStrength": 0.991640992808774,
+      "elapsed": 26.116666666666667,
+      "x": 291.17733493081107,
+      "y": 619.5661919383143,
+      "arrivalSpeed": 151.34101015729053,
+      "atmosphereTime": 4.2833333333333234,
+      "maxAtmosphereStrength": 0.9981436579685987,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 52.903080478415546,
+      "minTargetDistance": 49.4350438380314,
       "screenshot": "screenshots/level-23.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 14.02,
-        "speed": 146,
-        "score": 98,
+        "elapsed": 26.13,
+        "speed": 151.3,
+        "score": 96,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.992,
-          "time": 4.65
+          "maxStrength": 0.998,
+          "time": 4.28
         },
         "heat": {
           "level": 0,
@@ -1473,18 +1473,18 @@
     {
       "level": 24,
       "name": "Retrograd-Schleife",
-      "score": 100,
-      "powerPercent": 22,
-      "radius": 39.600000000000044,
-      "launchRadius": 25.96000000000003,
-      "angleDeg": -145.1000000000006,
+      "score": 98,
+      "powerPercent": 24,
+      "radius": 42.49999999999999,
+      "launchRadius": 27.861111111111107,
+      "angleDeg": -121.50000000000003,
       "pull": {
-        "x": -32.47801428460165,
-        "y": -22.656976588442138
+        "x": -22.20618900042782,
+        "y": -36.237206985048914
       },
       "drag": {
-        "x": 470.47801428460167,
-        "y": 270.65697658844215
+        "x": 460.2061890004278,
+        "y": 284.23720698504894
       },
       "launch": {
         "x": 438,
@@ -1496,30 +1496,30 @@
         "r": 34,
         "maxSpeed": 170
       },
-      "launchSpeed": 43.48300000000005,
+      "launchSpeed": 46.667361111111106,
       "outcome": "target_reached",
-      "elapsed": 13.316666666666666,
-      "x": 122.56384267388229,
-      "y": 509.73274333495635,
-      "arrivalSpeed": 137.56950821903106,
-      "atmosphereTime": 1.566666666666666,
-      "maxAtmosphereStrength": 0.9990137975591481,
+      "elapsed": 14.033333333333333,
+      "x": 121.37874426546772,
+      "y": 509.98812575188146,
+      "arrivalSpeed": 140.83927786780745,
+      "atmosphereTime": 1.4333333333333331,
+      "maxAtmosphereStrength": 0.9972840032131894,
       "heatTime": 0,
       "maxHeat": 0,
       "maxHeatExposure": 0,
       "shadowTime": 0,
-      "minTargetDistance": 20.15569017367993,
+      "minTargetDistance": 11.684654660176097,
       "screenshot": "screenshots/level-24.png",
       "browserReplay": {
         "mode": "won",
         "outcome": "target_reached",
-        "elapsed": 13.33,
-        "speed": 137.6,
-        "score": 100,
+        "elapsed": 14.05,
+        "speed": 140.8,
+        "score": 98,
         "atmosphere": {
           "currentStrength": 0,
-          "maxStrength": 0.999,
-          "time": 1.57
+          "maxStrength": 0.997,
+          "time": 1.43
         },
         "heat": {
           "level": 0,
