@@ -91,7 +91,8 @@
         }
 
         .icon-button,
-        .start-button {
+        .start-button,
+        .tilt-button {
             appearance: none;
             border: 1px solid rgba(222, 242, 255, 0.32);
             color: var(--ink);
@@ -121,7 +122,9 @@
         .icon-button:hover,
         .icon-button:focus-visible,
         .start-button:hover,
-        .start-button:focus-visible {
+        .start-button:focus-visible,
+        .tilt-button:hover,
+        .tilt-button:focus-visible {
             border-color: rgba(255, 255, 255, 0.62);
             outline: none;
         }
@@ -301,6 +304,39 @@
             text-transform: uppercase;
         }
 
+        .tilt-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.42rem;
+        }
+
+        .tilt-controls[hidden] {
+            display: none;
+        }
+
+        .tilt-button {
+            min-width: 0;
+            min-height: 2.25rem;
+            border-radius: 0.68rem;
+            color: #e9f7ff;
+            font-size: 0.7rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .tilt-button[aria-pressed="true"] {
+            border-color: rgba(142, 240, 136, 0.58);
+            background:
+                linear-gradient(145deg, rgba(142, 240, 136, 0.22), rgba(97, 216, 255, 0.12)),
+                rgba(7, 18, 34, 0.82);
+        }
+
+        .tilt-button:disabled {
+            cursor: default;
+            opacity: 0.45;
+        }
+
         .level-banner {
             left: 50%;
             bottom: 1.1rem;
@@ -406,6 +442,10 @@
                 <span id="statC">Kaskaden</span>
             </div>
             <button id="startButton" class="start-button" type="button">Start</button>
+            <div class="tilt-controls" id="tiltControls">
+                <button id="tiltToggleButton" class="tilt-button" type="button" aria-pressed="false">Neigung: Aus</button>
+                <button id="tiltCalibrateButton" class="tilt-button" type="button">Kalibrieren</button>
+            </div>
         </section>
 
         <div class="level-banner" id="levelBanner">Level 1</div>
@@ -422,6 +462,10 @@
             const PLAYER_MAX_SPEED = 292;
             const PLAYER_ACCEL = 1320;
             const PLAYER_DRAG = 5.2;
+            const TILT_RANGE_X = 20;
+            const TILT_RANGE_Y = 18;
+            const TILT_DEADZONE = 0.08;
+            const TILT_STALE_MS = 900;
             const SHIP_SPRITE_SRC = "images/kaskade-spacecraft-left.png";
             const SHIP_SPRITE_HEIGHT = 96;
             const SHIP_SPRITE_WIDTH = 58;
@@ -455,6 +499,12 @@
                     readyB: "Wellen",
                     readyC: "Kaskaden",
                     start: "Start",
+                    tiltOn: "Neigung: An",
+                    tiltOff: "Neigung: Aus",
+                    tiltWaiting: "Neigung: Warten",
+                    tiltUnavailable: "Neigung: Nicht verfügbar",
+                    tiltDenied: "Neigung: Blockiert",
+                    tiltCalibrate: "Kalibrieren",
                     pausedTitle: "Pause",
                     pausedCopy: "Halte kurz die Umlaufbahn an. Drücke Weiter, um die Kaskade fortzusetzen.",
                     gameOverTitle: "Signal verloren",
@@ -493,6 +543,12 @@
                     readyB: "Waves",
                     readyC: "Cascades",
                     start: "Start",
+                    tiltOn: "Tilt: On",
+                    tiltOff: "Tilt: Off",
+                    tiltWaiting: "Tilt: Waiting",
+                    tiltUnavailable: "Tilt: Unavailable",
+                    tiltDenied: "Tilt: Blocked",
+                    tiltCalibrate: "Calibrate",
                     pausedTitle: "Paused",
                     pausedCopy: "Hold the orbit for a moment. Press Resume to keep riding the cascade.",
                     gameOverTitle: "Signal Lost",
@@ -585,6 +641,9 @@
             const statA = document.getElementById("statA");
             const statB = document.getElementById("statB");
             const statC = document.getElementById("statC");
+            const tiltControls = document.getElementById("tiltControls");
+            const tiltToggleButton = document.getElementById("tiltToggleButton");
+            const tiltCalibrateButton = document.getElementById("tiltCalibrateButton");
             const levelBanner = document.getElementById("levelBanner");
 
             function preferredLanguage() {
@@ -676,7 +735,22 @@
                 },
                 debris: [],
                 particles: [],
-                lastInput: { x: 0, y: 0 }
+                lastInput: { x: 0, y: 0 },
+                tilt: {
+                    enabled: false,
+                    permission: "prompt",
+                    listening: false,
+                    calibrated: false,
+                    pendingCalibration: false,
+                    available: false,
+                    beta: 0,
+                    gamma: 0,
+                    baseBeta: 0,
+                    baseGamma: 0,
+                    inputX: 0,
+                    inputY: 0,
+                    lastSeen: 0
+                }
             };
             const shipSprite = new Image();
             let shipSpriteReady = false;
@@ -710,6 +784,141 @@
 
             function rand(min = 0, max = 1) {
                 return min + (max - min) * state.rng();
+            }
+
+            function clamp(value, min, max) {
+                return Math.max(min, Math.min(max, value));
+            }
+
+            function tiltSupported() {
+                return "DeviceOrientationEvent" in window || "ondeviceorientation" in window;
+            }
+
+            function ensureTiltListener() {
+                if (state.tilt.listening) return;
+                window.addEventListener("deviceorientation", handleDeviceOrientation);
+                state.tilt.listening = true;
+            }
+
+            function calibrateTiltControl() {
+                if (!state.tilt.lastSeen) {
+                    state.tilt.pendingCalibration = true;
+                    updateTiltControls();
+                    return false;
+                }
+                state.tilt.baseBeta = state.tilt.beta;
+                state.tilt.baseGamma = state.tilt.gamma;
+                state.tilt.inputX = 0;
+                state.tilt.inputY = 0;
+                state.tilt.calibrated = true;
+                state.tilt.pendingCalibration = false;
+                updateTiltControls();
+                return true;
+            }
+
+            function tiltAxis(value) {
+                if (Math.abs(value) < TILT_DEADZONE) return 0;
+                return clamp(value, -1, 1);
+            }
+
+            function currentTiltVector(now = performance.now()) {
+                if (!state.tilt.enabled || !state.tilt.calibrated || now - state.tilt.lastSeen > TILT_STALE_MS) {
+                    state.tilt.inputX = 0;
+                    state.tilt.inputY = 0;
+                    return { x: 0, y: 0 };
+                }
+                const x = tiltAxis((state.tilt.gamma - state.tilt.baseGamma) / TILT_RANGE_X);
+                const y = tiltAxis((state.tilt.beta - state.tilt.baseBeta) / TILT_RANGE_Y);
+                state.tilt.inputX = x;
+                state.tilt.inputY = y;
+                return { x, y };
+            }
+
+            function handleDeviceOrientation(event) {
+                const beta = Number(event.beta);
+                const gamma = Number(event.gamma);
+                if (!Number.isFinite(beta) || !Number.isFinite(gamma)) return;
+                state.tilt.available = true;
+                state.tilt.permission = state.tilt.permission === "denied" ? "denied" : "granted";
+                state.tilt.beta = beta;
+                state.tilt.gamma = gamma;
+                state.tilt.lastSeen = performance.now();
+                if (state.tilt.enabled && (state.tilt.pendingCalibration || !state.tilt.calibrated)) {
+                    calibrateTiltControl();
+                } else {
+                    updateTiltControls();
+                }
+            }
+
+            async function enableTiltControl() {
+                if (!tiltSupported()) {
+                    state.tilt.permission = "unavailable";
+                    updateTiltControls();
+                    return false;
+                }
+                ensureTiltListener();
+                try {
+                    const orientationEvent = window.DeviceOrientationEvent;
+                    if (orientationEvent && typeof orientationEvent.requestPermission === "function") {
+                        const permission = await orientationEvent.requestPermission();
+                        if (permission !== "granted") {
+                            state.tilt.enabled = false;
+                            state.tilt.permission = "denied";
+                            updateTiltControls();
+                            return false;
+                        }
+                    }
+                } catch (error) {
+                    state.tilt.enabled = false;
+                    state.tilt.permission = "denied";
+                    updateTiltControls();
+                    return false;
+                }
+                state.tilt.enabled = true;
+                state.tilt.permission = "granted";
+                state.tilt.pendingCalibration = true;
+                calibrateTiltControl();
+                updateTiltControls();
+                return true;
+            }
+
+            async function toggleTiltControl() {
+                if (state.tilt.enabled) {
+                    state.tilt.enabled = false;
+                    state.tilt.pendingCalibration = false;
+                    state.tilt.inputX = 0;
+                    state.tilt.inputY = 0;
+                    updateTiltControls();
+                    return;
+                }
+                await enableTiltControl();
+            }
+
+            async function calibrateTiltFromButton() {
+                if (!state.tilt.enabled) {
+                    const enabled = await enableTiltControl();
+                    if (!enabled) return;
+                }
+                calibrateTiltControl();
+            }
+
+            function updateTiltControls() {
+                if (!tiltToggleButton || !tiltCalibrateButton) return;
+                const unsupported = state.tilt.permission === "unavailable" || (!tiltSupported() && !state.tilt.enabled);
+                const denied = state.tilt.permission === "denied";
+                let label = state.tilt.enabled ? copy.tiltOn : copy.tiltOff;
+                if (unsupported) label = copy.tiltUnavailable;
+                else if (denied) label = copy.tiltDenied;
+                else if (state.tilt.enabled && (state.tilt.pendingCalibration || !state.tilt.lastSeen)) label = copy.tiltWaiting;
+                tiltToggleButton.textContent = label;
+                tiltToggleButton.title = label;
+                tiltToggleButton.setAttribute("aria-label", label);
+                tiltToggleButton.setAttribute("aria-pressed", String(state.tilt.enabled));
+                tiltToggleButton.disabled = unsupported || denied;
+                tiltCalibrateButton.textContent = copy.tiltCalibrate;
+                tiltCalibrateButton.title = copy.tiltCalibrate;
+                tiltCalibrateButton.setAttribute("aria-label", copy.tiltCalibrate);
+                tiltCalibrateButton.disabled = unsupported || denied;
             }
 
             function currentWavePattern(level = state.level) {
@@ -825,6 +1034,7 @@
 
             function showReadyMessage() {
                 messagePanel.hidden = false;
+                tiltControls.hidden = false;
                 messageTitle.textContent = copy.readyTitle;
                 messageCopy.textContent = copy.readyCopy;
                 statA.textContent = copy.readyA;
@@ -832,11 +1042,13 @@
                 statC.textContent = copy.readyC;
                 messageStats.hidden = false;
                 startButton.textContent = copy.start;
+                updateTiltControls();
                 messagePanel.classList.add("is-visible");
             }
 
             function showPausedMessage() {
                 messagePanel.hidden = false;
+                tiltControls.hidden = true;
                 messageTitle.textContent = copy.pausedTitle;
                 messageCopy.textContent = copy.pausedCopy;
                 statA.textContent = `${Math.floor(state.score)}`;
@@ -850,6 +1062,7 @@
             function showGameOverMessage() {
                 saveBest();
                 messagePanel.hidden = false;
+                tiltControls.hidden = false;
                 messageTitle.textContent = copy.gameOverTitle;
                 messageCopy.textContent = copy.gameOverCopy;
                 statA.textContent = `${Math.floor(state.score)}`;
@@ -857,6 +1070,7 @@
                 statC.textContent = `${Math.floor(state.survivalTime)}s`;
                 messageStats.hidden = false;
                 startButton.textContent = copy.again;
+                updateTiltControls();
                 messagePanel.classList.add("is-visible");
             }
 
@@ -893,6 +1107,7 @@
                 if (state.mode === "ready") showReadyMessage();
                 if (state.mode === "paused") showPausedMessage();
                 if (state.mode === "gameover") showGameOverMessage();
+                updateTiltControls();
                 updateHud();
             }
 
@@ -1075,6 +1290,12 @@
                         ax += dx / Math.max(max, length);
                         ay += dy / Math.max(max, length);
                     }
+                }
+
+                if (!state.joystick.active) {
+                    const tilt = currentTiltVector();
+                    ax += tilt.x;
+                    ay += tilt.y;
                 }
 
                 const mag = Math.hypot(ax, ay);
@@ -1901,6 +2122,16 @@
                     input: {
                         keyboard: [...keys],
                         joystick: state.joystick.active,
+                        tilt: {
+                            enabled: state.tilt.enabled,
+                            calibrated: state.tilt.calibrated,
+                            pendingCalibration: state.tilt.pendingCalibration,
+                            permission: state.tilt.permission,
+                            vector: {
+                                x: Number(state.tilt.inputX.toFixed(2)),
+                                y: Number(state.tilt.inputY.toFixed(2))
+                            }
+                        },
                         vector: {
                             x: Number(state.lastInput.x.toFixed(2)),
                             y: Number(state.lastInput.y.toFixed(2))
@@ -1928,6 +2159,8 @@
                     startGame();
                 }
             });
+            tiltToggleButton.addEventListener("click", toggleTiltControl);
+            tiltCalibrateButton.addEventListener("click", calibrateTiltFromButton);
             restartButton.addEventListener("click", restartGame);
             pauseButton.addEventListener("click", togglePause);
             canvas.addEventListener("pointerdown", onPointerDown);
