@@ -422,6 +422,9 @@
             const PLAYER_MAX_SPEED = 292;
             const PLAYER_ACCEL = 1320;
             const PLAYER_DRAG = 5.2;
+            const SHIP_SPRITE_SRC = "images/kaskade-spacecraft-left.png";
+            const SHIP_SPRITE_HEIGHT = 96;
+            const SHIP_SPRITE_WIDTH = 58;
             const MAX_DEBRIS = 132;
             const MAX_PARTICLES = 260;
             const FIXED_DT = 1 / 60;
@@ -462,7 +465,8 @@
                         crosswind: "Seitenwind",
                         panelDrift: "Taumelfeld",
                         cascadeBurst: "Kaskadenstoß",
-                        satelliteBreakup: "Satellitenbruch"
+                        satelliteBreakup: "Satellitenbruch",
+                        salvageStorm: "Schrottsturm"
                     },
                     bannerCloud: (level, wave) => `Level ${level}: ${wave}`,
                     bannerCalm: (level) => `Level ${level + 1} wird vorbereitet`,
@@ -499,7 +503,8 @@
                         crosswind: "Crosswind",
                         panelDrift: "Tumble Field",
                         cascadeBurst: "Cascade Burst",
-                        satelliteBreakup: "Satellite Breakup"
+                        satelliteBreakup: "Satellite Breakup",
+                        salvageStorm: "Salvage Storm"
                     },
                     bannerCloud: (level, wave) => `Level ${level}: ${wave}`,
                     bannerCalm: (level) => `Level ${level + 1} forming`,
@@ -514,7 +519,7 @@
                     sideChance: 0.02,
                     burstChance: 0.06,
                     burstCount: 2,
-                    weights: { shard: 0.58, panel: 0.14, chunk: 0.28, satellite: 0 }
+                    weights: { shard: 0.42, battery: 0.18, chunk: 0.18, panel: 0.1, antenna: 0.08, foil: 0.04 }
                 },
                 {
                     key: "crosswind",
@@ -522,7 +527,7 @@
                     sideChance: 0.62,
                     burstChance: 0.08,
                     burstCount: 1,
-                    weights: { shard: 0.34, panel: 0.34, chunk: 0.22, satellite: 0.1 }
+                    weights: { shard: 0.2, antenna: 0.22, foil: 0.16, solarWing: 0.18, panel: 0.14, fuelTank: 0.1 }
                 },
                 {
                     key: "panelDrift",
@@ -530,7 +535,7 @@
                     sideChance: 0.22,
                     burstChance: 0.1,
                     burstCount: 1,
-                    weights: { shard: 0.16, panel: 0.54, chunk: 0.24, satellite: 0.06 }
+                    weights: { panel: 0.28, solarWing: 0.28, foil: 0.2, antenna: 0.1, chunk: 0.1, cubesat: 0.04 }
                 },
                 {
                     key: "cascadeBurst",
@@ -538,7 +543,7 @@
                     sideChance: 0.18,
                     burstChance: 0.28,
                     burstCount: 2,
-                    weights: { shard: 0.24, panel: 0.16, chunk: 0.44, satellite: 0.16 }
+                    weights: { chunk: 0.24, fuelTank: 0.24, cubesat: 0.14, shard: 0.16, battery: 0.12, panel: 0.1 }
                 },
                 {
                     key: "satelliteBreakup",
@@ -546,7 +551,15 @@
                     sideChance: 0.16,
                     burstChance: 0.14,
                     burstCount: 1,
-                    weights: { shard: 0.2, panel: 0.18, chunk: 0.22, satellite: 0.4 }
+                    weights: { satellite: 0.2, cubesat: 0.24, solarWing: 0.16, antenna: 0.12, panel: 0.12, shard: 0.1, fuelTank: 0.06 }
+                },
+                {
+                    key: "salvageStorm",
+                    spawnScale: 0.96,
+                    sideChance: 0.28,
+                    burstChance: 0.18,
+                    burstCount: 2,
+                    weights: { fuelTank: 0.18, battery: 0.16, foil: 0.16, antenna: 0.16, solarWing: 0.14, chunk: 0.12, cubesat: 0.08 }
                 }
             ];
 
@@ -665,6 +678,16 @@
                 particles: [],
                 lastInput: { x: 0, y: 0 }
             };
+            const shipSprite = new Image();
+            let shipSpriteReady = false;
+            shipSprite.addEventListener("load", () => {
+                shipSpriteReady = true;
+                render();
+            });
+            shipSprite.addEventListener("error", () => {
+                shipSpriteReady = false;
+            });
+            shipSprite.src = SHIP_SPRITE_SRC;
 
             function loadBest() {
                 try {
@@ -879,20 +902,32 @@
                 const pattern = options.pattern || currentWavePattern();
                 const kind = options.kind || chooseDebrisKind(pattern);
                 const size = options.size || (
-                    kind === "shard" ? 1 :
-                    kind === "panel" ? 2 :
-                    kind === "satellite" ? 3 :
+                    kind === "shard" || kind === "battery" || kind === "foil" ? 1 :
+                    kind === "panel" || kind === "antenna" || kind === "solarWing" ? 2 :
+                    kind === "satellite" || kind === "cubesat" || kind === "fuelTank" ? 3 :
                     rand() < Math.min(0.58, 0.34 + level * 0.018) ? 3 : 2
                 );
                 const radius = options.radius || (
                     kind === "shard" ? rand(5.5, 9.2) :
+                    kind === "battery" ? rand(4.8, 7.2) :
+                    kind === "foil" ? rand(11, 16) :
+                    kind === "antenna" ? rand(10, 15) :
                     kind === "panel" ? rand(12, 18) :
+                    kind === "solarWing" ? rand(14, 20) :
+                    kind === "fuelTank" ? rand(14, 20) :
+                    kind === "cubesat" ? rand(13, 18) :
                     kind === "satellite" ? rand(18, 24) :
                     size === 3 ? rand(18, 27) : rand(12, 18)
                 );
                 const speed = options.speed || (
                     kind === "shard" ? rand(156 + level * 18, 232 + level * 22) :
+                    kind === "battery" ? rand(182 + level * 20, 260 + level * 24) :
+                    kind === "foil" ? rand(62 + level * 5, 106 + level * 8) :
+                    kind === "antenna" ? rand(126 + level * 12, 186 + level * 15) :
                     kind === "panel" ? rand(96 + level * 8, 146 + level * 12) :
+                    kind === "solarWing" ? rand(82 + level * 7, 132 + level * 10) :
+                    kind === "fuelTank" ? rand(108 + level * 9, 158 + level * 13) :
+                    kind === "cubesat" ? rand(118 + level * 10, 170 + level * 13) :
                     kind === "satellite" ? rand(86 + level * 7, 132 + level * 10) :
                     rand(104 + level * 10, 168 + level * 15)
                 );
@@ -912,7 +947,11 @@
                     x = left ? -radius - 12 : WORLD.width + radius + 12;
                     y = rand(PLAY_TOP + 6, WORLD.height * 0.34);
                     vx = (left ? 1 : -1) * rand(48 + level * 4, 102 + level * 6);
-                    vy = kind === "shard" ? rand(142 + level * 12, 210 + level * 14) : rand(92 + level * 8, 158 + level * 11);
+                    vy = kind === "shard" || kind === "battery"
+                        ? rand(142 + level * 12, 218 + level * 15)
+                        : kind === "foil" || kind === "solarWing"
+                            ? rand(78 + level * 6, 132 + level * 9)
+                            : rand(92 + level * 8, 158 + level * 11);
                 } else {
                     x = rand(28, WORLD.width - 28);
                     y = -radius - rand(8, 110);
@@ -924,6 +963,8 @@
                         vx += rand() < 0.5 ? -rand(36, 80 + level * 4) : rand(36, 80 + level * 4);
                     } else if (pattern.key === "panelDrift") {
                         vx += Math.sin(x * 0.018) * 38;
+                    } else if (pattern.key === "salvageStorm") {
+                        vx += Math.sin(x * 0.03 + level) * 54;
                     }
                 }
 
@@ -937,11 +978,12 @@
                     r: radius,
                     size,
                     age: 0,
-                    spin: kind === "panel" ? rand(-4.6, 4.6) : kind === "shard" ? rand(-2.2, 2.2) : rand(-3.2, 3.2),
+                    hitScale: kind === "battery" || kind === "shard" ? 0.82 : kind === "antenna" || kind === "solarWing" ? 1.18 : 1,
+                    spin: kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(-4.8, 4.8) : kind === "shard" || kind === "battery" ? rand(-2.2, 2.2) : rand(-3.2, 3.2),
                     rot: rand(0, Math.PI * 2),
                     seed: rand(0, 1000),
-                    fuse: kind === "satellite" ? rand(1.9, 3.25) : 0,
-                    weave: kind === "panel" ? rand(0.7, 1.4) * (rand() < 0.5 ? -1 : 1) : 0,
+                    fuse: kind === "satellite" || kind === "cubesat" ? rand(1.9, 3.25) : 0,
+                    weave: kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(0.7, 1.4) * (rand() < 0.5 ? -1 : 1) : 0,
                     flash: 0,
                     scoredNear: false
                 };
@@ -954,7 +996,7 @@
                 const radius = Math.max(4.5, source.r * rand(0.42, 0.62));
                 const vx = source.vx * 0.46 + Math.cos(angle) * power;
                 const vy = Math.max(54 + state.level * 5, source.vy * 0.5 + Math.sin(angle) * power);
-                const kind = kindOverride || (size <= 1 ? "shard" : source.kind === "satellite" ? "panel" : "chunk");
+                const kind = kindOverride || (size <= 1 ? "shard" : source.kind === "satellite" || source.kind === "cubesat" ? "panel" : "chunk");
                 return spawnDebris({
                     x: source.x + Math.cos(angle) * source.r * 0.34,
                     y: source.y + Math.sin(angle) * source.r * 0.34,
@@ -972,16 +1014,28 @@
                     debris.flash = 0.22;
                     return 0;
                 }
-                const count = debris.kind === "satellite" ? 4 : debris.size === 3 ? 3 : 2;
+                const count = debris.kind === "fuelTank" ? 5 : debris.kind === "satellite" ? 4 : debris.kind === "cubesat" ? 3 : debris.size === 3 ? 3 : 2;
                 const base = Math.PI / 2 + rand(-0.26, 0.26);
                 for (let i = 0; i < count; i += 1) {
                     const angle = base + (i - (count - 1) / 2) * rand(0.44, 0.84) + rand(-0.18, 0.18);
-                    const fragmentKind = debris.kind === "satellite"
-                        ? (i % 3 === 0 ? "panel" : "shard")
-                        : undefined;
+                    let fragmentKind;
+                    if (debris.kind === "satellite" || debris.kind === "cubesat") {
+                        fragmentKind = i % 3 === 0 ? "panel" : "shard";
+                    } else if (debris.kind === "fuelTank") {
+                        fragmentKind = i % 2 === 0 ? "battery" : "shard";
+                    } else if (debris.kind === "solarWing") {
+                        fragmentKind = i === 0 ? "panel" : "shard";
+                    } else if (debris.kind === "antenna") {
+                        fragmentKind = "shard";
+                    }
                     spawnFragment(debris, angle, rand(72, 150 + state.level * 8), undefined, fragmentKind);
                 }
-                createBurst(debris.x, debris.y, reason === "hit" ? "#ffcf6d" : debris.kind === "satellite" ? "#ff7d6e" : "#a7ecff", 12 + count * 4, 120);
+                const burstColor = reason === "hit"
+                    ? "#ffcf6d"
+                    : debris.kind === "satellite" || debris.kind === "cubesat" || debris.kind === "fuelTank"
+                        ? "#ff7d6e"
+                        : "#a7ecff";
+                createBurst(debris.x, debris.y, burstColor, 12 + count * 4, debris.kind === "fuelTank" ? 190 : 120);
                 debris.remove = true;
                 state.recentCascades += 1;
                 return count;
@@ -1125,7 +1179,7 @@
 
             function updateDebris(dt) {
                 for (const debris of state.debris) {
-                    if (debris.kind === "satellite") {
+                    if (debris.kind === "satellite" || debris.kind === "cubesat") {
                         debris.fuse -= dt;
                         if (debris.fuse < 0.82) {
                             debris.flash = Math.max(debris.flash, 0.08);
@@ -1135,15 +1189,20 @@
                             continue;
                         }
                     }
-                    if (debris.kind === "panel") {
-                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * 22 * dt;
+                    if (debris.kind === "panel" || debris.kind === "solarWing" || debris.kind === "foil") {
+                        const weavePower = debris.kind === "foil" ? 34 : debris.kind === "solarWing" ? 26 : 22;
+                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * weavePower * dt;
                     }
                     debris.x += debris.vx * dt;
                     debris.y += debris.vy * dt;
                     debris.age += dt;
                     debris.vx *= Math.max(0, 1 - 0.52 * dt);
                     debris.vy *= Math.max(0, 1 - 0.03 * dt);
-                    const kindSpeedBonus = debris.kind === "shard" ? 42 : debris.kind === "satellite" ? -8 : debris.kind === "chunk" ? 10 : 0;
+                    const kindSpeedBonus = debris.kind === "shard" || debris.kind === "battery"
+                        ? 42
+                        : debris.kind === "foil" || debris.kind === "solarWing" ? -18
+                            : debris.kind === "satellite" ? -8
+                                : debris.kind === "chunk" || debris.kind === "fuelTank" ? 10 : 0;
                     const minimumDownSpeed = 58 + state.level * 7 + debris.size * 8 + kindSpeedBonus;
                     if (debris.vy < minimumDownSpeed) {
                         debris.vy += (minimumDownSpeed - debris.vy) * Math.min(1, dt * 2.8);
@@ -1203,7 +1262,7 @@
                 for (const debris of state.debris) {
                     const dx = player.x - debris.x;
                     const dy = player.y - debris.y;
-                    const hitRadius = PLAYER_RADIUS + debris.r * 0.78;
+                    const hitRadius = PLAYER_RADIUS + debris.r * 0.78 * (debris.hitScale || 1);
                     const distanceSq = dx * dx + dy * dy;
                     if (!debris.scoredNear && distanceSq < (hitRadius + 24) * (hitRadius + 24) && distanceSq > hitRadius * hitRadius) {
                         debris.scoredNear = true;
@@ -1302,10 +1361,16 @@
                 ctx.save();
                 ctx.translate(debris.x, debris.y);
                 ctx.rotate(debris.rot);
-                const warning = debris.kind === "satellite" && debris.fuse < 0.85;
+                const warning = (debris.kind === "satellite" || debris.kind === "cubesat") && debris.fuse < 0.85;
                 ctx.globalAlpha = debris.flash > 0 || warning ? 1 : 0.92;
                 const r = debris.r;
-                const metal = debris.kind === "chunk" ? "#aeb9c2" : debris.kind === "panel" ? "#7f96a5" : debris.kind === "satellite" ? "#d6c29b" : "#dbe7f2";
+                const metal = debris.kind === "chunk" ? "#aeb9c2" :
+                    debris.kind === "fuelTank" ? "#d9d2bb" :
+                    debris.kind === "antenna" ? "#c5d0d9" :
+                    debris.kind === "foil" ? "rgba(199, 229, 245, 0.66)" :
+                    debris.kind === "panel" || debris.kind === "solarWing" ? "#7f96a5" :
+                    debris.kind === "satellite" || debris.kind === "cubesat" ? "#d6c29b" :
+                    "#dbe7f2";
                 ctx.fillStyle = metal;
                 ctx.strokeStyle = debris.flash > 0 ? "#ffffff" : "rgba(9, 16, 28, 0.72)";
                 ctx.lineWidth = Math.max(1.4, r * 0.12);
@@ -1328,18 +1393,93 @@
                     ctx.moveTo(-r * 0.44, -r * 0.18);
                     ctx.lineTo(r * 0.48, r * 0.12);
                     ctx.stroke();
-                } else if (debris.kind === "panel") {
-                    ctx.fillRect(-r * 1.24, -r * 0.42, r * 2.48, r * 0.84);
-                    ctx.strokeRect(-r * 1.24, -r * 0.42, r * 2.48, r * 0.84);
+                } else if (debris.kind === "fuelTank") {
+                    const tank = ctx.createLinearGradient(-r * 1.05, 0, r * 1.05, 0);
+                    tank.addColorStop(0, "#797f86");
+                    tank.addColorStop(0.28, "#eee2c3");
+                    tank.addColorStop(0.72, "#d6c69b");
+                    tank.addColorStop(1, "#6d747c");
+                    ctx.fillStyle = tank;
+                    ctx.beginPath();
+                    ctx.roundRect(-r * 1.05, -r * 0.46, r * 2.1, r * 0.92, r * 0.42);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = "#ff9f43";
+                    ctx.fillRect(-r * 0.22, -r * 0.45, r * 0.18, r * 0.9);
+                    ctx.fillRect(r * 0.2, -r * 0.45, r * 0.18, r * 0.9);
+                    ctx.strokeStyle = "rgba(255, 235, 178, 0.72)";
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 0.82, -r * 0.1);
+                    ctx.lineTo(r * 0.82, -r * 0.1);
+                    ctx.stroke();
+                } else if (debris.kind === "antenna") {
+                    ctx.strokeStyle = "#d9edf8";
+                    ctx.lineWidth = Math.max(2, r * 0.18);
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 1.9, 0);
+                    ctx.lineTo(r * 1.9, 0);
+                    ctx.moveTo(-r * 0.65, -r * 0.55);
+                    ctx.lineTo(r * 0.65, r * 0.55);
+                    ctx.moveTo(-r * 0.65, r * 0.55);
+                    ctx.lineTo(r * 0.65, -r * 0.55);
+                    ctx.stroke();
+                    ctx.fillStyle = "#ffcf6d";
+                    for (const px of [-1.35, 0, 1.35]) {
+                        ctx.beginPath();
+                        ctx.arc(px * r, 0, r * 0.16, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (debris.kind === "panel" || debris.kind === "solarWing") {
+                    const width = debris.kind === "solarWing" ? r * 3.25 : r * 2.48;
+                    const height = debris.kind === "solarWing" ? r * 0.72 : r * 0.84;
+                    ctx.fillRect(-width / 2, -height / 2, width, height);
+                    ctx.strokeRect(-width / 2, -height / 2, width, height);
                     ctx.fillStyle = "rgba(78, 155, 223, 0.78)";
-                    for (let i = -2; i <= 1; i += 1) {
-                        ctx.fillRect(i * r * 0.52 + r * 0.04, -r * 0.25, r * 0.38, r * 0.5);
+                    const cells = debris.kind === "solarWing" ? 6 : 4;
+                    for (let i = 0; i < cells; i += 1) {
+                        const cellWidth = width / cells;
+                        ctx.fillRect(-width / 2 + i * cellWidth + cellWidth * 0.16, -height * 0.32, cellWidth * 0.68, height * 0.64);
                     }
                     ctx.strokeStyle = "rgba(209, 236, 255, 0.42)";
                     ctx.beginPath();
-                    ctx.moveTo(-r * 1.1, 0);
-                    ctx.lineTo(r * 1.1, 0);
+                    ctx.moveTo(-width * 0.44, 0);
+                    ctx.lineTo(width * 0.44, 0);
                     ctx.stroke();
+                    if (debris.kind === "solarWing") {
+                        ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
+                        ctx.beginPath();
+                        ctx.moveTo(-width * 0.12, -height * 0.5);
+                        ctx.lineTo(width * 0.04, height * 0.5);
+                        ctx.stroke();
+                    }
+                } else if (debris.kind === "foil") {
+                    ctx.fillStyle = "rgba(192, 228, 243, 0.48)";
+                    ctx.strokeStyle = "rgba(232, 248, 255, 0.72)";
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 1.25, -r * 0.35);
+                    ctx.lineTo(-r * 0.45, -r * 0.72);
+                    ctx.lineTo(r * 1.2, -r * 0.28);
+                    ctx.lineTo(r * 0.7, r * 0.55);
+                    ctx.lineTo(-r * 1.05, r * 0.5);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.strokeStyle = "rgba(97, 216, 255, 0.5)";
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 0.9, 0);
+                    ctx.quadraticCurveTo(-r * 0.1, -r * 0.35, r * 0.78, r * 0.08);
+                    ctx.stroke();
+                } else if (debris.kind === "battery") {
+                    ctx.fillStyle = "#dbe5ea";
+                    ctx.fillRect(-r * 0.62, -r, r * 1.24, r * 2);
+                    ctx.strokeRect(-r * 0.62, -r, r * 1.24, r * 2);
+                    ctx.fillStyle = "#8ef088";
+                    ctx.fillRect(-r * 0.38, -r * 0.55, r * 0.76, r * 0.28);
+                    ctx.fillStyle = "#ffcf6d";
+                    ctx.fillRect(-r * 0.38, r * 0.2, r * 0.76, r * 0.28);
+                    ctx.fillStyle = "#aeb9c2";
+                    ctx.fillRect(-r * 0.28, -r * 1.22, r * 0.56, r * 0.22);
                 } else if (debris.kind === "shard") {
                     ctx.fillStyle = "#dcefff";
                     ctx.beginPath();
@@ -1356,6 +1496,8 @@
                     ctx.lineTo(0, r * 0.72);
                     ctx.stroke();
                 } else {
+                    const isCubesat = debris.kind === "cubesat";
+                    const bodySize = isCubesat ? r * 0.86 : r * 1.04;
                     if (warning) {
                         ctx.save();
                         ctx.rotate(-debris.rot);
@@ -1368,13 +1510,14 @@
                         ctx.restore();
                     }
                     ctx.fillStyle = "#d6c29b";
-                    ctx.fillRect(-r * 0.52, -r * 0.52, r * 1.04, r * 1.04);
-                    ctx.strokeRect(-r * 0.52, -r * 0.52, r * 1.04, r * 1.04);
+                    ctx.fillRect(-bodySize / 2, -bodySize / 2, bodySize, bodySize);
+                    ctx.strokeRect(-bodySize / 2, -bodySize / 2, bodySize, bodySize);
                     ctx.fillStyle = "#5d9bff";
-                    ctx.fillRect(-r * 1.7, -r * 0.34, r * 0.9, r * 0.68);
-                    ctx.fillRect(r * 0.8, -r * 0.34, r * 0.9, r * 0.68);
-                    ctx.strokeRect(-r * 1.7, -r * 0.34, r * 0.9, r * 0.68);
-                    ctx.strokeRect(r * 0.8, -r * 0.34, r * 0.9, r * 0.68);
+                    const wingScale = isCubesat ? 0.62 : 1;
+                    ctx.fillRect(-r * 1.7 * wingScale, -r * 0.34, r * 0.9 * wingScale, r * 0.68);
+                    ctx.fillRect(r * 0.8 * wingScale, -r * 0.34, r * 0.9 * wingScale, r * 0.68);
+                    ctx.strokeRect(-r * 1.7 * wingScale, -r * 0.34, r * 0.9 * wingScale, r * 0.68);
+                    ctx.strokeRect(r * 0.8 * wingScale, -r * 0.34, r * 0.9 * wingScale, r * 0.68);
                     ctx.strokeStyle = "rgba(255, 240, 190, 0.8)";
                     ctx.beginPath();
                     ctx.moveTo(0, -r * 0.52);
@@ -1401,8 +1544,8 @@
                     ctx.save();
                     ctx.globalCompositeOperation = "lighter";
                     const gradient = ctx.createLinearGradient(points[0].x, points[0].y, points[1].x, points[1].y);
-                    gradient.addColorStop(0, "rgba(255, 246, 168, 0.96)");
-                    gradient.addColorStop(0.45, "rgba(97, 216, 255, 0.82)");
+                    gradient.addColorStop(0, "rgba(255, 246, 168, 0.78)");
+                    gradient.addColorStop(0.48, "rgba(97, 216, 255, 0.56)");
                     gradient.addColorStop(1, "rgba(97, 216, 255, 0)");
                     ctx.fillStyle = gradient;
                     ctx.beginPath();
@@ -1419,93 +1562,108 @@
 
                 const sidePower = Math.min(1, Math.abs(input.x));
                 const verticalPower = Math.min(1, Math.abs(input.y));
-                drawFlame([{ x: -18, y: -5 }, { x: -40 - sidePower * 18, y: 1 }, { x: -18, y: 9 }], input.x > 0 ? sidePower : 0);
-                drawFlame([{ x: 18, y: -5 }, { x: 40 + sidePower * 18, y: 1 }, { x: 18, y: 9 }], input.x < 0 ? sidePower : 0);
-                drawFlame([{ x: -5, y: -18 }, { x: 0, y: -36 - verticalPower * 12 }, { x: 5, y: -18 }], input.y > 0 ? verticalPower : 0);
-                drawFlame([{ x: -7, y: 19 }, { x: 0, y: 40 + verticalPower * 13 }, { x: 7, y: 19 }], input.y < 0 ? verticalPower : 0);
+                const sideNozzleX = SHIP_SPRITE_WIDTH * 0.46;
+                const sideNozzleY = SHIP_SPRITE_HEIGHT * 0.14;
+                const noseNozzleY = -SHIP_SPRITE_HEIGHT * 0.43;
+                const tailNozzleY = SHIP_SPRITE_HEIGHT * 0.43;
+                drawFlame([{ x: -sideNozzleX, y: sideNozzleY - 4 }, { x: -sideNozzleX - 16 - sidePower * 9, y: sideNozzleY + 1 }, { x: -sideNozzleX, y: sideNozzleY + 6 }], input.x > 0 ? sidePower : 0);
+                drawFlame([{ x: sideNozzleX, y: sideNozzleY - 4 }, { x: sideNozzleX + 16 + sidePower * 9, y: sideNozzleY + 1 }, { x: sideNozzleX, y: sideNozzleY + 6 }], input.x < 0 ? sidePower : 0);
+                drawFlame([{ x: -4, y: noseNozzleY }, { x: 0, y: noseNozzleY - 13 - verticalPower * 6 }, { x: 4, y: noseNozzleY }], input.y > 0 ? verticalPower : 0);
+                drawFlame([{ x: -6, y: tailNozzleY }, { x: 0, y: tailNozzleY + 17 + verticalPower * 8 }, { x: 6, y: tailNozzleY }], input.y < 0 ? verticalPower : 0);
 
-                ctx.fillStyle = "#294063";
-                ctx.strokeStyle = "rgba(3, 10, 22, 0.78)";
-                ctx.lineWidth = 2.2;
-                ctx.beginPath();
-                ctx.moveTo(-31, 5);
-                ctx.lineTo(-12, -3);
-                ctx.lineTo(-12, 13);
-                ctx.lineTo(-31, 16);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(31, 5);
-                ctx.lineTo(12, -3);
-                ctx.lineTo(12, 13);
-                ctx.lineTo(31, 16);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.fillStyle = "#7ab8ff";
-                ctx.fillRect(-28, 7, 14, 5);
-                ctx.fillRect(14, 7, 14, 5);
-
-                const hull = ctx.createLinearGradient(-14, -24, 14, 24);
-                hull.addColorStop(0, "#ffffff");
-                hull.addColorStop(0.38, "#d9f8ff");
-                hull.addColorStop(1, "#86acd1");
-                ctx.fillStyle = hull;
-                ctx.strokeStyle = "rgba(3, 10, 22, 0.78)";
-                ctx.lineWidth = 2.2;
-                ctx.beginPath();
-                ctx.moveTo(0, -27);
-                ctx.bezierCurveTo(13, -17, 15, 3, 11, 18);
-                ctx.quadraticCurveTo(0, 26, -11, 18);
-                ctx.bezierCurveTo(-15, 3, -13, -17, 0, -27);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.fillStyle = "#123052";
-                ctx.beginPath();
-                ctx.ellipse(0, -9, 8, 11, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = "#61d8ff";
-                ctx.beginPath();
-                ctx.ellipse(0, -10, 5, 7, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = "#182842";
-                ctx.fillRect(-5, 17, 10, 8);
-                ctx.fillRect(-20, -2, 7, 9);
-                ctx.fillRect(13, -2, 7, 9);
-                ctx.fillRect(-4, -25, 8, 6);
-                ctx.strokeStyle = "rgba(151, 224, 255, 0.7)";
-                ctx.lineWidth = 1.4;
-                ctx.strokeRect(-5, 17, 10, 8);
-                ctx.strokeRect(-20, -2, 7, 9);
-                ctx.strokeRect(13, -2, 7, 9);
-                ctx.strokeRect(-4, -25, 8, 6);
-
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(0, -24);
-                ctx.lineTo(0, 19);
-                ctx.moveTo(-8, 5);
-                ctx.lineTo(8, 5);
-                ctx.stroke();
-                ctx.restore();
-
-                if (state.shields > 0) {
-                    ctx.save();
-                    ctx.translate(player.x, player.y);
-                    ctx.globalAlpha = 0.18 + 0.08 * Math.sin(state.survivalTime * 7);
-                    ctx.strokeStyle = state.shields === 1 ? "#ffcf6d" : "#61d8ff";
-                    ctx.lineWidth = 2.4;
+                if (shipSpriteReady && shipSprite.complete && shipSprite.naturalWidth > 0) {
+                    ctx.drawImage(
+                        shipSprite,
+                        -SHIP_SPRITE_WIDTH / 2,
+                        -SHIP_SPRITE_HEIGHT / 2,
+                        SHIP_SPRITE_WIDTH,
+                        SHIP_SPRITE_HEIGHT
+                    );
+                } else {
+                    ctx.fillStyle = "#263a5d";
+                    ctx.strokeStyle = "rgba(3, 10, 22, 0.78)";
+                    ctx.lineWidth = 2.2;
                     ctx.beginPath();
-                    ctx.arc(0, 0, PLAYER_RADIUS + 13, 0, Math.PI * 2);
+                    ctx.moveTo(-34, 9);
+                    ctx.lineTo(-9, -9);
+                    ctx.lineTo(-8, 9);
+                    ctx.lineTo(-27, 20);
+                    ctx.closePath();
+                    ctx.fill();
                     ctx.stroke();
-                    ctx.restore();
+                    ctx.beginPath();
+                    ctx.moveTo(34, 9);
+                    ctx.lineTo(9, -9);
+                    ctx.lineTo(8, 9);
+                    ctx.lineTo(27, 20);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#7ab8ff";
+                    ctx.beginPath();
+                    ctx.moveTo(-27, 8);
+                    ctx.lineTo(-14, 0);
+                    ctx.lineTo(-12, 6);
+                    ctx.lineTo(-25, 14);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(27, 8);
+                    ctx.lineTo(14, 0);
+                    ctx.lineTo(12, 6);
+                    ctx.lineTo(25, 14);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    const hull = ctx.createLinearGradient(-12, -32, 12, 28);
+                    hull.addColorStop(0, "#ffffff");
+                    hull.addColorStop(0.38, "#d9f8ff");
+                    hull.addColorStop(0.78, "#8eb8db");
+                    hull.addColorStop(1, "#516f93");
+                    ctx.fillStyle = hull;
+                    ctx.strokeStyle = "rgba(3, 10, 22, 0.78)";
+                    ctx.lineWidth = 2.2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -34);
+                    ctx.bezierCurveTo(11, -24, 13, -3, 8, 21);
+                    ctx.quadraticCurveTo(0, 29, -8, 21);
+                    ctx.bezierCurveTo(-13, -3, -11, -24, 0, -34);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#123052";
+                    ctx.beginPath();
+                    ctx.ellipse(0, -13, 6.6, 12.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = "#61d8ff";
+                    ctx.beginPath();
+                    ctx.ellipse(0, -15, 4, 7.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#182842";
+                    ctx.fillRect(-4.5, 20, 9, 8);
+                    ctx.fillRect(-19, -3, 6, 9);
+                    ctx.fillRect(13, -3, 6, 9);
+                    ctx.fillRect(-3.5, -31, 7, 6);
+                    ctx.strokeStyle = "rgba(151, 224, 255, 0.7)";
+                    ctx.lineWidth = 1.4;
+                    ctx.strokeRect(-4.5, 20, 9, 8);
+                    ctx.strokeRect(-19, -3, 6, 9);
+                    ctx.strokeRect(13, -3, 6, 9);
+                    ctx.strokeRect(-3.5, -31, 7, 6);
+
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -30);
+                    ctx.lineTo(0, 22);
+                    ctx.moveTo(-6, 4);
+                    ctx.lineTo(6, 4);
+                    ctx.stroke();
                 }
+                ctx.restore();
             }
 
             function drawJoystick() {
@@ -1716,7 +1874,7 @@
                         size: debris.size,
                         kind: debris.kind,
                         wave: debris.waveKey,
-                        fuse: debris.kind === "satellite" ? Number(debris.fuse.toFixed(2)) : null
+                        fuse: debris.kind === "satellite" || debris.kind === "cubesat" ? Number(debris.fuse.toFixed(2)) : null
                     }));
                 return JSON.stringify({
                     mode: state.mode,
