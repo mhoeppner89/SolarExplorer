@@ -467,15 +467,29 @@
             const TILT_DEADZONE = 0.08;
             const TILT_STALE_MS = 900;
             const SHIP_SPRITE_SRC = "images/kaskade-spacecraft-left.png";
+            const EARTH_SPRITE_SRC = "images/kaskade-earth-orbit.png";
+            const MOON_SPRITE_SRC = "images/kaskade-moon.png";
             const SHIP_SPRITE_HEIGHT = 96;
             const SHIP_SPRITE_WIDTH = 58;
             const MAX_DEBRIS = 132;
             const MAX_PARTICLES = 260;
+            const MAX_LEVEL = 25;
+            const MAX_SHIELDS = 3;
+            const REENTRY_DURATION = 7.4;
             const FIXED_DT = 1 / 60;
             const DEBRIS_EXIT_MARGIN = 34;
             const LANGUAGE_STORAGE_KEY = "solarExplorer.language";
             const BEST_STORAGE_KEY = "solarExplorer.kaskade.best.v1";
             const supportedLanguages = new Set(["de", "en"]);
+            const ISS_SPRITE_SOURCES = [
+                "images/kaskade-iss-intact.png",
+                "images/kaskade-iss-damaged-3.png",
+                "images/kaskade-iss-damaged-4.png",
+                "images/kaskade-iss-destroyed-1.png",
+                "images/kaskade-iss-destroyed-2.png"
+            ];
+            const ISS_DAMAGE_LEVELS = new Map([[1, 0], [6, 1], [11, 2], [16, 3], [21, 4]]);
+            const ISS_DRAW_SIZE = 376;
 
             const copyByLanguage = {
                 de: {
@@ -493,11 +507,13 @@
                     shieldAria: "Schilde",
                     phaseCloud: "Wolke",
                     phaseCalm: "Atempause",
+                    phaseReentry: "Wiedereintritt",
+                    phaseWon: "Mission geschafft",
                     readyTitle: "Kaskade",
-                    readyCopy: "Steuere das Raumschiff durch erkennbare Trümmerwellen. Jede Welle hat eigene Gefahren und Kaskaden.",
+                    readyCopy: "Level 1 beginnt leicht mit wenigen funktionierenden Satelliten und schnellen Splittern. Ab Level 2 setzt die Kaskade ein.",
                     readyA: "3 Schilde",
-                    readyB: "Wellen",
-                    readyC: "Kaskaden",
+                    readyB: "25 Level",
+                    readyC: "Rettungen",
                     start: "Start",
                     tiltOn: "Neigung: An",
                     tiltOff: "Neigung: Aus",
@@ -509,8 +525,12 @@
                     pausedCopy: "Halte kurz die Umlaufbahn an. Drücke Weiter, um die Kaskade fortzusetzen.",
                     gameOverTitle: "Signal verloren",
                     gameOverCopy: "Das Raumschiff wurde von zu vielen Splittern getroffen. Je länger du überlebst, desto schneller wächst dein Punktestand.",
+                    wonTitle: "Sicher in der Atmosphäre",
+                    wonCopy: "Du hast 25 Umlaufbahnen überstanden und die Erde wieder erreicht.",
                     again: "Nochmal",
+                    rescued: "Rettungen",
                     waveNames: {
+                        orbitalTraffic: "Orbitalverkehr",
                         shardRain: "Splitterregen",
                         crosswind: "Seitenwind",
                         panelDrift: "Taumelfeld",
@@ -520,6 +540,8 @@
                     },
                     bannerCloud: (level, wave) => `Level ${level}: ${wave}`,
                     bannerCalm: (level) => `Level ${level + 1} wird vorbereitet`,
+                    bannerReentry: "Wiedereintritt eingeleitet",
+                    bannerRescue: (restored) => restored ? "Astronaut gerettet: +1 Schild · +100" : "Astronaut gerettet: +100",
                     controls: "Ziehen zum Steuern · WASD/Pfeile · P Pause · F Vollbild"
                 },
                 en: {
@@ -537,11 +559,13 @@
                     shieldAria: "Shields",
                     phaseCloud: "Cloud",
                     phaseCalm: "Breather",
+                    phaseReentry: "Re-entry",
+                    phaseWon: "Mission complete",
                     readyTitle: "Kaskade",
-                    readyCopy: "Pilot the spacecraft through readable debris waves. Every wave has its own hazards and cascade rhythm.",
+                    readyCopy: "Level 1 starts lightly with a few functioning satellites and fast shards. The Kessler cascade begins in level 2.",
                     readyA: "3 shields",
-                    readyB: "Waves",
-                    readyC: "Cascades",
+                    readyB: "25 levels",
+                    readyC: "Rescues",
                     start: "Start",
                     tiltOn: "Tilt: On",
                     tiltOff: "Tilt: Off",
@@ -553,8 +577,12 @@
                     pausedCopy: "Hold the orbit for a moment. Press Resume to keep riding the cascade.",
                     gameOverTitle: "Signal Lost",
                     gameOverCopy: "The spacecraft took too many fragment hits. Survive longer to grow your score faster.",
+                    wonTitle: "Safely Through Re-entry",
+                    wonCopy: "You survived 25 orbits and reached Earth again.",
                     again: "Again",
+                    rescued: "Rescues",
                     waveNames: {
+                        orbitalTraffic: "Orbital Traffic",
                         shardRain: "Shard Rain",
                         crosswind: "Crosswind",
                         panelDrift: "Tumble Field",
@@ -564,24 +592,35 @@
                     },
                     bannerCloud: (level, wave) => `Level ${level}: ${wave}`,
                     bannerCalm: (level) => `Level ${level + 1} forming`,
+                    bannerReentry: "Re-entry initiated",
+                    bannerRescue: (restored) => restored ? "Astronaut rescued: +1 shield · +100" : "Astronaut rescued: +100",
                     controls: "Drag to steer · WASD/arrows · P pause · F fullscreen"
                 }
+            };
+
+            const ORBITAL_TRAFFIC_PATTERN = {
+                key: "orbitalTraffic",
+                spawnScale: 1.8,
+                sideChance: 0.04,
+                burstChance: 0,
+                burstCount: 0,
+                weights: { operationalSatellite: 0.68, shard: 0.32 }
             };
 
             const WAVE_PATTERNS = [
                 {
                     key: "shardRain",
-                    spawnScale: 1.16,
+                    spawnScale: 1.02,
                     sideChance: 0.02,
-                    burstChance: 0.06,
-                    burstCount: 2,
+                    burstChance: 0.05,
+                    burstCount: 1,
                     weights: { shard: 0.42, battery: 0.18, chunk: 0.18, panel: 0.1, antenna: 0.08, foil: 0.04 }
                 },
                 {
                     key: "crosswind",
-                    spawnScale: 0.9,
+                    spawnScale: 0.98,
                     sideChance: 0.62,
-                    burstChance: 0.08,
+                    burstChance: 0.06,
                     burstCount: 1,
                     weights: { shard: 0.2, antenna: 0.22, foil: 0.16, solarWing: 0.18, panel: 0.14, fuelTank: 0.1 }
                 },
@@ -589,32 +628,32 @@
                     key: "panelDrift",
                     spawnScale: 1.0,
                     sideChance: 0.22,
-                    burstChance: 0.1,
+                    burstChance: 0.07,
                     burstCount: 1,
                     weights: { panel: 0.28, solarWing: 0.28, foil: 0.2, antenna: 0.1, chunk: 0.1, cubesat: 0.04 }
                 },
                 {
                     key: "cascadeBurst",
-                    spawnScale: 0.86,
+                    spawnScale: 0.96,
                     sideChance: 0.18,
-                    burstChance: 0.28,
-                    burstCount: 2,
+                    burstChance: 0.1,
+                    burstCount: 1,
                     weights: { chunk: 0.24, fuelTank: 0.24, cubesat: 0.14, shard: 0.16, battery: 0.12, panel: 0.1 }
                 },
                 {
                     key: "satelliteBreakup",
-                    spawnScale: 1.04,
+                    spawnScale: 1.0,
                     sideChance: 0.16,
-                    burstChance: 0.14,
+                    burstChance: 0.08,
                     burstCount: 1,
                     weights: { satellite: 0.2, cubesat: 0.24, solarWing: 0.16, antenna: 0.12, panel: 0.12, shard: 0.1, fuelTank: 0.06 }
                 },
                 {
                     key: "salvageStorm",
-                    spawnScale: 0.96,
+                    spawnScale: 1.0,
                     sideChance: 0.28,
-                    burstChance: 0.18,
-                    burstCount: 2,
+                    burstChance: 0.08,
+                    burstCount: 1,
                     weights: { fuelTank: 0.18, battery: 0.16, foil: 0.16, antenna: 0.16, solarWing: 0.14, chunk: 0.12, cubesat: 0.08 }
                 }
             ];
@@ -698,6 +737,16 @@
                 };
             });
 
+            const ORBITAL_SCENES = [
+                { key: "earthDay" },
+                { key: "terminator" },
+                { key: "sunrise" },
+                { key: "moonPass" },
+                { key: "aurora" },
+                { key: "highOrbit" },
+                { key: "nightLights" }
+            ];
+
             const keys = new Set();
             const state = {
                 mode: "ready",
@@ -716,6 +765,11 @@
                 recentCascades: 0,
                 rngSeed: 424242,
                 rng: mulberry32(424242),
+                levelThemes: {},
+                backgroundScenes: {},
+                astronautTimer: Infinity,
+                astronautSpawned: false,
+                astronautsRescued: 0,
                 player: {
                     x: WORLD.width * 0.5,
                     y: 760,
@@ -734,8 +788,14 @@
                     y: 0
                 },
                 debris: [],
+                collectibles: [],
                 particles: [],
                 lastInput: { x: 0, y: 0 },
+                reentry: {
+                    timer: 0,
+                    duration: REENTRY_DURATION,
+                    active: false
+                },
                 tilt: {
                     enabled: false,
                     permission: "prompt",
@@ -752,6 +812,28 @@
                     lastSeen: 0
                 }
             };
+            const earthSprite = new Image();
+            let earthSpriteReady = false;
+            earthSprite.addEventListener("load", () => {
+                earthSpriteReady = true;
+                render();
+            });
+            earthSprite.addEventListener("error", () => {
+                earthSpriteReady = false;
+            });
+            earthSprite.src = EARTH_SPRITE_SRC;
+
+            const moonSprite = new Image();
+            let moonSpriteReady = false;
+            moonSprite.addEventListener("load", () => {
+                moonSpriteReady = true;
+                render();
+            });
+            moonSprite.addEventListener("error", () => {
+                moonSpriteReady = false;
+            });
+            moonSprite.src = MOON_SPRITE_SRC;
+
             const shipSprite = new Image();
             let shipSpriteReady = false;
             shipSprite.addEventListener("load", () => {
@@ -762,6 +844,12 @@
                 shipSpriteReady = false;
             });
             shipSprite.src = SHIP_SPRITE_SRC;
+            const issSprites = ISS_SPRITE_SOURCES.map((source) => {
+                const sprite = new Image();
+                sprite.addEventListener("load", render);
+                sprite.src = source;
+                return sprite;
+            });
 
             function loadBest() {
                 try {
@@ -921,8 +1009,63 @@
                 tiltCalibrateButton.disabled = unsupported || denied;
             }
 
+            function shuffle(items) {
+                const shuffled = [...items];
+                for (let index = shuffled.length - 1; index > 0; index -= 1) {
+                    const other = Math.floor(rand(0, index + 1));
+                    [shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
+                }
+                return shuffled;
+            }
+
+            function buildRunThemes() {
+                const themes = {
+                    1: ORBITAL_TRAFFIC_PATTERN,
+                    2: WAVE_PATTERNS.find((pattern) => pattern.key === "satelliteBreakup")
+                };
+                let previous = themes[2].key;
+                let bag = [];
+                for (let level = 3; level <= MAX_LEVEL; level += 1) {
+                    if (!bag.length) {
+                        bag = shuffle(WAVE_PATTERNS);
+                        if (bag[0].key === previous) {
+                            [bag[0], bag[1]] = [bag[1], bag[0]];
+                        }
+                    }
+                    const pattern = bag.shift();
+                    themes[level] = pattern;
+                    previous = pattern.key;
+                }
+                return themes;
+            }
+
+            function buildRunScenery() {
+                const scenes = { 1: ORBITAL_SCENES.find((scene) => scene.key === "earthDay") };
+                let previous = scenes[1].key;
+                let bag = [];
+                for (let level = 2; level <= MAX_LEVEL; level += 1) {
+                    if (!bag.length) {
+                        bag = shuffle(ORBITAL_SCENES);
+                        if (bag[0].key === previous) {
+                            [bag[0], bag[1]] = [bag[1], bag[0]];
+                        }
+                    }
+                    const scene = bag.shift();
+                    scenes[level] = scene;
+                    previous = scene.key;
+                }
+                return scenes;
+            }
+
+            function difficultyForLevel(level = state.level) {
+                const progress = clamp((level - 1) / (MAX_LEVEL - 1), 0, 1);
+                return progress < 0.5
+                    ? progress * 0.82
+                    : 0.41 + (progress - 0.5) * 1.58;
+            }
+
             function currentWavePattern(level = state.level) {
-                return WAVE_PATTERNS[(level - 1) % WAVE_PATTERNS.length];
+                return state.levelThemes[level] || (level === 1 ? ORBITAL_TRAFFIC_PATTERN : WAVE_PATTERNS[0]);
             }
 
             function currentWaveName(level = state.level) {
@@ -939,22 +1082,39 @@
                 return "chunk";
             }
 
+            function astronautLevel(level = state.level) {
+                return level >= 3 && level % 2 === 1;
+            }
+
+            function configureCloudPhase(level) {
+                state.phase = "cloud";
+                state.phaseTimer = 0;
+                state.phaseDuration = cloudDurationForLevel(level);
+                state.spawnTimer = level === 1 ? 0.42 : 0.24;
+                state.astronautSpawned = false;
+                state.astronautTimer = astronautLevel(level)
+                    ? rand(state.phaseDuration * 0.28, state.phaseDuration * 0.62)
+                    : Infinity;
+            }
+
             function resetGame() {
                 state.mode = "ready";
                 state.level = 1;
-                state.phase = "cloud";
-                state.phaseTimer = 0;
-                state.phaseDuration = 12;
-                state.spawnTimer = 0.3;
                 state.cascadeTimer = 0;
                 state.score = 0;
                 state.survivalTime = 0;
-                state.shields = 3;
+                state.shields = MAX_SHIELDS;
                 state.shake = 0;
                 state.bannerTimer = 0;
                 state.recentCascades = 0;
                 state.rngSeed = 424242 + Math.floor(performance.now()) % 100000;
                 state.rng = mulberry32(state.rngSeed);
+                state.levelThemes = buildRunThemes();
+                state.backgroundScenes = buildRunScenery();
+                state.astronautsRescued = 0;
+                state.reentry.timer = 0;
+                state.reentry.duration = REENTRY_DURATION;
+                state.reentry.active = false;
                 state.player.x = WORLD.width * 0.5;
                 state.player.y = 760;
                 state.player.vx = 0;
@@ -965,9 +1125,11 @@
                 state.joystick.active = false;
                 state.joystick.id = null;
                 state.debris.length = 0;
+                state.collectibles.length = 0;
                 state.particles.length = 0;
                 state.lastInput.x = 0;
                 state.lastInput.y = 0;
+                configureCloudPhase(state.level);
                 showReadyMessage();
                 updateHud();
                 render();
@@ -975,12 +1137,12 @@
 
             function startGame() {
                 if (state.mode === "playing") return;
-                if (state.mode === "gameover" || state.mode === "ready") {
+                if (state.mode === "gameover" || state.mode === "won") {
+                    restartGame();
+                    return;
+                }
+                if (state.mode === "ready") {
                     state.mode = "playing";
-                    state.phase = "cloud";
-                    state.phaseTimer = 0;
-                    state.phaseDuration = cloudDurationForLevel(state.level);
-                    state.spawnTimer = 0.15;
                     state.bannerTimer = 1.8;
                     messagePanel.classList.remove("is-visible");
                     messagePanel.hidden = true;
@@ -1009,6 +1171,11 @@
                     restartGame();
                     return;
                 }
+                if (state.mode === "won") {
+                    restartGame();
+                    return;
+                }
+                if (state.mode === "reentry") return;
                 if (state.mode === "paused") {
                     state.mode = "playing";
                     messagePanel.classList.remove("is-visible");
@@ -1021,15 +1188,17 @@
             }
 
             function cloudDurationForLevel(level) {
-                return Math.min(19, 10.5 + level * 0.62);
+                return Math.min(20.4, 11.6 + level * 0.35);
             }
 
             function calmDurationForLevel(level) {
-                return Math.max(2.15, 3.25 - level * 0.06);
+                return Math.max(1.5, 3.1 - level * 0.062);
             }
 
             function spawnIntervalForLevel(level) {
-                return Math.max(0.13, 0.64 - level * 0.038);
+                const progress = clamp((level - 1) / (MAX_LEVEL - 1), 0, 1);
+                const latePressure = Math.max(0, (progress - 0.46) / 0.54);
+                return Math.max(0.18, 0.84 - progress * 0.37 - latePressure * 0.25);
             }
 
             function showReadyMessage() {
@@ -1053,7 +1222,7 @@
                 messageCopy.textContent = copy.pausedCopy;
                 statA.textContent = `${Math.floor(state.score)}`;
                 statB.textContent = `${copy.level} ${state.level}`;
-                statC.textContent = `${state.shields}/3`;
+                statC.textContent = `${state.shields}/${MAX_SHIELDS}`;
                 messageStats.hidden = false;
                 startButton.textContent = copy.resume;
                 messagePanel.classList.add("is-visible");
@@ -1074,11 +1243,29 @@
                 messagePanel.classList.add("is-visible");
             }
 
+            function showWinMessage() {
+                messagePanel.hidden = false;
+                tiltControls.hidden = false;
+                messageTitle.textContent = copy.wonTitle;
+                messageCopy.textContent = copy.wonCopy;
+                statA.textContent = `${copy.level} ${MAX_LEVEL}`;
+                statB.textContent = `${copy.score} ${Math.floor(state.score)}`;
+                statC.textContent = `${copy.rescued} ${state.astronautsRescued}`;
+                messageStats.hidden = false;
+                startButton.textContent = copy.again;
+                updateTiltControls();
+                messagePanel.classList.add("is-visible");
+            }
+
             function updateHud() {
                 scoreValue.textContent = String(Math.floor(state.score));
                 bestValue.textContent = String(Math.max(state.best, Math.floor(state.score)));
                 levelValue.textContent = String(state.level);
-                phasePill.textContent = state.phase === "cloud" ? currentWaveName() : copy.phaseCalm;
+                phasePill.textContent = state.mode === "reentry"
+                    ? copy.phaseReentry
+                    : state.mode === "won"
+                        ? copy.phaseWon
+                        : state.phase === "cloud" ? currentWaveName() : copy.phaseCalm;
                 pauseButton.textContent = state.mode === "paused" ? "▶" : "Ⅱ";
                 pauseButton.setAttribute("aria-label", state.mode === "paused" ? copy.resume : copy.pause);
                 pauseButton.title = state.mode === "paused" ? copy.resume : copy.pause;
@@ -1107,6 +1294,7 @@
                 if (state.mode === "ready") showReadyMessage();
                 if (state.mode === "paused") showPausedMessage();
                 if (state.mode === "gameover") showGameOverMessage();
+                if (state.mode === "won") showWinMessage();
                 updateTiltControls();
                 updateHud();
             }
@@ -1116,10 +1304,11 @@
                 const level = state.level;
                 const pattern = options.pattern || currentWavePattern();
                 const kind = options.kind || chooseDebrisKind(pattern);
+                const difficulty = difficultyForLevel(level);
                 const size = options.size || (
                     kind === "shard" || kind === "battery" || kind === "foil" ? 1 :
                     kind === "panel" || kind === "antenna" || kind === "solarWing" ? 2 :
-                    kind === "satellite" || kind === "cubesat" || kind === "fuelTank" ? 3 :
+                    kind === "satellite" || kind === "cubesat" || kind === "operationalSatellite" || kind === "fuelTank" ? 3 :
                     rand() < Math.min(0.58, 0.34 + level * 0.018) ? 3 : 2
                 );
                 const radius = options.radius || (
@@ -1132,21 +1321,23 @@
                     kind === "fuelTank" ? rand(14, 20) :
                     kind === "cubesat" ? rand(13, 18) :
                     kind === "satellite" ? rand(18, 24) :
+                    kind === "operationalSatellite" ? rand(15, 20) :
                     size === 3 ? rand(18, 27) : rand(12, 18)
                 );
-                const speed = options.speed || (
-                    kind === "shard" ? rand(156 + level * 18, 232 + level * 22) :
-                    kind === "battery" ? rand(182 + level * 20, 260 + level * 24) :
-                    kind === "foil" ? rand(62 + level * 5, 106 + level * 8) :
-                    kind === "antenna" ? rand(126 + level * 12, 186 + level * 15) :
-                    kind === "panel" ? rand(96 + level * 8, 146 + level * 12) :
-                    kind === "solarWing" ? rand(82 + level * 7, 132 + level * 10) :
-                    kind === "fuelTank" ? rand(108 + level * 9, 158 + level * 13) :
-                    kind === "cubesat" ? rand(118 + level * 10, 170 + level * 13) :
-                    kind === "satellite" ? rand(86 + level * 7, 132 + level * 10) :
-                    rand(104 + level * 10, 168 + level * 15)
+                const speed = options.speed ?? (
+                    kind === "operationalSatellite" ? rand(72 + level * 1.5, 96 + level * 2) :
+                    kind === "shard" ? rand(144 + difficulty * 155, 216 + difficulty * 195) :
+                    kind === "battery" ? rand(168 + difficulty * 172, 238 + difficulty * 210) :
+                    kind === "foil" ? rand(64 + difficulty * 54, 104 + difficulty * 78) :
+                    kind === "antenna" ? rand(118 + difficulty * 112, 176 + difficulty * 142) :
+                    kind === "panel" ? rand(92 + difficulty * 86, 142 + difficulty * 118) :
+                    kind === "solarWing" ? rand(80 + difficulty * 72, 128 + difficulty * 105) :
+                    kind === "fuelTank" ? rand(106 + difficulty * 102, 156 + difficulty * 136) :
+                    kind === "cubesat" ? rand(114 + difficulty * 114, 166 + difficulty * 144) :
+                    kind === "satellite" ? rand(84 + difficulty * 92, 128 + difficulty * 122) :
+                    rand(102 + difficulty * 108, 164 + difficulty * 140)
                 );
-                const drift = Math.sin(level * 1.83) * (24 + level * 2);
+                const drift = Math.sin(level * 1.83) * (18 + difficulty * 42);
                 const fromSide = options.fromSide ?? (rand() < pattern.sideChance);
                 let x;
                 let y;
@@ -1155,18 +1346,18 @@
                 if (options.x !== undefined) {
                     x = options.x;
                     y = options.y;
-                    vx = options.vx;
-                    vy = options.vy;
+                    vx = options.vx ?? 0;
+                    vy = options.vy ?? speed;
                 } else if (fromSide) {
                     const left = rand() < 0.5;
                     x = left ? -radius - 12 : WORLD.width + radius + 12;
                     y = rand(PLAY_TOP + 6, WORLD.height * 0.34);
-                    vx = (left ? 1 : -1) * rand(48 + level * 4, 102 + level * 6);
+                    vx = (left ? 1 : -1) * rand(44 + difficulty * 40, 92 + difficulty * 68);
                     vy = kind === "shard" || kind === "battery"
-                        ? rand(142 + level * 12, 218 + level * 15)
+                        ? rand(142 + difficulty * 146, 218 + difficulty * 186)
                         : kind === "foil" || kind === "solarWing"
-                            ? rand(78 + level * 6, 132 + level * 9)
-                            : rand(92 + level * 8, 158 + level * 11);
+                            ? rand(78 + difficulty * 62, 132 + difficulty * 86)
+                            : rand(90 + difficulty * 94, 154 + difficulty * 128);
                 } else {
                     x = rand(28, WORLD.width - 28);
                     y = -radius - rand(8, 110);
@@ -1193,13 +1384,14 @@
                     r: radius,
                     size,
                     age: 0,
-                    hitScale: kind === "battery" || kind === "shard" ? 0.82 : kind === "antenna" || kind === "solarWing" ? 1.18 : 1,
-                    spin: kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(-4.8, 4.8) : kind === "shard" || kind === "battery" ? rand(-2.2, 2.2) : rand(-3.2, 3.2),
+                    hitScale: kind === "battery" || kind === "shard" ? 0.82 : kind === "antenna" || kind === "solarWing" ? 1.18 : kind === "operationalSatellite" ? 0.9 : 1,
+                    spin: kind === "operationalSatellite" ? rand(-0.24, 0.24) : kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(-4.8, 4.8) : kind === "shard" || kind === "battery" ? rand(-2.2, 2.2) : rand(-3.2, 3.2),
                     rot: rand(0, Math.PI * 2),
                     seed: rand(0, 1000),
                     fuse: kind === "satellite" || kind === "cubesat" ? rand(1.9, 3.25) : 0,
                     weave: kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(0.7, 1.4) * (rand() < 0.5 ? -1 : 1) : 0,
                     flash: 0,
+                    canCascade: options.canCascade ?? (level >= 2 && kind !== "operationalSatellite"),
                     scoredNear: false
                 };
                 state.debris.push(debris);
@@ -1225,6 +1417,11 @@
             }
 
             function splitDebris(debris, reason = "cascade") {
+                if (!debris.canCascade) {
+                    createBurst(debris.x, debris.y, reason === "hit" ? "#ffcf6d" : "#a7ecff", 10, 92);
+                    debris.remove = true;
+                    return 0;
+                }
                 if (state.debris.length >= MAX_DEBRIS - 2 || debris.size <= 1) {
                     debris.flash = 0.22;
                     return 0;
@@ -1358,6 +1555,10 @@
             function updatePhase(dt) {
                 state.phaseTimer += dt;
                 if (state.phase === "cloud" && state.phaseTimer >= state.phaseDuration) {
+                    if (state.level >= MAX_LEVEL) {
+                        beginReentry();
+                        return;
+                    }
                     state.phase = "calm";
                     state.phaseTimer = 0;
                     state.phaseDuration = calmDurationForLevel(state.level);
@@ -1366,27 +1567,24 @@
                     levelBanner.classList.add("is-visible");
                 } else if (state.phase === "calm" && state.phaseTimer >= state.phaseDuration) {
                     state.level += 1;
-                    state.phase = "cloud";
-                    state.phaseTimer = 0;
-                    state.phaseDuration = cloudDurationForLevel(state.level);
-                    state.spawnTimer = Math.min(state.spawnTimer, 0.22);
+                    configureCloudPhase(state.level);
+                    if (state.level === 2) {
+                        state.debris = state.debris.filter((debris) => debris.kind !== "operationalSatellite");
+                    }
                     state.bannerTimer = 1.55;
                     levelBanner.textContent = copy.bannerCloud(state.level, currentWaveName());
                     levelBanner.classList.add("is-visible");
-                    if (state.shields < 3 && state.level % 3 === 0) {
-                        state.shields += 1;
-                        createBurst(state.player.x, state.player.y, "#61d8ff", 26, 130);
-                    }
                 }
             }
 
             function updateSpawning(dt) {
                 state.spawnTimer -= dt;
-                const calmFactor = state.phase === "calm" ? 2.65 : 1;
+                const calmFactor = state.phase === "calm" ? 3.3 : 1;
                 if (state.spawnTimer <= 0) {
                     const pattern = currentWavePattern();
                     spawnDebris({ pattern });
-                    if (rand() < pattern.burstChance + Math.min(0.1, state.level * 0.008)) {
+                    const burstPressure = Math.min(0.2, Math.max(0, state.level - 5) * 0.013);
+                    if (pattern.key !== "orbitalTraffic" && rand() < pattern.burstChance + burstPressure) {
                         for (let i = 0; i < pattern.burstCount; i += 1) {
                             spawnDebris({
                                 pattern,
@@ -1422,7 +1620,8 @@
                     const kindSpeedBonus = debris.kind === "shard" || debris.kind === "battery"
                         ? 42
                         : debris.kind === "foil" || debris.kind === "solarWing" ? -18
-                            : debris.kind === "satellite" ? -8
+                            : debris.kind === "operationalSatellite" ? -20
+                                : debris.kind === "satellite" ? -8
                                 : debris.kind === "chunk" || debris.kind === "fuelTank" ? 10 : 0;
                     const minimumDownSpeed = 58 + state.level * 7 + debris.size * 8 + kindSpeedBonus;
                     if (debris.vy < minimumDownSpeed) {
@@ -1451,11 +1650,11 @@
                 const maxChecks = Math.min(760, state.debris.length * 8);
                 for (let i = 0; i < state.debris.length && checks < maxChecks; i += 1) {
                     const a = state.debris[i];
-                    if (a.remove || a.size <= 1) continue;
+                    if (a.remove || !a.canCascade || a.size <= 1) continue;
                     for (let j = i + 1; j < state.debris.length && checks < maxChecks; j += 1) {
                         checks += 1;
                         const b = state.debris[j];
-                        if (b.remove) continue;
+                        if (b.remove || !b.canCascade) continue;
                         const dx = a.x - b.x;
                         const dy = a.y - b.y;
                         const rr = (a.r + b.r) * 0.72;
@@ -1511,6 +1710,103 @@
                 }
             }
 
+            function spawnAstronaut() {
+                if (state.astronautSpawned) return;
+                state.astronautSpawned = true;
+                state.collectibles.push({
+                    x: rand(76, WORLD.width - 76),
+                    y: PLAY_TOP - 34,
+                    vx: rand(-14, 14),
+                    vy: rand(74, 94),
+                    r: 15,
+                    age: 0,
+                    seed: rand(0, 1000),
+                    remove: false
+                });
+            }
+
+            function updateAstronautSpawning(dt) {
+                if (state.phase !== "cloud" || state.astronautSpawned || !Number.isFinite(state.astronautTimer)) return;
+                state.astronautTimer -= dt;
+                if (state.astronautTimer <= 0) spawnAstronaut();
+            }
+
+            function rescueAstronaut(astronaut) {
+                const restored = state.shields < MAX_SHIELDS;
+                state.shields = Math.min(MAX_SHIELDS, state.shields + 1);
+                state.astronautsRescued += 1;
+                state.score += 100;
+                astronaut.remove = true;
+                createBurst(astronaut.x, astronaut.y, "#8ef088", 28, 138);
+                state.bannerTimer = 1.55;
+                levelBanner.textContent = copy.bannerRescue(restored);
+                levelBanner.classList.add("is-visible");
+            }
+
+            function updateCollectibles(dt) {
+                const player = state.player;
+                for (const astronaut of state.collectibles) {
+                    astronaut.age += dt;
+                    astronaut.vx += Math.sin(astronaut.age * 1.8 + astronaut.seed) * 14 * dt;
+                    astronaut.vx *= Math.max(0, 1 - dt * 0.42);
+                    astronaut.x += astronaut.vx * dt;
+                    astronaut.y += astronaut.vy * dt;
+                    if (astronaut.x < 34 || astronaut.x > WORLD.width - 34) astronaut.vx *= -0.75;
+                    if (astronaut.y > PLAY_BOTTOM + astronaut.r + 28) {
+                        astronaut.remove = true;
+                        continue;
+                    }
+                    const radius = PLAYER_RADIUS + astronaut.r * 0.86;
+                    const dx = player.x - astronaut.x;
+                    const dy = player.y - astronaut.y;
+                    if (dx * dx + dy * dy <= radius * radius) rescueAstronaut(astronaut);
+                }
+                state.collectibles = state.collectibles.filter((astronaut) => !astronaut.remove);
+            }
+
+            function beginReentry() {
+                state.mode = "reentry";
+                state.reentry.active = true;
+                state.reentry.timer = 0;
+                state.debris.length = 0;
+                state.collectibles.length = 0;
+                state.joystick.active = false;
+                state.player.vx = 0;
+                state.player.vy = 0;
+                state.player.invulnerable = 0;
+                state.lastInput.x = 0;
+                state.lastInput.y = 0;
+                state.bannerTimer = 2.2;
+                levelBanner.textContent = copy.bannerReentry;
+                levelBanner.classList.add("is-visible");
+            }
+
+            function finishReentry() {
+                state.mode = "won";
+                state.reentry.active = false;
+                state.bannerTimer = 0;
+                levelBanner.classList.remove("is-visible");
+                saveBest();
+                showWinMessage();
+            }
+
+            function updateReentry(dt) {
+                const reentry = state.reentry;
+                reentry.timer += dt;
+                state.survivalTime += dt;
+                state.score += dt * 24;
+                const progress = clamp(reentry.timer / reentry.duration, 0, 1);
+                const eased = progress * progress * (3 - 2 * progress);
+                const previousX = state.player.x;
+                const previousY = state.player.y;
+                state.player.x = WORLD.width * 0.5 + Math.sin(progress * Math.PI * 3.2) * (22 - eased * 12);
+                state.player.y = 448 + eased * 172;
+                state.player.vx = (state.player.x - previousX) / Math.max(dt, 0.001);
+                state.player.vy = (state.player.y - previousY) / Math.max(dt, 0.001);
+                state.player.thrust = 0.38 + Math.sin(progress * Math.PI * 4) * 0.12;
+                if (progress >= 1) finishReentry();
+            }
+
             function updateParticles(dt) {
                 for (const particle of state.particles) {
                     particle.x += particle.vx * dt;
@@ -1523,6 +1819,15 @@
             }
 
             function update(dt) {
+                if (state.mode === "reentry") {
+                    updateReentry(dt);
+                    updateParticles(dt);
+                    state.shake = Math.max(0, state.shake - dt * 2.8);
+                    state.bannerTimer = Math.max(0, state.bannerTimer - dt);
+                    if (state.bannerTimer <= 0) levelBanner.classList.remove("is-visible");
+                    updateHud();
+                    return;
+                }
                 if (state.mode !== "playing") {
                     updateParticles(dt);
                     return;
@@ -1530,8 +1835,15 @@
                 state.survivalTime += dt;
                 state.score += dt * (9.4 + state.level * 1.55 + state.debris.length * 0.018);
                 updatePhase(dt);
+                if (state.mode !== "playing") {
+                    updateParticles(dt);
+                    updateHud();
+                    return;
+                }
                 updateSpawning(dt);
                 updateInput(dt);
+                updateAstronautSpawning(dt);
+                updateCollectibles(dt);
                 updateDebris(dt);
                 updateParticles(dt);
                 state.shake = Math.max(0, state.shake - dt * 2.8);
@@ -1540,42 +1852,394 @@
                 updateHud();
             }
 
-            function drawBackground() {
+            function smoothstep(value) {
+                const t = clamp(value, 0, 1);
+                return t * t * (3 - 2 * t);
+            }
+
+            function backgroundSceneForLevel(level = state.level) {
+                return state.backgroundScenes[level] || ORBITAL_SCENES[0];
+            }
+
+            function sceneBlend() {
+                if (state.phase !== "calm" || state.level >= MAX_LEVEL) return 0;
+                return smoothstep(state.phaseTimer / Math.max(0.001, state.phaseDuration));
+            }
+
+            function campaignProgress() {
+                if (state.mode === "reentry" || state.mode === "won") return 1;
+                const phaseProgress = clamp(state.phaseTimer / Math.max(0.001, state.phaseDuration), 0, 1);
+                const withinLevel = state.phase === "calm"
+                    ? 0.82 + phaseProgress * 0.18
+                    : phaseProgress * 0.82;
+                return clamp((state.level - 1 + withinLevel) / (MAX_LEVEL - 1), 0, 1);
+            }
+
+            function backgroundObjectProgress() {
+                const phaseProgress = clamp(state.phaseTimer / Math.max(0.001, state.phaseDuration), 0, 1);
+                return state.phase === "calm"
+                    ? 0.82 + phaseProgress * 0.18
+                    : 0.04 + phaseProgress * 0.78;
+            }
+
+            function earthTextureScrollProgress(time = state.survivalTime) {
+                return ((time / 110) % 1 + 1) % 1;
+            }
+
+            function earthOrbitState(time) {
+                const approach = campaignProgress();
+                const radius = 685 + approach * 190;
+                return {
+                    x: WORLD.width * 0.5 + Math.sin(time * 0.047) * 48 + Math.cos(time * 0.021) * 10,
+                    y: WORLD.height + 318 - approach * 140 + Math.sin(time * 0.036) * 14,
+                    radius,
+                    approach
+                };
+            }
+
+            function paletteForScene(scene) {
+                const palettes = {
+                    earthDay: ["#071d30", "#123e59", "#14233d"],
+                    terminator: ["#050b1d", "#152a42", "#3c2340"],
+                    sunrise: ["#1a1430", "#9a4f43", "#e08a4f"],
+                    moonPass: ["#0b1326", "#1c2941", "#2b4563"],
+                    aurora: ["#071b24", "#0c3d45", "#14355b"],
+                    highOrbit: ["#060a18", "#101c34", "#28304e"],
+                    nightLights: ["#040817", "#16213a", "#31233d"]
+                };
+                return palettes[scene.key] || palettes.earthDay;
+            }
+
+            function drawSpaceGradient(scene, alpha = 1) {
+                const [top, middle, bottom] = paletteForScene(scene);
                 const gradient = ctx.createLinearGradient(0, 0, WORLD.width, WORLD.height);
-                gradient.addColorStop(0, "#061226");
-                gradient.addColorStop(0.48, "#071a31");
-                gradient.addColorStop(1, "#111735");
+                gradient.addColorStop(0, top);
+                gradient.addColorStop(0.5, middle);
+                gradient.addColorStop(1, bottom);
+                ctx.save();
+                ctx.globalAlpha = alpha;
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+                ctx.restore();
+            }
 
-                const time = state.survivalTime;
+            function drawStars(time) {
                 ctx.save();
                 for (const star of stars) {
-                    const y = (star.y + time * star.speed) % WORLD.height;
+                    const y = (star.y + time * star.speed * 0.23) % WORLD.height;
                     ctx.fillStyle = `${star.hue}${star.alpha})`;
                     ctx.beginPath();
                     ctx.arc(star.x, y, star.r, 0, Math.PI * 2);
                     ctx.fill();
                 }
                 ctx.restore();
+            }
+
+            function drawSun(x, y, radius, alpha = 1) {
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                const glow = ctx.createRadialGradient(x, y, radius * 0.22, x, y, radius * 3.1);
+                glow.addColorStop(0, "rgba(255, 250, 203, 0.95)");
+                glow.addColorStop(0.28, "rgba(255, 191, 98, 0.5)");
+                glow.addColorStop(1, "rgba(255, 152, 70, 0)");
+                ctx.fillStyle = glow;
+                ctx.fillRect(x - radius * 3.1, y - radius * 3.1, radius * 6.2, radius * 6.2);
+                ctx.fillStyle = "#ffe29a";
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function drawMoon(x, y, radius, alpha, time) {
+                if (moonSpriteReady && moonSprite.complete && moonSprite.naturalWidth > 0) {
+                    const spriteSize = radius * 2.4;
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.drawImage(moonSprite, x - spriteSize / 2, y - spriteSize / 2, spriteSize, spriteSize);
+                    ctx.restore();
+                    return;
+                }
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                const surface = ctx.createRadialGradient(x - radius * 0.28, y - radius * 0.3, radius * 0.1, x, y, radius);
+                surface.addColorStop(0, "#f1e6cf");
+                surface.addColorStop(0.54, "#b8ae9f");
+                surface.addColorStop(1, "#5c5b65");
+                ctx.fillStyle = surface;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.save();
+                ctx.clip();
+                ctx.fillStyle = "rgba(72, 72, 81, 0.34)";
+                for (let index = 0; index < 8; index += 1) {
+                    const angle = index * 1.7 + time * 0.01;
+                    const distance = radius * (0.18 + (index % 4) * 0.17);
+                    ctx.beginPath();
+                    ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, radius * (0.06 + (index % 3) * 0.035), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+                ctx.restore();
+            }
+
+            function risingCelestialPosition(earth, travel, side, time) {
+                const rise = clamp((travel - 0.04) / 0.96, 0, 1);
+                const horizon = earth.y - earth.radius;
+                const inwardTravel = (0.5 - side) * WORLD.width * 0.92 * rise;
+                const orbitalCurve = Math.sin(rise * Math.PI) * (side < 0.5 ? 24 : -24);
+                return {
+                    x: WORLD.width * side + inwardTravel + orbitalCurve + Math.sin(time * 0.025 + side * 8) * 6,
+                    y: horizon + 92 - rise * (horizon + 270)
+                };
+            }
+
+            function mirroredTextureCoordinate(value) {
+                const wrapped = ((value % 2) + 2) % 2;
+                return wrapped <= 1 ? wrapped : 2 - wrapped;
+            }
+
+            function drawProjectedEarthTexture(x, y, radius, time) {
+                const sourceSize = Math.min(earthSprite.naturalWidth, earthSprite.naturalHeight) * 0.54;
+                const sourceX = (earthSprite.naturalWidth - sourceSize) / 2;
+                const sourceY = (earthSprite.naturalHeight - sourceSize) / 2;
+                const scroll = earthTextureScrollProgress(time) * 2;
+                const bandHeight = radius > 1000 ? 4 : 2;
+                const visibleTop = Math.max(0, Math.floor(y - radius));
+                const visibleBottom = Math.min(WORLD.height, Math.ceil(y + radius));
+                ctx.fillStyle = "#176f9f";
+                ctx.fillRect(x - radius, visibleTop, radius * 2, visibleBottom - visibleTop);
+
+                // Compress each texture band to the sphere chord so the surface recedes around the limb.
+                for (let bandY = visibleTop; bandY < visibleBottom; bandY += bandHeight) {
+                    const sampleY = bandY + bandHeight * 0.5;
+                    const sphereY = clamp((sampleY - y) / radius, -1, 1);
+                    const halfChord = radius * Math.sqrt(Math.max(0, 1 - sphereY * sphereY));
+                    if (halfChord < 1) continue;
+                    const latitude = Math.asin(sphereY) / Math.PI + 0.5;
+                    const textureV = mirroredTextureCoordinate(latitude - scroll);
+                    const sourceBandY = sourceY + textureV * (sourceSize - 2);
+                    ctx.drawImage(
+                        earthSprite,
+                        sourceX,
+                        sourceBandY,
+                        sourceSize,
+                        2,
+                        x - halfChord,
+                        bandY,
+                        halfChord * 2,
+                        bandHeight + 1
+                    );
+                }
+
+                const limbShade = ctx.createRadialGradient(
+                    x,
+                    y - radius * 0.2,
+                    radius * 0.34,
+                    x,
+                    y,
+                    radius * 1.02
+                );
+                limbShade.addColorStop(0.56, "rgba(3, 19, 36, 0)");
+                limbShade.addColorStop(0.82, "rgba(3, 19, 36, 0.08)");
+                limbShade.addColorStop(1, "rgba(3, 12, 28, 0.34)");
+                ctx.fillStyle = limbShade;
+                ctx.fillRect(x - radius, visibleTop, radius * 2, visibleBottom - visibleTop);
+            }
+
+            function drawEarthPlanet({ x, y, radius, alpha = 1, night = false, sunrise = false, aurora = false, cityLights = false, lightDirection = -1, time = 0 }) {
+                const texturedEarth = earthSpriteReady && earthSprite.complete && earthSprite.naturalWidth > 0;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.clip();
+                if (texturedEarth) {
+                    drawProjectedEarthTexture(x, y, radius, time);
+                    if (sunrise) {
+                        ctx.fillStyle = "rgba(255, 154, 89, 0.16)";
+                        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+                    }
+                } else {
+                    const lightX = x + lightDirection * radius * 0.28;
+                    const surface = ctx.createRadialGradient(lightX, y - radius * 0.34, radius * 0.12, x, y, radius * 1.1);
+                    surface.addColorStop(0, sunrise ? "#7cd5e8" : "#91d9ee");
+                    surface.addColorStop(0.44, sunrise ? "#3c87a2" : "#327ba0");
+                    surface.addColorStop(1, "#0b2545");
+                    ctx.fillStyle = surface;
+                    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+
+                    const continents = [
+                        [-0.36, -0.08, 0.28, 0.12, -0.34],
+                        [-0.1, 0.16, 0.21, 0.1, 0.62],
+                        [0.22, -0.21, 0.29, 0.13, 0.28],
+                        [0.37, 0.12, 0.15, 0.08, -0.58],
+                        [-0.42, 0.25, 0.16, 0.08, 0.15]
+                    ];
+                    ctx.fillStyle = sunrise ? "rgba(113, 166, 96, 0.76)" : "rgba(67, 146, 100, 0.72)";
+                    for (const [dx, dy, rx, ry, angle] of continents) {
+                        ctx.beginPath();
+                        ctx.ellipse(x + radius * (dx + Math.sin(time * 0.035) * 0.025), y + radius * dy, radius * rx, radius * ry, angle, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    ctx.strokeStyle = "rgba(242, 252, 255, 0.34)";
+                    ctx.lineWidth = Math.max(1.1, radius * 0.011);
+                    for (let index = 0; index < 6; index += 1) {
+                        ctx.beginPath();
+                        ctx.ellipse(x + Math.sin(time * 0.08 + index) * radius * 0.1, y + (index - 2.5) * radius * 0.14, radius * (0.46 - index * 0.018), radius * 0.075, -0.2 + index * 0.12, Math.PI * 0.1, Math.PI * 1.06);
+                        ctx.stroke();
+                    }
+                }
+
+                if (night) {
+                    const terminator = ctx.createLinearGradient(x - radius, y, x + radius, y);
+                    if (lightDirection < 0) {
+                        terminator.addColorStop(0, "rgba(3, 9, 24, 0.04)");
+                        terminator.addColorStop(0.48, "rgba(3, 9, 24, 0.26)");
+                        terminator.addColorStop(1, "rgba(3, 9, 24, 0.94)");
+                    } else {
+                        terminator.addColorStop(0, "rgba(3, 9, 24, 0.94)");
+                        terminator.addColorStop(0.52, "rgba(3, 9, 24, 0.26)");
+                        terminator.addColorStop(1, "rgba(3, 9, 24, 0.04)");
+                    }
+                    ctx.fillStyle = terminator;
+                    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+                }
+                if (cityLights) {
+                    ctx.fillStyle = "rgba(255, 204, 103, 0.78)";
+                    for (let index = 0; index < 18; index += 1) {
+                        const angle = index * 2.41;
+                        const distance = radius * (0.14 + (index % 5) * 0.11);
+                        ctx.beginPath();
+                        ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, 1.1 + (index % 3) * 0.45, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                if (aurora) {
+                    ctx.globalCompositeOperation = "lighter";
+                    ctx.strokeStyle = "rgba(108, 255, 171, 0.58)";
+                    ctx.lineWidth = Math.max(2, radius * 0.024);
+                    for (let index = 0; index < 4; index += 1) {
+                        ctx.beginPath();
+                        ctx.ellipse(x, y - radius * 0.48 + index * radius * 0.06, radius * (0.45 + index * 0.05), radius * 0.11, 0.02, Math.PI * 1.08, Math.PI * 1.92);
+                        ctx.stroke();
+                    }
+                }
+                ctx.restore();
 
                 ctx.save();
-                ctx.globalAlpha = 0.34;
-                const aurora = ctx.createRadialGradient(WORLD.width * 0.52, WORLD.height + 160, 40, WORLD.width * 0.52, WORLD.height + 160, 520);
-                aurora.addColorStop(0, "rgba(111, 226, 178, 0.46)");
-                aurora.addColorStop(0.5, "rgba(81, 155, 255, 0.16)");
-                aurora.addColorStop(1, "rgba(81, 155, 255, 0)");
-                ctx.fillStyle = aurora;
-                ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-                ctx.globalAlpha = 0.22;
-                ctx.strokeStyle = "#9cd6ff";
-                ctx.lineWidth = 1.2;
-                for (let i = 0; i < 5; i += 1) {
+                ctx.globalAlpha = alpha * (texturedEarth ? 0.38 : 0.78);
+                ctx.strokeStyle = sunrise ? "rgba(255, 204, 129, 0.86)" : "rgba(121, 224, 255, 0.74)";
+                ctx.lineWidth = Math.max(1.5, radius * 0.018);
+                ctx.beginPath();
+                ctx.arc(x, y, radius + Math.max(2, radius * 0.018), 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawOrbitalScene(scene, alpha, time, travel = backgroundObjectProgress(), drawCelestial = true) {
+                const earth = earthOrbitState(time);
+                if (scene.key === "earthDay") {
+                    const sun = risingCelestialPosition(earth, travel, 0.84, time);
+                    if (drawCelestial) drawSun(sun.x, sun.y, 44, alpha * 0.52);
+                    drawEarthPlanet({ ...earth, alpha, lightDirection: -0.7, time });
+                } else if (scene.key === "terminator") {
+                    const sun = risingCelestialPosition(earth, travel, 0.15, time);
+                    if (drawCelestial) drawSun(sun.x, sun.y, 70, alpha * 0.68);
+                    drawEarthPlanet({ ...earth, alpha, night: true, cityLights: true, lightDirection: -1, time });
+                } else if (scene.key === "sunrise") {
+                    const sun = risingCelestialPosition(earth, travel, 0.16, time);
+                    if (drawCelestial) drawSun(sun.x, sun.y, 70, alpha * 0.9);
+                    drawEarthPlanet({ ...earth, alpha, night: true, sunrise: true, lightDirection: -1, time });
+                } else if (scene.key === "moonPass") {
+                    const moon = risingCelestialPosition(earth, travel, 0.72, time);
+                    if (drawCelestial) drawMoon(moon.x, moon.y, 62 + earth.approach * 12, alpha * 0.9, time);
+                    drawEarthPlanet({ ...earth, alpha, night: true, lightDirection: -0.64, time });
+                } else if (scene.key === "aurora") {
+                    drawEarthPlanet({ ...earth, alpha, aurora: true, lightDirection: -0.44, time });
+                } else if (scene.key === "highOrbit") {
+                    const moon = risingCelestialPosition(earth, travel, 0.2, time);
+                    if (drawCelestial) drawMoon(moon.x, moon.y, 34, alpha * 0.7, time);
+                    drawEarthPlanet({ ...earth, alpha, night: true, lightDirection: 1, time });
+                } else {
+                    drawEarthPlanet({ ...earth, alpha, night: true, cityLights: true, lightDirection: 1, time });
+                }
+            }
+
+            function drawISSBackground() {
+                const damageIndex = ISS_DAMAGE_LEVELS.get(state.level);
+                if (damageIndex === undefined) return;
+                const sprite = issSprites[damageIndex];
+                if (!sprite.complete || !sprite.naturalWidth) return;
+                const time = state.survivalTime;
+                const travel = backgroundObjectProgress();
+                const y = -ISS_DRAW_SIZE * 0.54 + travel * (WORLD.height + ISS_DRAW_SIZE * 1.08);
+                ctx.save();
+                ctx.globalAlpha = 1;
+                ctx.translate(WORLD.width * 0.5 + Math.sin(time * 0.034 + damageIndex) * 54, y);
+                ctx.rotate(Math.sin(time * 0.026 + damageIndex) * 0.022);
+                ctx.drawImage(sprite, -ISS_DRAW_SIZE / 2, -ISS_DRAW_SIZE / 2, ISS_DRAW_SIZE, ISS_DRAW_SIZE);
+                ctx.restore();
+            }
+
+            function drawReentryBackground() {
+                const progress = clamp(state.reentry.timer / state.reentry.duration, 0, 1);
+                const orbitEarth = earthOrbitState(state.survivalTime);
+                const earth = {
+                    x: orbitEarth.x + Math.sin(state.survivalTime * 0.05) * 12,
+                    y: orbitEarth.y - progress * 44,
+                    radius: orbitEarth.radius + progress * 440
+                };
+                const horizon = earth.y - earth.radius;
+                drawSpaceGradient({ key: "sunrise" });
+                drawStars(state.survivalTime * 0.35);
+                drawSun(WORLD.width * 0.15 + Math.sin(state.survivalTime * 0.03) * 48, horizon + 72, 66, 0.66 + progress * 0.22);
+                drawEarthPlanet({
+                    ...earth,
+                    alpha: 1,
+                    sunrise: true,
+                    night: progress < 0.42,
+                    lightDirection: -1,
+                    time: state.survivalTime
+                });
+                ctx.save();
+                ctx.globalCompositeOperation = "lighter";
+                const streakCount = 16;
+                for (let index = 0; index < streakCount; index += 1) {
+                    const x = (index * 73 + state.survivalTime * (45 + index * 3)) % (WORLD.width + 60) - 30;
+                    const y = PLAY_TOP + ((index * 119 + state.survivalTime * 155) % 590);
+                    const length = 28 + (index % 5) * 13 + progress * 42;
+                    const flare = ctx.createLinearGradient(x, y, x - 14, y - length);
+                    flare.addColorStop(0, "rgba(255, 237, 176, 0)");
+                    flare.addColorStop(0.55, "rgba(255, 159, 92, 0.34)");
+                    flare.addColorStop(1, "rgba(255, 229, 181, 0.06)");
+                    ctx.strokeStyle = flare;
+                    ctx.lineWidth = 1.2 + (index % 3) * 0.65;
                     ctx.beginPath();
-                    ctx.ellipse(WORLD.width * 0.5, WORLD.height + 150 + i * 24, 340 + i * 42, 92 + i * 15, -0.05, Math.PI * 1.05, Math.PI * 1.95);
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x - 14, y - length);
                     ctx.stroke();
                 }
                 ctx.restore();
+            }
+
+            function drawBackground() {
+                if (state.mode === "reentry" || state.mode === "won") {
+                    drawReentryBackground();
+                    return;
+                }
+                const time = state.survivalTime;
+                const scene = backgroundSceneForLevel();
+                const blend = sceneBlend();
+                const travel = backgroundObjectProgress();
+                drawSpaceGradient(scene);
+                if (blend > 0) drawSpaceGradient(backgroundSceneForLevel(state.level + 1), blend);
+                drawStars(time);
+                drawOrbitalScene(scene, 1, time, travel);
+                if (blend > 0) drawOrbitalScene(backgroundSceneForLevel(state.level + 1), blend, time, travel, false);
+                drawISSBackground();
             }
 
             function drawDebris(debris) {
@@ -1590,7 +2254,7 @@
                     debris.kind === "antenna" ? "#c5d0d9" :
                     debris.kind === "foil" ? "rgba(199, 229, 245, 0.66)" :
                     debris.kind === "panel" || debris.kind === "solarWing" ? "#7f96a5" :
-                    debris.kind === "satellite" || debris.kind === "cubesat" ? "#d6c29b" :
+                    debris.kind === "satellite" || debris.kind === "cubesat" || debris.kind === "operationalSatellite" ? "#d6c29b" :
                     "#dbe7f2";
                 ctx.fillStyle = metal;
                 ctx.strokeStyle = debris.flash > 0 ? "#ffffff" : "rgba(9, 16, 28, 0.72)";
@@ -1716,6 +2380,48 @@
                     ctx.moveTo(0, -r);
                     ctx.lineTo(0, r * 0.72);
                     ctx.stroke();
+                } else if (debris.kind === "operationalSatellite") {
+                    const busWidth = r * 1.18;
+                    const busHeight = r * 0.82;
+                    const wingWidth = r * 1.08;
+                    const wingHeight = r * 0.58;
+                    ctx.fillStyle = "#1d5f9a";
+                    ctx.fillRect(-r * 1.82, -wingHeight / 2, wingWidth, wingHeight);
+                    ctx.fillRect(r * 0.74, -wingHeight / 2, wingWidth, wingHeight);
+                    ctx.strokeStyle = "rgba(215, 241, 255, 0.66)";
+                    ctx.lineWidth = Math.max(1, r * 0.07);
+                    ctx.strokeRect(-r * 1.82, -wingHeight / 2, wingWidth, wingHeight);
+                    ctx.strokeRect(r * 0.74, -wingHeight / 2, wingWidth, wingHeight);
+                    ctx.strokeStyle = "rgba(119, 194, 255, 0.72)";
+                    for (const offset of [-r * 1.82, r * 0.74]) {
+                        for (let cell = 1; cell < 4; cell += 1) {
+                            const cellX = offset + wingWidth * cell / 4;
+                            ctx.beginPath();
+                            ctx.moveTo(cellX, -wingHeight / 2);
+                            ctx.lineTo(cellX, wingHeight / 2);
+                            ctx.stroke();
+                        }
+                    }
+                    const bus = ctx.createLinearGradient(-busWidth / 2, -busHeight / 2, busWidth / 2, busHeight / 2);
+                    bus.addColorStop(0, "#f2f5f2");
+                    bus.addColorStop(0.5, "#b5c3cb");
+                    bus.addColorStop(1, "#647a88");
+                    ctx.fillStyle = bus;
+                    ctx.fillRect(-busWidth / 2, -busHeight / 2, busWidth, busHeight);
+                    ctx.strokeStyle = "rgba(10, 25, 40, 0.82)";
+                    ctx.strokeRect(-busWidth / 2, -busHeight / 2, busWidth, busHeight);
+                    ctx.fillStyle = "#ffcf6d";
+                    ctx.fillRect(-busWidth * 0.14, -busHeight * 0.42, busWidth * 0.28, busHeight * 0.16);
+                    ctx.strokeStyle = "rgba(242, 247, 255, 0.78)";
+                    ctx.beginPath();
+                    ctx.moveTo(0, -busHeight / 2);
+                    ctx.lineTo(0, -r * 1.34);
+                    ctx.lineTo(r * 0.34, -r * 1.56);
+                    ctx.stroke();
+                    ctx.fillStyle = Math.sin(state.survivalTime * 6 + debris.seed) > 0 ? "#8ef088" : "#e7fff0";
+                    ctx.beginPath();
+                    ctx.arc(0, busHeight * 0.12, Math.max(1.8, r * 0.14), 0, Math.PI * 2);
+                    ctx.fill();
                 } else {
                     const isCubesat = debris.kind === "cubesat";
                     const bodySize = isCubesat ? r * 0.86 : r * 1.04;
@@ -1754,6 +2460,56 @@
                 ctx.restore();
             }
 
+            function drawAstronaut(astronaut) {
+                const bob = Math.sin(astronaut.age * 2.2 + astronaut.seed) * 0.12;
+                ctx.save();
+                ctx.translate(astronaut.x, astronaut.y);
+                ctx.rotate(bob);
+                ctx.globalCompositeOperation = "lighter";
+                const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, astronaut.r * 1.8);
+                glow.addColorStop(0, "rgba(235, 255, 244, 0.72)");
+                glow.addColorStop(0.5, "rgba(142, 240, 136, 0.2)");
+                glow.addColorStop(1, "rgba(142, 240, 136, 0)");
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(0, 0, astronaut.r * 1.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalCompositeOperation = "source-over";
+                ctx.strokeStyle = "rgba(235, 247, 255, 0.88)";
+                ctx.lineWidth = 3;
+                ctx.lineCap = "round";
+                ctx.beginPath();
+                ctx.moveTo(-5, 5);
+                ctx.lineTo(-11, 13);
+                ctx.moveTo(5, 5);
+                ctx.lineTo(11, 13);
+                ctx.moveTo(-7, -1);
+                ctx.lineTo(-14, 4);
+                ctx.moveTo(7, -1);
+                ctx.lineTo(14, 4);
+                ctx.stroke();
+                ctx.fillStyle = "#f4f7f1";
+                ctx.strokeStyle = "rgba(20, 45, 68, 0.9)";
+                ctx.lineWidth = 1.6;
+                ctx.fillRect(-7, -2, 14, 15);
+                ctx.strokeRect(-7, -2, 14, 15);
+                ctx.fillStyle = "#9bb2bd";
+                ctx.fillRect(-10, 0, 3, 10);
+                ctx.strokeRect(-10, 0, 3, 10);
+                ctx.fillStyle = "#f5f7f4";
+                ctx.beginPath();
+                ctx.arc(0, -9, 8.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = "#1d6f94";
+                ctx.beginPath();
+                ctx.arc(0, -9.5, 5.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#ffcf6d";
+                ctx.fillRect(-3.2, 3, 6.4, 2.4);
+                ctx.restore();
+            }
+
             function drawPlayer() {
                 const player = state.player;
                 const flicker = player.invulnerable > 0 && Math.floor(player.invulnerable * 18) % 2 === 0;
@@ -1780,6 +2536,21 @@
 
                 ctx.save();
                 ctx.translate(player.x, player.y);
+
+                if (state.mode === "reentry" || state.mode === "won") {
+                    const progress = clamp(state.reentry.timer / state.reentry.duration, 0, 1);
+                    ctx.save();
+                    ctx.globalCompositeOperation = "lighter";
+                    const plasma = ctx.createRadialGradient(0, 0, 8, 0, 0, 52 + progress * 18);
+                    plasma.addColorStop(0, "rgba(255, 245, 197, 0.7)");
+                    plasma.addColorStop(0.42, "rgba(255, 151, 86, 0.33)");
+                    plasma.addColorStop(1, "rgba(255, 105, 105, 0)");
+                    ctx.fillStyle = plasma;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 52 + progress * 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
 
                 const sidePower = Math.min(1, Math.abs(input.x));
                 const verticalPower = Math.min(1, Math.abs(input.y));
@@ -1931,6 +2702,22 @@
                 if (state.phase !== "cloud") return;
                 const intensity = Math.min(0.34, 0.1 + state.level * 0.012);
                 const wave = currentWavePattern();
+                if (wave.key === "orbitalTraffic") {
+                    ctx.save();
+                    ctx.globalAlpha = 0.26 + Math.sin(state.survivalTime * 2.8) * 0.08;
+                    ctx.strokeStyle = "rgba(142, 240, 136, 0.72)";
+                    ctx.lineWidth = 1.4;
+                    ctx.setLineDash([7, 12]);
+                    for (const x of [WORLD.width * 0.25, WORLD.width * 0.5, WORLD.width * 0.75]) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, PLAY_TOP + 18);
+                        ctx.lineTo(x, PLAY_TOP + 94);
+                        ctx.stroke();
+                    }
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                    return;
+                }
                 ctx.save();
                 ctx.globalAlpha = intensity * (0.65 + 0.35 * Math.sin(state.survivalTime * 4));
                 ctx.fillStyle = "rgba(255, 207, 109, 0.18)";
@@ -2005,6 +2792,7 @@
                 drawBackground();
                 drawCloudWarnings();
                 for (const debris of state.debris) drawDebris(debris);
+                for (const astronaut of state.collectibles) drawAstronaut(astronaut);
                 drawParticles();
                 if (state.mode !== "gameover" || state.shields > 0) drawPlayer();
                 drawJoystick();
@@ -2040,7 +2828,7 @@
                 if (event.target !== canvas) return;
                 if (state.mode === "ready") {
                     startGame();
-                } else if (state.mode === "gameover") {
+                } else if (state.mode === "gameover" || state.mode === "won") {
                     restartGame();
                 }
                 if (state.mode !== "playing") return;
@@ -2106,6 +2894,20 @@
                         key: currentWavePattern().key,
                         name: currentWaveName()
                     },
+                    difficulty: Number(difficultyForLevel().toFixed(2)),
+                    scenery: backgroundSceneForLevel().key,
+                    iss: {
+                        visible: ISS_DAMAGE_LEVELS.has(state.level),
+                        damageStage: ISS_DAMAGE_LEVELS.get(state.level) ?? null,
+                        asset: ISS_DAMAGE_LEVELS.has(state.level) ? ISS_SPRITE_SOURCES[ISS_DAMAGE_LEVELS.get(state.level)] : null,
+                        displaySize: ISS_DRAW_SIZE,
+                        travel: ISS_DAMAGE_LEVELS.has(state.level) ? Number(backgroundObjectProgress().toFixed(2)) : null
+                    },
+                    orbit: {
+                        approach: Number(campaignProgress().toFixed(2)),
+                        earthRadius: Number(earthOrbitState(state.survivalTime).radius.toFixed(1)),
+                        textureScroll: Number(earthTextureScrollProgress().toFixed(2))
+                    },
                     phaseRemaining: Number(Math.max(0, state.phaseDuration - state.phaseTimer).toFixed(2)),
                     score: Math.floor(state.score),
                     best: Math.max(state.best, Math.floor(state.score)),
@@ -2139,6 +2941,16 @@
                     },
                     debrisCount: state.debris.length,
                     nearestDebris: relevantDebris,
+                    astronauts: state.collectibles.map((astronaut) => ({
+                        x: Number(astronaut.x.toFixed(1)),
+                        y: Number(astronaut.y.toFixed(1)),
+                        r: astronaut.r
+                    })),
+                    astronautsRescued: state.astronautsRescued,
+                    reentry: {
+                        active: state.reentry.active,
+                        progress: Number(clamp(state.reentry.timer / state.reentry.duration, 0, 1).toFixed(2))
+                    },
                     particles: state.particles.length,
                     recentCascades: state.recentCascades,
                     controls: copy.controls
@@ -2153,7 +2965,7 @@
             };
 
             startButton.addEventListener("click", () => {
-                if (state.mode === "gameover") {
+                if (state.mode === "gameover" || state.mode === "won") {
                     restartGame();
                 } else {
                     startGame();
@@ -2175,7 +2987,7 @@
                 }
                 if (key === " " || key === "Enter") {
                     if (state.mode === "ready") startGame();
-                    else if (state.mode === "gameover") restartGame();
+                    else if (state.mode === "gameover" || state.mode === "won") restartGame();
                 } else if (key === "p") {
                     togglePause();
                 } else if (key === "f") {
