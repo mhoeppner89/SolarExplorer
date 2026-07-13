@@ -119,6 +119,106 @@
             line-height: 1;
         }
 
+        .icon-button.laser-button {
+            --laser-charge: 1turn;
+            position: absolute;
+            right: max(0.9rem, env(safe-area-inset-right));
+            bottom: max(1rem, env(safe-area-inset-bottom));
+            z-index: 4;
+            width: 4.5rem;
+            isolation: isolate;
+            background:
+                radial-gradient(circle at 42% 32%, rgba(255, 255, 255, 0.18), transparent 42%),
+                rgba(7, 18, 34, 0.82);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                0 12px 30px rgba(0, 0, 0, 0.38),
+                0 0 18px rgba(97, 216, 255, 0.18);
+            transition: opacity 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
+        }
+
+        .laser-button::before {
+            content: "";
+            position: absolute;
+            inset: 3px;
+            border-radius: inherit;
+            background: conic-gradient(from -90deg, #61d8ff var(--laser-charge), rgba(97, 216, 255, 0.12) 0);
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+            pointer-events: none;
+        }
+
+        .laser-icon {
+            position: relative;
+            width: 1.55rem;
+            height: 1.75rem;
+            filter: drop-shadow(0 0 5px rgba(97, 216, 255, 0.68));
+        }
+
+        .laser-icon::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 0.24rem;
+            height: 1.1rem;
+            border-radius: 999px;
+            transform: translateX(-50%);
+            background: linear-gradient(#ffffff, #61d8ff);
+        }
+
+        .laser-icon::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: 0.78rem;
+            height: 0.5rem;
+            border: 2px solid #dffaff;
+            border-radius: 0.18rem 0.18rem 0.3rem 0.3rem;
+            transform: translateX(-50%);
+            background: #174b6c;
+        }
+
+        .laser-timer {
+            position: absolute;
+            inset: 0;
+            display: none;
+            place-items: center;
+            color: #dffaff;
+            font-size: 0.94rem;
+            font-weight: 900;
+            text-shadow: 0 1px 4px #030711;
+        }
+
+        .laser-button.is-cooling .laser-icon {
+            opacity: 0.42;
+        }
+
+        .laser-button.is-cooling .laser-timer {
+            display: grid;
+        }
+
+        .laser-button.is-active {
+            opacity: 1;
+            border-color: rgba(220, 255, 255, 0.9);
+            box-shadow: 0 0 18px rgba(97, 216, 255, 0.7), inset 0 0 12px rgba(255, 255, 255, 0.2);
+            animation: laser-button-pulse 0.36s ease-in-out infinite alternate;
+        }
+
+        .laser-button:disabled {
+            cursor: default;
+        }
+
+        .laser-button.is-cooling {
+            opacity: 0.38;
+        }
+
+        @keyframes laser-button-pulse {
+            from { filter: brightness(0.92); }
+            to { filter: brightness(1.24); }
+        }
+
         .icon-button:hover,
         .icon-button:focus-visible,
         .start-button:hover,
@@ -371,6 +471,12 @@
                 width: 2.25rem;
             }
 
+            .icon-button.laser-button {
+                right: max(0.75rem, env(safe-area-inset-right));
+                bottom: max(0.8rem, env(safe-area-inset-bottom));
+                width: 4.1rem;
+            }
+
             .hud {
                 top: 3.25rem;
                 grid-template-columns: 1fr;
@@ -408,6 +514,11 @@
             <button id="restartButton" class="icon-button" type="button" aria-label="Neu starten" title="Neu starten">↻</button>
         </nav>
 
+        <button id="laserButton" class="icon-button laser-button" type="button" aria-label="Laser" title="Laser">
+            <span class="laser-icon" aria-hidden="true"></span>
+            <span class="laser-timer" id="laserTimer" aria-hidden="true"></span>
+        </button>
+
         <section class="hud" aria-label="Status">
             <div class="score-stack">
                 <div class="chip">
@@ -429,6 +540,8 @@
                     <span class="shield-dot is-live"></span>
                     <span class="shield-dot is-live"></span>
                     <span class="shield-dot is-live"></span>
+                    <span class="shield-dot"></span>
+                    <span class="shield-dot"></span>
                 </div>
             </div>
         </section>
@@ -467,6 +580,7 @@
             const TILT_DEADZONE = 0.08;
             const TILT_STALE_MS = 900;
             const SHIP_SPRITE_SRC = "images/kaskade-spacecraft-left.png";
+            const ASTRONAUT_SPRITE_SRC = "images/kaskade-astronaut.png";
             const EARTH_SPRITE_SRC = "images/kaskade-earth-orbit.png";
             const MOON_SPRITE_SRC = "images/kaskade-moon.png";
             const SHIP_SPRITE_HEIGHT = 96;
@@ -474,7 +588,15 @@
             const MAX_DEBRIS = 132;
             const MAX_PARTICLES = 260;
             const MAX_LEVEL = 25;
-            const MAX_SHIELDS = 3;
+            const STARTING_SHIELDS = 3;
+            const MAX_SHIELDS = 5;
+            const DAY_CYCLE_DURATION = 60;
+            const DEBRIS_SPEED_MULTIPLIER = 1.5;
+            const LASER_DURATION = 5;
+            const LASER_COOLDOWN = 30;
+            const LASER_HALF_WIDTH = 5;
+            const LASER_PUSH_FORCE = 236;
+            const LASER_SIDE_FORCE = 46;
             const REENTRY_DURATION = 7.4;
             const FIXED_DT = 1 / 60;
             const DEBRIS_EXIT_MARGIN = 34;
@@ -501,6 +623,9 @@
                     restart: "Neu starten",
                     pause: "Pause",
                     resume: "Weiter",
+                    laserReady: "Laser bereit",
+                    laserActive: (seconds) => `Laser aktiv: ${seconds}s`,
+                    laserCooldown: (seconds) => `Laser lädt: ${seconds}s`,
                     score: "Punkte",
                     best: "Bestwert",
                     level: "Level",
@@ -542,7 +667,7 @@
                     bannerCalm: (level) => `Level ${level + 1} wird vorbereitet`,
                     bannerReentry: "Wiedereintritt eingeleitet",
                     bannerRescue: (restored) => restored ? "Astronaut gerettet: +1 Schild · +100" : "Astronaut gerettet: +100",
-                    controls: "Ziehen zum Steuern · WASD/Pfeile · P Pause · F Vollbild"
+                    controls: "Ziehen zum Steuern · WASD/Pfeile · Leertaste Laser · P Pause · F Vollbild"
                 },
                 en: {
                     documentTitle: "Kaskade - Solar Explorer",
@@ -553,6 +678,9 @@
                     restart: "Restart",
                     pause: "Pause",
                     resume: "Resume",
+                    laserReady: "Laser ready",
+                    laserActive: (seconds) => `Laser active: ${seconds}s`,
+                    laserCooldown: (seconds) => `Laser charging: ${seconds}s`,
                     score: "Score",
                     best: "Best",
                     level: "Level",
@@ -594,7 +722,7 @@
                     bannerCalm: (level) => `Level ${level + 1} forming`,
                     bannerReentry: "Re-entry initiated",
                     bannerRescue: (restored) => restored ? "Astronaut rescued: +1 shield · +100" : "Astronaut rescued: +100",
-                    controls: "Drag to steer · WASD/arrows · P pause · F fullscreen"
+                    controls: "Drag to steer · WASD/arrows · Space laser · P pause · F fullscreen"
                 }
             };
 
@@ -664,6 +792,8 @@
             const backButton = document.getElementById("backButton");
             const pauseButton = document.getElementById("pauseButton");
             const restartButton = document.getElementById("restartButton");
+            const laserButton = document.getElementById("laserButton");
+            const laserTimer = document.getElementById("laserTimer");
             const startButton = document.getElementById("startButton");
             const scoreLabel = document.getElementById("scoreLabel");
             const scoreValue = document.getElementById("scoreValue");
@@ -759,7 +889,7 @@
                 score: 0,
                 best: 0,
                 survivalTime: 0,
-                shields: 3,
+                shields: STARTING_SHIELDS,
                 shake: 0,
                 bannerTimer: 0,
                 recentCascades: 0,
@@ -791,6 +921,13 @@
                 collectibles: [],
                 particles: [],
                 lastInput: { x: 0, y: 0 },
+                laser: {
+                    active: false,
+                    remaining: 0,
+                    cooldown: 0,
+                    disintegrated: 0,
+                    deflected: 0
+                },
                 reentry: {
                     timer: 0,
                     duration: REENTRY_DURATION,
@@ -844,6 +981,16 @@
                 shipSpriteReady = false;
             });
             shipSprite.src = SHIP_SPRITE_SRC;
+            const astronautSprite = new Image();
+            let astronautSpriteReady = false;
+            astronautSprite.addEventListener("load", () => {
+                astronautSpriteReady = true;
+                render();
+            });
+            astronautSprite.addEventListener("error", () => {
+                astronautSpriteReady = false;
+            });
+            astronautSprite.src = ASTRONAUT_SPRITE_SRC;
             const issSprites = ISS_SPRITE_SOURCES.map((source) => {
                 const sprite = new Image();
                 sprite.addEventListener("load", render);
@@ -1103,7 +1250,7 @@
                 state.cascadeTimer = 0;
                 state.score = 0;
                 state.survivalTime = 0;
-                state.shields = MAX_SHIELDS;
+                state.shields = STARTING_SHIELDS;
                 state.shake = 0;
                 state.bannerTimer = 0;
                 state.recentCascades = 0;
@@ -1112,6 +1259,11 @@
                 state.levelThemes = buildRunThemes();
                 state.backgroundScenes = buildRunScenery();
                 state.astronautsRescued = 0;
+                state.laser.active = false;
+                state.laser.remaining = 0;
+                state.laser.cooldown = 0;
+                state.laser.disintegrated = 0;
+                state.laser.deflected = 0;
                 state.reentry.timer = 0;
                 state.reentry.duration = REENTRY_DURATION;
                 state.reentry.active = false;
@@ -1272,6 +1424,22 @@
                 [...shieldRow.children].forEach((dot, index) => {
                     dot.classList.toggle("is-live", index < state.shields);
                 });
+                const laser = state.laser;
+                const cooling = !laser.active && laser.cooldown > 0;
+                const charge = laser.active
+                    ? laser.remaining / LASER_DURATION
+                    : cooling ? 1 - laser.cooldown / LASER_COOLDOWN : 1;
+                const seconds = Math.ceil(laser.active ? laser.remaining : laser.cooldown);
+                const laserLabel = laser.active
+                    ? copy.laserActive(seconds)
+                    : cooling ? copy.laserCooldown(seconds) : copy.laserReady;
+                laserButton.classList.toggle("is-active", laser.active);
+                laserButton.classList.toggle("is-cooling", cooling);
+                laserButton.style.setProperty("--laser-charge", `${clamp(charge, 0, 1)}turn`);
+                laserButton.disabled = state.mode !== "playing" || laser.active || cooling;
+                laserButton.setAttribute("aria-label", laserLabel);
+                laserButton.title = laserLabel;
+                laserTimer.textContent = cooling ? String(seconds) : "";
             }
 
             function applyLanguage(nextLanguage) {
@@ -1374,6 +1542,10 @@
                     }
                 }
 
+                const velocityScale = options.velocityScale ?? DEBRIS_SPEED_MULTIPLIER;
+                vx *= velocityScale;
+                vy *= velocityScale;
+
                 const debris = {
                     kind,
                     waveKey: pattern.key,
@@ -1391,6 +1563,11 @@
                     fuse: kind === "satellite" || kind === "cubesat" ? rand(1.9, 3.25) : 0,
                     weave: kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(0.7, 1.4) * (rand() < 0.5 ? -1 : 1) : 0,
                     flash: 0,
+                    laserGlow: 0,
+                    collisionGrace: options.x !== undefined ? 0.22 : 0,
+                    laserDeflected: 0,
+                    laserHitCooldown: 0,
+                    canCollide: options.canCollide ?? true,
                     canCascade: options.canCascade ?? (level >= 2 && kind !== "operationalSatellite"),
                     scoredNear: false
                 };
@@ -1401,8 +1578,9 @@
             function spawnFragment(source, angle, power, sizeOverride, kindOverride) {
                 const size = sizeOverride || Math.max(1, source.size - 1);
                 const radius = Math.max(4.5, source.r * rand(0.42, 0.62));
-                const vx = source.vx * 0.46 + Math.cos(angle) * power;
-                const vy = Math.max(54 + state.level * 5, source.vy * 0.5 + Math.sin(angle) * power);
+                const fragmentPower = power * DEBRIS_SPEED_MULTIPLIER;
+                const vx = source.vx * 0.46 + Math.cos(angle) * fragmentPower;
+                const vy = Math.max((54 + state.level * 5) * DEBRIS_SPEED_MULTIPLIER, source.vy * 0.5 + Math.sin(angle) * fragmentPower);
                 const kind = kindOverride || (size <= 1 ? "shard" : source.kind === "satellite" || source.kind === "cubesat" ? "panel" : "chunk");
                 return spawnDebris({
                     x: source.x + Math.cos(angle) * source.r * 0.34,
@@ -1412,7 +1590,8 @@
                     kind,
                     size,
                     radius,
-                    speed: power
+                    speed: fragmentPower,
+                    velocityScale: 1
                 });
             }
 
@@ -1568,9 +1747,6 @@
                 } else if (state.phase === "calm" && state.phaseTimer >= state.phaseDuration) {
                     state.level += 1;
                     configureCloudPhase(state.level);
-                    if (state.level === 2) {
-                        state.debris = state.debris.filter((debris) => debris.kind !== "operationalSatellite");
-                    }
                     state.bannerTimer = 1.55;
                     levelBanner.textContent = copy.bannerCloud(state.level, currentWaveName());
                     levelBanner.classList.add("is-visible");
@@ -1596,8 +1772,64 @@
                 }
             }
 
+            function activateLaser() {
+                const laser = state.laser;
+                if (state.mode !== "playing" || laser.active || laser.cooldown > 0) return false;
+                laser.active = true;
+                laser.remaining = LASER_DURATION;
+                updateHud();
+                return true;
+            }
+
+            function applyLaserToDebris(dt) {
+                const beamX = state.player.x;
+                const beamBottom = state.player.y - SHIP_SPRITE_HEIGHT * 0.42;
+                for (const debris of state.debris) {
+                    if (debris.remove || debris.y - debris.r > beamBottom) continue;
+                    const hitWidth = LASER_HALF_WIDTH + debris.r * 0.72 * (debris.hitScale || 1);
+                    const offsetX = debris.x - beamX;
+                    if (Math.abs(offsetX) > hitWidth) continue;
+                    if (debris.size <= 1) {
+                        debris.remove = true;
+                        state.laser.disintegrated += 1;
+                        createBurst(debris.x, debris.y, "#b8f6ff", 9, 92);
+                        continue;
+                    }
+
+                    const firstDeflection = debris.laserDeflected <= 0;
+                    const side = Math.abs(offsetX) > 0.5 ? Math.sign(offsetX) : Math.sin(debris.seed) < 0 ? -1 : 1;
+                    debris.laserDeflected = 0.58;
+                    debris.collisionGrace = Math.max(debris.collisionGrace, 0.18);
+                    debris.vy -= LASER_PUSH_FORCE * dt;
+                    debris.vx += side * LASER_SIDE_FORCE * dt;
+                    debris.flash = Math.max(debris.flash, 0.08);
+                    debris.laserGlow = Math.max(debris.laserGlow, 0.28);
+                    if (firstDeflection) state.laser.deflected += 1;
+                    if (debris.laserHitCooldown <= 0) {
+                        createBurst(debris.x, debris.y + debris.r * 0.38, "#8cecff", 4, 54);
+                        debris.laserHitCooldown = 0.13;
+                    }
+                }
+            }
+
+            function updateLaser(dt) {
+                const laser = state.laser;
+                if (laser.active) {
+                    applyLaserToDebris(dt);
+                    laser.remaining = Math.max(0, laser.remaining - dt);
+                    if (laser.remaining <= 0.0001) {
+                        laser.remaining = 0;
+                        laser.active = false;
+                        laser.cooldown = LASER_COOLDOWN;
+                    }
+                } else if (laser.cooldown > 0) {
+                    laser.cooldown = Math.max(0, laser.cooldown - dt);
+                }
+            }
+
             function updateDebris(dt) {
                 for (const debris of state.debris) {
+                    if (debris.remove) continue;
                     if (debris.kind === "satellite" || debris.kind === "cubesat") {
                         debris.fuse -= dt;
                         if (debris.fuse < 0.82) {
@@ -1610,29 +1842,24 @@
                     }
                     if (debris.kind === "panel" || debris.kind === "solarWing" || debris.kind === "foil") {
                         const weavePower = debris.kind === "foil" ? 34 : debris.kind === "solarWing" ? 26 : 22;
-                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * weavePower * dt;
+                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * weavePower * DEBRIS_SPEED_MULTIPLIER * dt;
                     }
                     debris.x += debris.vx * dt;
                     debris.y += debris.vy * dt;
                     debris.age += dt;
                     debris.vx *= Math.max(0, 1 - 0.52 * dt);
                     debris.vy *= Math.max(0, 1 - 0.03 * dt);
-                    const kindSpeedBonus = debris.kind === "shard" || debris.kind === "battery"
-                        ? 42
-                        : debris.kind === "foil" || debris.kind === "solarWing" ? -18
-                            : debris.kind === "operationalSatellite" ? -20
-                                : debris.kind === "satellite" ? -8
-                                : debris.kind === "chunk" || debris.kind === "fuelTank" ? 10 : 0;
-                    const minimumDownSpeed = 58 + state.level * 7 + debris.size * 8 + kindSpeedBonus;
-                    if (debris.vy < minimumDownSpeed) {
-                        debris.vy += (minimumDownSpeed - debris.vy) * Math.min(1, dt * 2.8);
-                    }
                     debris.rot += debris.spin * dt;
                     debris.flash = Math.max(0, debris.flash - dt);
+                    debris.laserGlow = Math.max(0, debris.laserGlow - dt * 0.72);
+                    debris.collisionGrace = Math.max(0, debris.collisionGrace - dt);
+                    debris.laserDeflected = Math.max(0, debris.laserDeflected - dt);
+                    debris.laserHitCooldown = Math.max(0, debris.laserHitCooldown - dt);
                     if (
                         debris.y > WORLD.height + debris.r + DEBRIS_EXIT_MARGIN ||
                         debris.x < -debris.r - 100 ||
                         debris.x > WORLD.width + debris.r + 100 ||
+                        (debris.age > 0.5 && debris.vy < 0 && debris.y < -debris.r - 140) ||
                         (debris.age > 11 && debris.y > PLAY_BOTTOM)
                     ) {
                         debris.remove = true;
@@ -1643,35 +1870,123 @@
                 state.debris = state.debris.filter((debris) => !debris.remove);
             }
 
+            function resolveDebrisContact(a, b, dx, dy, rr) {
+                const distance = Math.max(1, Math.hypot(dx, dy));
+                const nx = dx / distance;
+                const ny = dy / distance;
+                const relativeNormal = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+                if (relativeNormal < 0) {
+                    const impulse = -relativeNormal * 0.68;
+                    const totalSize = Math.max(1, a.size + b.size);
+                    a.vx += nx * impulse * b.size / totalSize;
+                    a.vy += ny * impulse * b.size / totalSize;
+                    b.vx -= nx * impulse * a.size / totalSize;
+                    b.vy -= ny * impulse * a.size / totalSize;
+                }
+                const separation = Math.max(0, rr - distance) * 0.52;
+                a.x += nx * separation;
+                a.y += ny * separation;
+                b.x -= nx * separation;
+                b.y -= ny * separation;
+                a.collisionGrace = Math.max(a.collisionGrace, 0.14);
+                b.collisionGrace = Math.max(b.collisionGrace, 0.14);
+                a.flash = Math.max(a.flash, 0.06);
+                b.flash = Math.max(b.flash, 0.06);
+            }
+
             function handleDebrisCollisions() {
                 state.cascadeTimer -= FIXED_DT;
                 if (state.cascadeTimer > 0 || state.debris.length < 2) return;
+                const cellSize = 70;
+                const grid = new Map();
+                const debrisIndex = new Map(state.debris.map((debris, index) => [debris, index]));
+                for (const debris of state.debris) {
+                    if (debris.remove || !debris.canCollide || debris.collisionGrace > 0) continue;
+                    const cellX = Math.floor(debris.x / cellSize);
+                    const cellY = Math.floor(debris.y / cellSize);
+                    const key = `${cellX},${cellY}`;
+                    if (!grid.has(key)) grid.set(key, []);
+                    grid.get(key).push(debris);
+                }
+
                 let checks = 0;
-                const maxChecks = Math.min(760, state.debris.length * 8);
-                for (let i = 0; i < state.debris.length && checks < maxChecks; i += 1) {
-                    const a = state.debris[i];
-                    if (a.remove || !a.canCascade || a.size <= 1) continue;
-                    for (let j = i + 1; j < state.debris.length && checks < maxChecks; j += 1) {
-                        checks += 1;
-                        const b = state.debris[j];
-                        if (b.remove || !b.canCascade) continue;
-                        const dx = a.x - b.x;
-                        const dy = a.y - b.y;
-                        const rr = (a.r + b.r) * 0.72;
-                        if (dx * dx + dy * dy > rr * rr) continue;
-                        const rvx = a.vx - b.vx;
-                        const rvy = a.vy - b.vy;
-                        const relative = Math.hypot(rvx, rvy);
-                        const chance = 0.28 + Math.min(0.24, state.level * 0.014);
-                        if (relative > 58 && rand() < chance) {
-                            splitDebris(a.size >= b.size ? a : b, "cascade");
-                            state.cascadeTimer = Math.max(0.025, 0.12 - state.level * 0.004);
-                            return;
+                const maxChecks = Math.min(1100, state.debris.length * 12);
+                for (const [key, occupants] of grid) {
+                    const [cellX, cellY] = key.split(",").map(Number);
+                    for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+                        for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+                            const neighbours = grid.get(`${cellX + offsetX},${cellY + offsetY}`);
+                            if (!neighbours) continue;
+                            for (const a of occupants) {
+                                for (const b of neighbours) {
+                                    if (checks >= maxChecks) return;
+                                    if (a === b || a.remove || b.remove || debrisIndex.get(a) >= debrisIndex.get(b)) continue;
+                                    checks += 1;
+                                    const dx = a.x - b.x;
+                                    const dy = a.y - b.y;
+                                    const rr = (a.r + b.r) * 0.78;
+                                    if (dx * dx + dy * dy > rr * rr) continue;
+                                    const rvx = a.vx - b.vx;
+                                    const rvy = a.vy - b.vy;
+                                    const relative = Math.hypot(rvx, rvy);
+                                    if (relative < 34) {
+                                        resolveDebrisContact(a, b, dx, dy, rr);
+                                        state.cascadeTimer = 0.035;
+                                        return;
+                                    }
+
+                                    const cascadePossible = a.canCascade || b.canCascade;
+                                    if (!cascadePossible) {
+                                        resolveDebrisContact(a, b, dx, dy, rr);
+                                        createBurst((a.x + b.x) * 0.5, (a.y + b.y) * 0.5, "#dbe7f2", 3, 42);
+                                        state.cascadeTimer = 0.045;
+                                        return;
+                                    }
+                                    const collisionChance = 0.58 + difficultyForLevel() * 0.32;
+                                    if (relative < 92 && rand() > collisionChance) {
+                                        resolveDebrisContact(a, b, dx, dy, rr);
+                                        state.cascadeTimer = 0.035;
+                                        return;
+                                    }
+                                    if (a.size <= 1 && b.size <= 1) {
+                                        a.remove = true;
+                                        b.remove = true;
+                                        createBurst((a.x + b.x) * 0.5, (a.y + b.y) * 0.5, "#c9efff", 8, 72);
+                                        state.recentCascades += 1;
+                                    } else {
+                                        const candidates = [a, b]
+                                            .filter((debris) => debris.canCascade && debris.size > 1)
+                                            .sort((left, right) => right.size - left.size);
+                                        if (!candidates.length) {
+                                            const fragile = a.canCascade ? a : b;
+                                            const solid = fragile === a ? b : a;
+                                            resolveDebrisContact(a, b, dx, dy, rr);
+                                            fragile.remove = true;
+                                            solid.flash = Math.max(solid.flash, 0.12);
+                                            createBurst(fragile.x, fragile.y, "#d9f5ff", 7, 74);
+                                            state.recentCascades += 1;
+                                            state.cascadeTimer = Math.max(0.035, 0.095 - state.level * 0.0022);
+                                            return;
+                                        }
+                                        const primary = candidates[0];
+                                        const secondary = primary === a ? b : a;
+                                        splitDebris(primary, "cascade");
+                                        if (secondary.size <= 1) {
+                                            secondary.remove = true;
+                                            createBurst(secondary.x, secondary.y, "#d9f5ff", 6, 68);
+                                        } else if (secondary.canCascade && relative > 118 && state.debris.length < MAX_DEBRIS - 5 && rand() < 0.42) {
+                                            splitDebris(secondary, "cascade");
+                                        } else {
+                                            resolveDebrisContact(a, b, dx, dy, rr);
+                                            secondary.flash = Math.max(secondary.flash, 0.18);
+                                            secondary.collisionGrace = Math.max(secondary.collisionGrace, 0.28);
+                                        }
+                                    }
+                                    state.cascadeTimer = Math.max(0.035, 0.095 - state.level * 0.0022);
+                                    return;
+                                }
+                            }
                         }
-                        a.vx += dx * 0.018;
-                        a.vy += dy * 0.018;
-                        b.vx -= dx * 0.018;
-                        b.vy -= dy * 0.018;
                     }
                 }
             }
@@ -1680,6 +1995,7 @@
                 const player = state.player;
                 player.invulnerable = Math.max(0, player.invulnerable - FIXED_DT);
                 for (const debris of state.debris) {
+                    if (debris.remove) continue;
                     const dx = player.x - debris.x;
                     const dy = player.y - debris.y;
                     const hitRadius = PLAYER_RADIUS + debris.r * 0.78 * (debris.hitScale || 1);
@@ -1703,6 +2019,8 @@
                     if (state.shields <= 0) {
                         state.mode = "gameover";
                         state.joystick.active = false;
+                        state.laser.active = false;
+                        state.laser.remaining = 0;
                         showGameOverMessage();
                     }
                     updateHud();
@@ -1771,6 +2089,8 @@
                 state.debris.length = 0;
                 state.collectibles.length = 0;
                 state.joystick.active = false;
+                state.laser.active = false;
+                state.laser.remaining = 0;
                 state.player.vx = 0;
                 state.player.vy = 0;
                 state.player.invulnerable = 0;
@@ -1842,6 +2162,7 @@
                 }
                 updateSpawning(dt);
                 updateInput(dt);
+                updateLaser(dt);
                 updateAstronautSpawning(dt);
                 updateCollectibles(dt);
                 updateDebris(dt);
@@ -1855,6 +2176,27 @@
             function smoothstep(value) {
                 const t = clamp(value, 0, 1);
                 return t * t * (3 - 2 * t);
+            }
+
+            function dayCycleState(time = state.survivalTime) {
+                const phase = ((time / DAY_CYCLE_DURATION) % 1 + 1) % 1;
+                const angle = phase * Math.PI * 2;
+                const sunElevation = Math.sin(angle);
+                const daylight = smoothstep((sunElevation + 0.16) / 0.42);
+                const warmth = Math.pow(Math.max(0, 1 - Math.abs(sunElevation) / 0.72), 2);
+                const name = phase < 0.065 || phase >= 0.94
+                    ? "sunrise"
+                    : phase < 0.44
+                        ? "day"
+                        : phase < 0.565 ? "sunset" : "night";
+                return {
+                    phase,
+                    name,
+                    daylight,
+                    nightAmount: 1 - daylight,
+                    warmth,
+                    lightDirection: -Math.cos(angle)
+                };
             }
 
             function backgroundSceneForLevel(level = state.level) {
@@ -1923,8 +2265,9 @@
                 ctx.restore();
             }
 
-            function drawStars(time) {
+            function drawStars(time, alpha = 1) {
                 ctx.save();
+                ctx.globalAlpha = alpha;
                 for (const star of stars) {
                     const y = (star.y + time * star.speed * 0.23) % WORLD.height;
                     ctx.fillStyle = `${star.hue}${star.alpha})`;
@@ -1935,20 +2278,74 @@
                 ctx.restore();
             }
 
-            function drawSun(x, y, radius, alpha = 1) {
+            function drawSun(x, y, radius, glowAlpha = 1) {
                 ctx.save();
-                ctx.globalAlpha = alpha;
+                ctx.globalAlpha = glowAlpha;
                 const glow = ctx.createRadialGradient(x, y, radius * 0.22, x, y, radius * 3.1);
                 glow.addColorStop(0, "rgba(255, 250, 203, 0.95)");
                 glow.addColorStop(0.28, "rgba(255, 191, 98, 0.5)");
                 glow.addColorStop(1, "rgba(255, 152, 70, 0)");
                 ctx.fillStyle = glow;
                 ctx.fillRect(x - radius * 3.1, y - radius * 3.1, radius * 6.2, radius * 6.2);
+                ctx.globalAlpha = 1;
                 ctx.fillStyle = "#ffe29a";
                 ctx.beginPath();
                 ctx.arc(x, y, radius, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
+            }
+
+            function drawDayCycleGradient(cycle) {
+                const night = ctx.createLinearGradient(0, 0, WORLD.width, WORLD.height);
+                night.addColorStop(0, "#030714");
+                night.addColorStop(0.52, "#0b1830");
+                night.addColorStop(1, "#17152d");
+                ctx.fillStyle = night;
+                ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+                if (cycle.daylight > 0) {
+                    const day = ctx.createLinearGradient(0, 0, WORLD.width, WORLD.height);
+                    day.addColorStop(0, "#061b2f");
+                    day.addColorStop(0.52, "#17445c");
+                    day.addColorStop(1, "#263d59");
+                    ctx.save();
+                    ctx.globalAlpha = cycle.daylight;
+                    ctx.fillStyle = day;
+                    ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+                    ctx.restore();
+                }
+
+                if (cycle.warmth > 0) {
+                    const warm = ctx.createLinearGradient(0, 0, WORLD.width, WORLD.height);
+                    warm.addColorStop(0, "#25132c");
+                    warm.addColorStop(0.48, "#8b4043");
+                    warm.addColorStop(1, "#d77947");
+                    ctx.save();
+                    ctx.globalAlpha = cycle.warmth * 0.82;
+                    ctx.fillStyle = warm;
+                    ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+                    ctx.restore();
+                }
+            }
+
+            function celestialArcPosition(earth, progress, reverse = false) {
+                const horizon = earth.y - earth.radius;
+                const travel = reverse ? 1 - progress : progress;
+                return {
+                    x: -78 + travel * (WORLD.width + 156),
+                    y: horizon + 86 - Math.sin(progress * Math.PI) * (horizon + 220)
+                };
+            }
+
+            function drawDayCycleCelestials(earth, cycle, time) {
+                if (cycle.phase <= 0.5) {
+                    const sun = celestialArcPosition(earth, cycle.phase / 0.5);
+                    drawSun(sun.x, sun.y, 60, 1);
+                } else {
+                    const moonProgress = (cycle.phase - 0.5) / 0.5;
+                    const moon = celestialArcPosition(earth, moonProgress, true);
+                    drawMoon(moon.x, moon.y, 54 + earth.approach * 10, 1, time);
+                }
             }
 
             function drawMoon(x, y, radius, alpha, time) {
@@ -2048,8 +2445,10 @@
                 ctx.fillRect(x - radius, visibleTop, radius * 2, visibleBottom - visibleTop);
             }
 
-            function drawEarthPlanet({ x, y, radius, alpha = 1, night = false, sunrise = false, aurora = false, cityLights = false, lightDirection = -1, time = 0 }) {
+            function drawEarthPlanet({ x, y, radius, alpha = 1, night = false, nightAmount = 0, sunrise = false, warmth = 0, aurora = false, cityLights = false, lightDirection = -1, time = 0 }) {
                 const texturedEarth = earthSpriteReady && earthSprite.complete && earthSprite.naturalWidth > 0;
+                const darkness = Math.max(night ? 1 : 0, nightAmount);
+                const warmLight = Math.max(sunrise ? 1 : 0, warmth);
                 ctx.save();
                 ctx.globalAlpha = alpha;
                 ctx.beginPath();
@@ -2057,15 +2456,15 @@
                 ctx.clip();
                 if (texturedEarth) {
                     drawProjectedEarthTexture(x, y, radius, time);
-                    if (sunrise) {
-                        ctx.fillStyle = "rgba(255, 154, 89, 0.16)";
+                    if (warmLight > 0) {
+                        ctx.fillStyle = `rgba(255, 154, 89, ${warmLight * 0.18})`;
                         ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
                     }
                 } else {
                     const lightX = x + lightDirection * radius * 0.28;
                     const surface = ctx.createRadialGradient(lightX, y - radius * 0.34, radius * 0.12, x, y, radius * 1.1);
-                    surface.addColorStop(0, sunrise ? "#7cd5e8" : "#91d9ee");
-                    surface.addColorStop(0.44, sunrise ? "#3c87a2" : "#327ba0");
+                    surface.addColorStop(0, warmLight > 0.35 ? "#7cd5e8" : "#91d9ee");
+                    surface.addColorStop(0.44, warmLight > 0.35 ? "#3c87a2" : "#327ba0");
                     surface.addColorStop(1, "#0b2545");
                     ctx.fillStyle = surface;
                     ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
@@ -2077,7 +2476,7 @@
                         [0.37, 0.12, 0.15, 0.08, -0.58],
                         [-0.42, 0.25, 0.16, 0.08, 0.15]
                     ];
-                    ctx.fillStyle = sunrise ? "rgba(113, 166, 96, 0.76)" : "rgba(67, 146, 100, 0.72)";
+                    ctx.fillStyle = warmLight > 0.35 ? "rgba(113, 166, 96, 0.76)" : "rgba(67, 146, 100, 0.72)";
                     for (const [dx, dy, rx, ry, angle] of continents) {
                         ctx.beginPath();
                         ctx.ellipse(x + radius * (dx + Math.sin(time * 0.035) * 0.025), y + radius * dy, radius * rx, radius * ry, angle, 0, Math.PI * 2);
@@ -2093,21 +2492,29 @@
                     }
                 }
 
-                if (night) {
-                    const terminator = ctx.createLinearGradient(x - radius, y, x + radius, y);
-                    if (lightDirection < 0) {
-                        terminator.addColorStop(0, "rgba(3, 9, 24, 0.04)");
-                        terminator.addColorStop(0.48, "rgba(3, 9, 24, 0.26)");
-                        terminator.addColorStop(1, "rgba(3, 9, 24, 0.94)");
-                    } else {
-                        terminator.addColorStop(0, "rgba(3, 9, 24, 0.94)");
-                        terminator.addColorStop(0.52, "rgba(3, 9, 24, 0.26)");
-                        terminator.addColorStop(1, "rgba(3, 9, 24, 0.04)");
-                    }
+                if (darkness > 0.02) {
+                    ctx.save();
+                    ctx.globalAlpha = alpha * (0.2 + darkness * 0.8);
+                    const lightX = x + lightDirection * radius * 0.46;
+                    const terminator = ctx.createRadialGradient(
+                        lightX,
+                        y - radius * 0.18,
+                        radius * 0.08,
+                        lightX,
+                        y,
+                        radius * 1.34
+                    );
+                    terminator.addColorStop(0, "rgba(3, 9, 24, 0.03)");
+                    terminator.addColorStop(0.45, "rgba(3, 9, 24, 0.12)");
+                    terminator.addColorStop(0.76, "rgba(3, 9, 24, 0.48)");
+                    terminator.addColorStop(1, "rgba(3, 9, 24, 0.94)");
                     ctx.fillStyle = terminator;
                     ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+                    ctx.restore();
                 }
-                if (cityLights) {
+                if (cityLights && darkness > 0.3) {
+                    ctx.save();
+                    ctx.globalAlpha = alpha * smoothstep((darkness - 0.3) / 0.7);
                     ctx.fillStyle = "rgba(255, 204, 103, 0.78)";
                     for (let index = 0; index < 18; index += 1) {
                         const angle = index * 2.41;
@@ -2116,6 +2523,7 @@
                         ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, 1.1 + (index % 3) * 0.45, 0, Math.PI * 2);
                         ctx.fill();
                     }
+                    ctx.restore();
                 }
                 if (aurora) {
                     ctx.globalCompositeOperation = "lighter";
@@ -2131,7 +2539,7 @@
 
                 ctx.save();
                 ctx.globalAlpha = alpha * (texturedEarth ? 0.38 : 0.78);
-                ctx.strokeStyle = sunrise ? "rgba(255, 204, 129, 0.86)" : "rgba(121, 224, 255, 0.74)";
+                ctx.strokeStyle = warmLight > 0.25 ? `rgba(255, 204, 129, ${0.52 + warmLight * 0.34})` : "rgba(121, 224, 255, 0.74)";
                 ctx.lineWidth = Math.max(1.5, radius * 0.018);
                 ctx.beginPath();
                 ctx.arc(x, y, radius + Math.max(2, radius * 0.018), 0, Math.PI * 2);
@@ -2233,22 +2641,46 @@
                 const time = state.survivalTime;
                 const scene = backgroundSceneForLevel();
                 const blend = sceneBlend();
-                const travel = backgroundObjectProgress();
-                drawSpaceGradient(scene);
-                if (blend > 0) drawSpaceGradient(backgroundSceneForLevel(state.level + 1), blend);
-                drawStars(time);
-                drawOrbitalScene(scene, 1, time, travel);
-                if (blend > 0) drawOrbitalScene(backgroundSceneForLevel(state.level + 1), blend, time, travel, false);
+                const accentScene = blend > 0.5 ? backgroundSceneForLevel(state.level + 1) : scene;
+                const cycle = dayCycleState(time);
+                const earth = earthOrbitState(time);
+                drawDayCycleGradient(cycle);
+                drawStars(time, 0.18 + cycle.nightAmount * 0.82);
+                drawDayCycleCelestials(earth, cycle, time);
+                drawEarthPlanet({
+                    ...earth,
+                    alpha: 1,
+                    nightAmount: cycle.nightAmount,
+                    warmth: cycle.warmth,
+                    aurora: accentScene.key === "aurora" && cycle.nightAmount > 0.48,
+                    cityLights: cycle.nightAmount > 0.3,
+                    lightDirection: cycle.lightDirection,
+                    time
+                });
                 drawISSBackground();
             }
 
             function drawDebris(debris) {
                 ctx.save();
                 ctx.translate(debris.x, debris.y);
+                const r = debris.r;
+                if (debris.laserGlow > 0) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = "lighter";
+                    ctx.globalAlpha = clamp(debris.laserGlow / 0.28, 0, 1);
+                    const hitGlow = ctx.createRadialGradient(0, 0, r * 0.28, 0, 0, r * 2.35);
+                    hitGlow.addColorStop(0, "rgba(224, 255, 255, 0.82)");
+                    hitGlow.addColorStop(0.36, "rgba(97, 216, 255, 0.46)");
+                    hitGlow.addColorStop(1, "rgba(65, 177, 255, 0)");
+                    ctx.fillStyle = hitGlow;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * 2.35, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
                 ctx.rotate(debris.rot);
                 const warning = (debris.kind === "satellite" || debris.kind === "cubesat") && debris.fuse < 0.85;
                 ctx.globalAlpha = debris.flash > 0 || warning ? 1 : 0.92;
-                const r = debris.r;
                 const metal = debris.kind === "chunk" ? "#aeb9c2" :
                     debris.kind === "fuelTank" ? "#d9d2bb" :
                     debris.kind === "antenna" ? "#c5d0d9" :
@@ -2257,7 +2689,7 @@
                     debris.kind === "satellite" || debris.kind === "cubesat" || debris.kind === "operationalSatellite" ? "#d6c29b" :
                     "#dbe7f2";
                 ctx.fillStyle = metal;
-                ctx.strokeStyle = debris.flash > 0 ? "#ffffff" : "rgba(9, 16, 28, 0.72)";
+                ctx.strokeStyle = debris.laserGlow > 0 ? "#9cefff" : debris.flash > 0 ? "#ffffff" : "rgba(9, 16, 28, 0.72)";
                 ctx.lineWidth = Math.max(1.4, r * 0.12);
 
                 if (debris.kind === "chunk") {
@@ -2475,6 +2907,13 @@
                 ctx.arc(0, 0, astronaut.r * 1.8, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.globalCompositeOperation = "source-over";
+                if (astronautSpriteReady && astronautSprite.complete && astronautSprite.naturalWidth > 0) {
+                    const spriteHeight = astronaut.r * 3.7;
+                    const spriteWidth = spriteHeight * astronautSprite.naturalWidth / astronautSprite.naturalHeight;
+                    ctx.drawImage(astronautSprite, -spriteWidth / 2, -spriteHeight / 2, spriteWidth, spriteHeight);
+                    ctx.restore();
+                    return;
+                }
                 ctx.strokeStyle = "rgba(235, 247, 255, 0.88)";
                 ctx.lineWidth = 3;
                 ctx.lineCap = "round";
@@ -2658,6 +3097,41 @@
                 ctx.restore();
             }
 
+            function drawLaserBeam() {
+                if (!state.laser.active || state.mode !== "playing") return;
+                const x = state.player.x;
+                const bottom = state.player.y - SHIP_SPRITE_HEIGHT * 0.42;
+                const pulse = 0.5 + Math.sin(state.survivalTime * 42) * 0.5;
+                const beam = ctx.createLinearGradient(x, -12, x, bottom);
+                beam.addColorStop(0, "rgba(109, 226, 255, 0.38)");
+                beam.addColorStop(0.72, "rgba(97, 216, 255, 0.7)");
+                beam.addColorStop(1, "rgba(225, 255, 255, 0.96)");
+                ctx.save();
+                ctx.globalCompositeOperation = "lighter";
+                ctx.lineCap = "round";
+                ctx.shadowColor = "rgba(97, 216, 255, 0.95)";
+                ctx.shadowBlur = 10 + pulse * 5;
+                ctx.strokeStyle = "rgba(74, 197, 255, 0.2)";
+                ctx.lineWidth = 9 + pulse * 2;
+                ctx.beginPath();
+                ctx.moveTo(x, -16);
+                ctx.lineTo(x, bottom);
+                ctx.stroke();
+                ctx.shadowBlur = 5 + pulse * 2;
+                ctx.strokeStyle = beam;
+                ctx.lineWidth = 3.8 + pulse;
+                ctx.stroke();
+                ctx.shadowBlur = 2;
+                ctx.strokeStyle = "rgba(245, 255, 255, 0.98)";
+                ctx.lineWidth = 1.25 + pulse * 0.45;
+                ctx.stroke();
+                ctx.fillStyle = "rgba(210, 252, 255, 0.95)";
+                ctx.beginPath();
+                ctx.arc(x, bottom, 3.4 + pulse, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
             function drawJoystick() {
                 if (!state.joystick.active) return;
                 const joy = state.joystick;
@@ -2791,6 +3265,7 @@
                 ctx.translate(shakeX, shakeY);
                 drawBackground();
                 drawCloudWarnings();
+                drawLaserBeam();
                 for (const debris of state.debris) drawDebris(debris);
                 for (const astronaut of state.collectibles) drawAstronaut(astronaut);
                 drawParticles();
@@ -2870,6 +3345,7 @@
             }
 
             function renderGameToText() {
+                const cycle = dayCycleState();
                 const relevantDebris = state.debris
                     .slice()
                     .sort((a, b) => Math.hypot(a.x - state.player.x, a.y - state.player.y) - Math.hypot(b.x - state.player.x, b.y - state.player.y))
@@ -2883,6 +3359,10 @@
                         size: debris.size,
                         kind: debris.kind,
                         wave: debris.waveKey,
+                        canCollide: debris.canCollide,
+                        canCascade: debris.canCascade,
+                        laserDeflected: Number(debris.laserDeflected.toFixed(2)),
+                        laserGlow: Number(debris.laserGlow.toFixed(2)),
                         fuse: debris.kind === "satellite" || debris.kind === "cubesat" ? Number(debris.fuse.toFixed(2)) : null
                     }));
                 return JSON.stringify({
@@ -2895,6 +3375,7 @@
                         name: currentWaveName()
                     },
                     difficulty: Number(difficultyForLevel().toFixed(2)),
+                    debrisSpeedMultiplier: DEBRIS_SPEED_MULTIPLIER,
                     scenery: backgroundSceneForLevel().key,
                     iss: {
                         visible: ISS_DAMAGE_LEVELS.has(state.level),
@@ -2913,6 +3394,24 @@
                     best: Math.max(state.best, Math.floor(state.score)),
                     survivalTime: Number(state.survivalTime.toFixed(2)),
                     shields: state.shields,
+                    maxShields: MAX_SHIELDS,
+                    laser: {
+                        active: state.laser.active,
+                        duration: LASER_DURATION,
+                        remaining: Number(state.laser.remaining.toFixed(2)),
+                        cooldownDuration: LASER_COOLDOWN,
+                        cooldown: Number(state.laser.cooldown.toFixed(2)),
+                        ready: !state.laser.active && state.laser.cooldown <= 0,
+                        disintegrated: state.laser.disintegrated,
+                        deflected: state.laser.deflected
+                    },
+                    dayCycle: {
+                        duration: DAY_CYCLE_DURATION,
+                        phase: Number(cycle.phase.toFixed(3)),
+                        name: cycle.name,
+                        daylight: Number(cycle.daylight.toFixed(2)),
+                        warmth: Number(cycle.warmth.toFixed(2))
+                    },
                     player: {
                         x: Number(state.player.x.toFixed(1)),
                         y: Number(state.player.y.toFixed(1)),
@@ -2944,7 +3443,9 @@
                     astronauts: state.collectibles.map((astronaut) => ({
                         x: Number(astronaut.x.toFixed(1)),
                         y: Number(astronaut.y.toFixed(1)),
-                        r: astronaut.r
+                        r: astronaut.r,
+                        sprite: ASTRONAUT_SPRITE_SRC,
+                        spriteReady: astronautSpriteReady
                     })),
                     astronautsRescued: state.astronautsRescued,
                     reentry: {
@@ -2975,6 +3476,7 @@
             tiltCalibrateButton.addEventListener("click", calibrateTiltFromButton);
             restartButton.addEventListener("click", restartGame);
             pauseButton.addEventListener("click", togglePause);
+            laserButton.addEventListener("click", activateLaser);
             canvas.addEventListener("pointerdown", onPointerDown);
             canvas.addEventListener("pointermove", onPointerMove);
             canvas.addEventListener("pointerup", onPointerUp);
@@ -2985,7 +3487,11 @@
                 if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " ", "Spacebar"].includes(event.key)) {
                     event.preventDefault();
                 }
-                if (key === " " || key === "Enter") {
+                if (key === " ") {
+                    if (state.mode === "ready") startGame();
+                    else if (state.mode === "gameover" || state.mode === "won") restartGame();
+                    else if (state.mode === "playing" && !event.repeat) activateLaser();
+                } else if (key === "Enter") {
                     if (state.mode === "ready") startGame();
                     else if (state.mode === "gameover" || state.mode === "won") restartGame();
                 } else if (key === "p") {
