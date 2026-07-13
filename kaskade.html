@@ -642,7 +642,11 @@
             const TILT_DEADZONE = 0.08;
             const TILT_STALE_MS = 900;
             const SHIP_SPRITE_SRC = "images/kaskade-spacecraft-left.png";
-            const ASTRONAUT_SPRITE_SRC = "images/kaskade-astronaut.png";
+            const ASTRONAUT_SPRITE_SOURCES = [
+                "images/kaskade-astronaut.png",
+                "images/kaskade-astronaut-2.png",
+                "images/kaskade-astronaut-3.png"
+            ];
             const EARTH_SPRITE_SRC = "images/kaskade-earth-orbit-hd.webp";
             const MOON_SPRITE_SRC = "images/kaskade-moon.png";
             const SHIP_SPRITE_HEIGHT = 96;
@@ -659,6 +663,7 @@
             const LASER_HALF_WIDTH = 5;
             const LASER_PUSH_FORCE = 236;
             const LASER_SIDE_FORCE = 46;
+            const LASER_SPARK_INTERVAL = 0.22;
             const FUEL_LASER_DETONATION_TIME = 0.1;
             const FUEL_BLAST_RADIUS = 210;
             const FUEL_FRAGMENT_CLEAR_RADIUS = 168;
@@ -877,6 +882,8 @@
 
             const canvas = document.getElementById("game");
             const ctx = canvas.getContext("2d");
+            let laserBeamTexture = null;
+            let debrisLaserGlowTexture = null;
             const shell = document.getElementById("gameShell");
             const backButton = document.getElementById("backButton");
             const pauseButton = document.getElementById("pauseButton");
@@ -1029,6 +1036,7 @@
                     active: false,
                     remaining: 0,
                     cooldown: 0,
+                    sparkCooldown: 0,
                     disintegrated: 0,
                     deflected: 0
                 },
@@ -1090,16 +1098,19 @@
                 shipSpriteReady = false;
             });
             shipSprite.src = SHIP_SPRITE_SRC;
-            const astronautSprite = new Image();
-            let astronautSpriteReady = false;
-            astronautSprite.addEventListener("load", () => {
-                astronautSpriteReady = true;
-                render();
+            const astronautSprites = ASTRONAUT_SPRITE_SOURCES.map((source) => {
+                const sprite = new Image();
+                sprite.ready = false;
+                sprite.addEventListener("load", () => {
+                    sprite.ready = true;
+                    render();
+                });
+                sprite.addEventListener("error", () => {
+                    sprite.ready = false;
+                });
+                sprite.src = source;
+                return sprite;
             });
-            astronautSprite.addEventListener("error", () => {
-                astronautSpriteReady = false;
-            });
-            astronautSprite.src = ASTRONAUT_SPRITE_SRC;
             const issSprites = ISS_SPRITE_SOURCES.map((source) => {
                 const sprite = new Image();
                 sprite.addEventListener("load", render);
@@ -1374,6 +1385,7 @@
                 state.laser.active = false;
                 state.laser.remaining = 0;
                 state.laser.cooldown = 0;
+                state.laser.sparkCooldown = 0;
                 state.laser.disintegrated = 0;
                 state.laser.deflected = 0;
                 state.reentry.timer = 0;
@@ -2000,6 +2012,7 @@
                 if (state.mode !== "playing" || laser.active || laser.cooldown > 0) return false;
                 laser.active = true;
                 laser.remaining = LASER_DURATION;
+                laser.sparkCooldown = 0;
                 updateHud();
                 return true;
             }
@@ -2007,7 +2020,9 @@
             function applyLaserToDebris(dt) {
                 const beamX = state.player.x;
                 const beamBottom = state.player.y - SHIP_SPRITE_HEIGHT * 0.42;
-                for (const debris of state.debris.slice()) {
+                const debrisCount = state.debris.length;
+                for (let index = 0; index < debrisCount; index += 1) {
+                    const debris = state.debris[index];
                     if (debris.remove || debris.y - debris.r > beamBottom) continue;
                     const hitWidth = LASER_HALF_WIDTH + debris.r * 0.72 * (debris.hitScale || 1);
                     const offsetX = debris.x - beamX;
@@ -2018,8 +2033,11 @@
                         debris.flash = Math.max(debris.flash, 0.08);
                         debris.vy -= LASER_PUSH_FORCE * dt * 0.18;
                         if (debris.laserHitCooldown <= 0) {
-                            createBurst(debris.x, debris.y, "#ff9a62", 2, 34);
-                            debris.laserHitCooldown = 0.12;
+                            debris.laserHitCooldown = LASER_SPARK_INTERVAL;
+                            if (state.laser.sparkCooldown <= 0) {
+                                createBurst(debris.x, debris.y, "#ff9a62", 1, 34);
+                                state.laser.sparkCooldown = 0.055;
+                            }
                         }
                         if (debris.laserHeat >= 1 - 1e-6) explodeFuelTank(debris);
                         continue;
@@ -2027,7 +2045,7 @@
                     if (debris.size <= 1) {
                         debris.remove = true;
                         state.laser.disintegrated += 1;
-                        createBurst(debris.x, debris.y, "#b8f6ff", 9, 92);
+                        createBurst(debris.x, debris.y, "#b8f6ff", 6, 92);
                         continue;
                     }
 
@@ -2041,14 +2059,18 @@
                     debris.laserGlow = Math.max(debris.laserGlow, 0.28);
                     if (firstDeflection) state.laser.deflected += 1;
                     if (debris.laserHitCooldown <= 0) {
-                        createBurst(debris.x, debris.y + debris.r * 0.38, "#8cecff", 4, 54);
-                        debris.laserHitCooldown = 0.13;
+                        debris.laserHitCooldown = LASER_SPARK_INTERVAL;
+                        if (state.laser.sparkCooldown <= 0) {
+                            createBurst(debris.x, debris.y + debris.r * 0.38, "#8cecff", 2, 54);
+                            state.laser.sparkCooldown = 0.055;
+                        }
                     }
                 }
             }
 
             function updateLaser(dt) {
                 const laser = state.laser;
+                laser.sparkCooldown = Math.max(0, laser.sparkCooldown - dt);
                 if (laser.active) {
                     applyLaserToDebris(dt);
                     laser.remaining = Math.max(0, laser.remaining - dt);
@@ -2309,12 +2331,13 @@
                 state.astronautSpawned = true;
                 state.collectibles.push({
                     x: rand(76, WORLD.width - 76),
-                    y: PLAY_TOP - 34,
+                    y: -40,
                     vx: rand(-14, 14),
                     vy: rand(74, 94),
                     r: 15,
                     age: 0,
                     seed: rand(0, 1000),
+                    spriteIndex: Math.floor(rand(0, ASTRONAUT_SPRITE_SOURCES.length)),
                     remove: false
                 });
             }
@@ -3387,6 +3410,22 @@
                 ctx.restore();
             }
 
+            function getDebrisLaserGlowTexture() {
+                if (debrisLaserGlowTexture) return debrisLaserGlowTexture;
+                const texture = document.createElement("canvas");
+                texture.width = 128;
+                texture.height = 128;
+                const glowCtx = texture.getContext("2d");
+                const glow = glowCtx.createRadialGradient(64, 64, 8, 64, 64, 64);
+                glow.addColorStop(0, "rgba(224, 255, 255, 0.82)");
+                glow.addColorStop(0.36, "rgba(97, 216, 255, 0.46)");
+                glow.addColorStop(1, "rgba(65, 177, 255, 0)");
+                glowCtx.fillStyle = glow;
+                glowCtx.fillRect(0, 0, 128, 128);
+                debrisLaserGlowTexture = texture;
+                return debrisLaserGlowTexture;
+            }
+
             function drawDebris(debris) {
                 ctx.save();
                 ctx.translate(debris.x, debris.y);
@@ -3397,14 +3436,8 @@
                     ctx.save();
                     ctx.globalCompositeOperation = "lighter";
                     ctx.globalAlpha = clamp(debris.laserGlow / 0.28, 0, 1);
-                    const hitGlow = ctx.createRadialGradient(0, 0, r * 0.28, 0, 0, r * 2.35);
-                    hitGlow.addColorStop(0, "rgba(224, 255, 255, 0.82)");
-                    hitGlow.addColorStop(0.36, "rgba(97, 216, 255, 0.46)");
-                    hitGlow.addColorStop(1, "rgba(65, 177, 255, 0)");
-                    ctx.fillStyle = hitGlow;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, r * 2.35, 0, Math.PI * 2);
-                    ctx.fill();
+                    const glowSize = r * 4.7;
+                    ctx.drawImage(getDebrisLaserGlowTexture(), -glowSize / 2, -glowSize / 2, glowSize, glowSize);
                     ctx.restore();
                 }
                 if (fuelHeat > 0) {
@@ -3575,6 +3608,7 @@
 
             function drawAstronaut(astronaut) {
                 const bob = Math.sin(astronaut.age * 2.2 + astronaut.seed) * 0.12;
+                const sprite = astronautSprites[astronaut.spriteIndex] || astronautSprites[0];
                 ctx.save();
                 ctx.translate(astronaut.x, astronaut.y);
                 ctx.rotate(bob);
@@ -3588,10 +3622,10 @@
                 ctx.arc(0, 0, astronaut.r * 1.8, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.globalCompositeOperation = "source-over";
-                if (astronautSpriteReady && astronautSprite.complete && astronautSprite.naturalWidth > 0) {
+                if (sprite?.ready && sprite.complete && sprite.naturalWidth > 0) {
                     const spriteHeight = astronaut.r * 3.7;
-                    const spriteWidth = spriteHeight * astronautSprite.naturalWidth / astronautSprite.naturalHeight;
-                    ctx.drawImage(astronautSprite, -spriteWidth / 2, -spriteHeight / 2, spriteWidth, spriteHeight);
+                    const spriteWidth = spriteHeight * sprite.naturalWidth / sprite.naturalHeight;
+                    ctx.drawImage(sprite, -spriteWidth / 2, -spriteHeight / 2, spriteWidth, spriteHeight);
                     ctx.restore();
                     return;
                 }
@@ -3923,37 +3957,51 @@
                 ctx.restore();
             }
 
+            function getLaserBeamTexture() {
+                if (laserBeamTexture) return laserBeamTexture;
+                const texture = document.createElement("canvas");
+                texture.width = 64;
+                texture.height = 1024;
+                const beamCtx = texture.getContext("2d");
+                const center = texture.width / 2;
+                const beam = beamCtx.createLinearGradient(center, 0, center, texture.height);
+                beam.addColorStop(0, "rgba(109, 226, 255, 0.34)");
+                beam.addColorStop(0.72, "rgba(97, 216, 255, 0.72)");
+                beam.addColorStop(1, "rgba(225, 255, 255, 0.98)");
+                beamCtx.lineCap = "round";
+                beamCtx.shadowColor = "rgba(97, 216, 255, 0.95)";
+                beamCtx.shadowBlur = 14;
+                beamCtx.strokeStyle = "rgba(74, 197, 255, 0.24)";
+                beamCtx.lineWidth = 11;
+                beamCtx.beginPath();
+                beamCtx.moveTo(center, -8);
+                beamCtx.lineTo(center, texture.height + 8);
+                beamCtx.stroke();
+                beamCtx.shadowBlur = 7;
+                beamCtx.strokeStyle = beam;
+                beamCtx.lineWidth = 4.6;
+                beamCtx.stroke();
+                beamCtx.shadowBlur = 2;
+                beamCtx.strokeStyle = "rgba(247, 255, 255, 0.98)";
+                beamCtx.lineWidth = 1.55;
+                beamCtx.stroke();
+                laserBeamTexture = texture;
+                return laserBeamTexture;
+            }
+
             function drawLaserBeam() {
                 if (!state.laser.active || state.mode !== "playing") return;
                 const x = state.player.x;
                 const bottom = state.player.y - SHIP_SPRITE_HEIGHT * 0.42;
                 const pulse = 0.5 + Math.sin(state.survivalTime * 42) * 0.5;
-                const beam = ctx.createLinearGradient(x, -12, x, bottom);
-                beam.addColorStop(0, "rgba(109, 226, 255, 0.38)");
-                beam.addColorStop(0.72, "rgba(97, 216, 255, 0.7)");
-                beam.addColorStop(1, "rgba(225, 255, 255, 0.96)");
+                const beamWidth = 22 + pulse * 3;
                 ctx.save();
                 ctx.globalCompositeOperation = "lighter";
-                ctx.lineCap = "round";
-                ctx.shadowColor = "rgba(97, 216, 255, 0.95)";
-                ctx.shadowBlur = 10 + pulse * 5;
-                ctx.strokeStyle = "rgba(74, 197, 255, 0.2)";
-                ctx.lineWidth = 9 + pulse * 2;
+                ctx.globalAlpha = 0.86 + pulse * 0.14;
+                ctx.drawImage(getLaserBeamTexture(), x - beamWidth / 2, -16, beamWidth, bottom + 16);
+                ctx.fillStyle = "rgba(226, 255, 255, 0.96)";
                 ctx.beginPath();
-                ctx.moveTo(x, -16);
-                ctx.lineTo(x, bottom);
-                ctx.stroke();
-                ctx.shadowBlur = 5 + pulse * 2;
-                ctx.strokeStyle = beam;
-                ctx.lineWidth = 3.8 + pulse;
-                ctx.stroke();
-                ctx.shadowBlur = 2;
-                ctx.strokeStyle = "rgba(245, 255, 255, 0.98)";
-                ctx.lineWidth = 1.25 + pulse * 0.45;
-                ctx.stroke();
-                ctx.fillStyle = "rgba(210, 252, 255, 0.95)";
-                ctx.beginPath();
-                ctx.arc(x, bottom, 3.4 + pulse, 0, Math.PI * 2);
+                ctx.arc(x, bottom, 2.8 + pulse * 0.8, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             }
@@ -4253,8 +4301,9 @@
                         x: Number(astronaut.x.toFixed(1)),
                         y: Number(astronaut.y.toFixed(1)),
                         r: astronaut.r,
-                        sprite: ASTRONAUT_SPRITE_SRC,
-                        spriteReady: astronautSpriteReady
+                        spriteIndex: astronaut.spriteIndex,
+                        sprite: ASTRONAUT_SPRITE_SOURCES[astronaut.spriteIndex],
+                        spriteReady: Boolean(astronautSprites[astronaut.spriteIndex]?.ready)
                     })),
                     astronautsRescued: state.astronautsRescued,
                     reentry: {
