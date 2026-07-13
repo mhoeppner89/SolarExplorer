@@ -88,6 +88,7 @@
             align-items: center;
             gap: 0.38rem;
             pointer-events: none;
+            transition: opacity 0.28s ease;
         }
 
         .icon-button,
@@ -255,11 +256,19 @@
             gap: 0.45rem;
             align-items: start;
             pointer-events: none;
+            transition: opacity 0.28s ease;
+        }
+
+        .game-shell.is-cinematic .topbar,
+        .game-shell.is-cinematic .hud,
+        .game-shell.is-cinematic .laser-button {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .score-stack {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 0.38rem;
             min-width: 0;
         }
@@ -316,7 +325,8 @@
         }
 
         .phase-pill {
-            min-width: 5.8rem;
+            width: 8rem;
+            box-sizing: border-box;
             padding: 0.4rem 0.52rem;
             border: 1px solid rgba(179, 218, 255, 0.2);
             border-radius: 999px;
@@ -327,6 +337,7 @@
             letter-spacing: 0.08em;
             text-align: center;
             text-transform: uppercase;
+            text-align: center;
             white-space: nowrap;
         }
 
@@ -357,6 +368,51 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
+        .message.is-win {
+            border-color: rgba(255, 218, 128, 0.58);
+            background:
+                linear-gradient(145deg, rgba(31, 56, 84, 0.96), rgba(9, 27, 46, 0.9)),
+                var(--panel);
+            box-shadow:
+                0 30px 70px rgba(0, 0, 0, 0.48),
+                0 0 34px rgba(255, 207, 109, 0.2),
+                0 0 48px rgba(97, 216, 255, 0.15),
+                inset 0 1px 0 rgba(255, 244, 199, 0.2);
+        }
+
+        .message.is-win h1 {
+            color: #fff2bd;
+            text-align: center;
+            text-shadow: 0 0 18px rgba(255, 207, 109, 0.24);
+        }
+
+        .message.is-win > p {
+            text-align: center;
+        }
+
+        .message.is-win .stat-line span {
+            display: grid;
+            gap: 0.2rem;
+            border-color: rgba(255, 218, 128, 0.3);
+            background: rgba(255, 218, 128, 0.08);
+        }
+
+        .message.is-win .stat-line small {
+            color: rgba(231, 244, 255, 0.72);
+            font-size: 0.58rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .message.is-win .stat-line strong {
+            color: #fff8dc;
+            font-size: 0.94rem;
+        }
+
+        .message.is-win .start-button {
+            background: linear-gradient(145deg, #ffe19a, #72e6ff);
+        }
+
         .message[hidden] {
             display: none;
         }
@@ -380,6 +436,10 @@
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 0.42rem;
+        }
+
+        .message .stat-line[hidden] {
+            display: none;
         }
 
         .message .stat-line span {
@@ -542,6 +602,8 @@
                     <span class="shield-dot is-live"></span>
                     <span class="shield-dot"></span>
                     <span class="shield-dot"></span>
+                    <span class="shield-dot"></span>
+                    <span class="shield-dot"></span>
                 </div>
             </div>
         </section>
@@ -549,7 +611,7 @@
         <section class="message is-visible" id="messagePanel" aria-live="polite">
             <h1 id="messageTitle">Kaskade</h1>
             <p id="messageCopy">Steuere das Raumschiff durch Trümmerwolken. Wenn Teile kollidieren, entstehen neue Splitter.</p>
-            <div class="stat-line" id="messageStats">
+            <div class="stat-line" id="messageStats" hidden>
                 <span id="statA">3 Schilde</span>
                 <span id="statB">Wellen</span>
                 <span id="statC">Kaskaden</span>
@@ -581,7 +643,7 @@
             const TILT_STALE_MS = 900;
             const SHIP_SPRITE_SRC = "images/kaskade-spacecraft-left.png";
             const ASTRONAUT_SPRITE_SRC = "images/kaskade-astronaut.png";
-            const EARTH_SPRITE_SRC = "images/kaskade-earth-orbit.png";
+            const EARTH_SPRITE_SRC = "images/kaskade-earth-orbit-hd.webp";
             const MOON_SPRITE_SRC = "images/kaskade-moon.png";
             const SHIP_SPRITE_HEIGHT = 96;
             const SHIP_SPRITE_WIDTH = 58;
@@ -589,7 +651,7 @@
             const MAX_PARTICLES = 260;
             const MAX_LEVEL = 25;
             const STARTING_SHIELDS = 3;
-            const MAX_SHIELDS = 5;
+            const MAX_SHIELDS = 7;
             const DAY_CYCLE_DURATION = 60;
             const DEBRIS_SPEED_MULTIPLIER = 1.5;
             const LASER_DURATION = 5;
@@ -597,12 +659,20 @@
             const LASER_HALF_WIDTH = 5;
             const LASER_PUSH_FORCE = 236;
             const LASER_SIDE_FORCE = 46;
-            const REENTRY_DURATION = 7.4;
+            const FUEL_LASER_DETONATION_TIME = 0.1;
+            const FUEL_BLAST_RADIUS = 210;
+            const FUEL_FRAGMENT_CLEAR_RADIUS = 168;
+            const FUEL_PLAYER_BLAST_RADIUS = 100.8;
+            const VICTORY_BONUS = 1000;
+            const REENTRY_DURATION = 10.5;
+            const REENTRY_CLEARANCE_DURATION = 2.2;
             const FIXED_DT = 1 / 60;
             const DEBRIS_EXIT_MARGIN = 34;
             const LANGUAGE_STORAGE_KEY = "solarExplorer.language";
             const BEST_STORAGE_KEY = "solarExplorer.kaskade.best.v1";
             const supportedLanguages = new Set(["de", "en"]);
+            const requestedReviewMode = new URLSearchParams(window.location.search).get("review");
+            const reviewMode = requestedReviewMode === "late" || requestedReviewMode === "ending" ? requestedReviewMode : null;
             const ISS_SPRITE_SOURCES = [
                 "images/kaskade-iss-intact.png",
                 "images/kaskade-iss-damaged-3.png",
@@ -612,6 +682,7 @@
             ];
             const ISS_DAMAGE_LEVELS = new Map([[1, 0], [6, 1], [11, 2], [16, 3], [21, 4]]);
             const ISS_DRAW_SIZE = 376;
+            const SATELLITE_KINDS = new Set(["satellite", "cubesat", "operationalSatellite"]);
 
             const copyByLanguage = {
                 de: {
@@ -635,7 +706,7 @@
                     phaseReentry: "Wiedereintritt",
                     phaseWon: "Mission geschafft",
                     readyTitle: "Kaskade",
-                    readyCopy: "Level 1 beginnt leicht mit wenigen funktionierenden Satelliten und schnellen Splittern. Ab Level 2 setzt die Kaskade ein.",
+                    readyCopy: "Rette gestrandete Astronauten, weiche Trümmern aus und bringe dein Raumschiff sicher zurück zur Erde.",
                     readyA: "3 Schilde",
                     readyB: "25 Level",
                     readyC: "Rettungen",
@@ -650,9 +721,18 @@
                     pausedCopy: "Halte kurz die Umlaufbahn an. Drücke Weiter, um die Kaskade fortzusetzen.",
                     gameOverTitle: "Signal verloren",
                     gameOverCopy: "Das Raumschiff wurde von zu vielen Splittern getroffen. Je länger du überlebst, desto schneller wächst dein Punktestand.",
-                    wonTitle: "Sicher in der Atmosphäre",
-                    wonCopy: "Du hast 25 Umlaufbahnen überstanden und die Erde wieder erreicht.",
+                    wonTitle: "Willkommen zurück",
+                    wonCopy: (bonus) => `Glückwunsch! Du bist sicher zur Erde zurückgekehrt. +${bonus} Punkte.`,
+                    highscore: "Highscore",
+                    reviewLateTitle: "Späte Umlaufbahnen",
+                    reviewLateCopy: "Unverwundbare Vorschau ab Level 21.",
+                    reviewEndingTitle: "Finale Vorschau",
+                    reviewEndingCopy: "Die letzte Umlaufbahn endet gleich; danach beginnt der Wiedereintritt.",
+                    reviewInvincible: "Unverwundbar",
+                    reviewStart: "Vorschau starten",
+                    reentryStages: ["Deorbit-Bremsung", "Atmosphärengrenze", "Plasma-Blackout", "Atmosphärenflug"],
                     again: "Nochmal",
+                    againVictory: "Erneut fliegen",
                     rescued: "Rettungen",
                     waveNames: {
                         orbitalTraffic: "Orbitalverkehr",
@@ -690,7 +770,7 @@
                     phaseReentry: "Re-entry",
                     phaseWon: "Mission complete",
                     readyTitle: "Kaskade",
-                    readyCopy: "Level 1 starts lightly with a few functioning satellites and fast shards. The Kessler cascade begins in level 2.",
+                    readyCopy: "Rescue stranded astronauts, evade the debris, and bring your spacecraft safely back to Earth.",
                     readyA: "3 shields",
                     readyB: "25 levels",
                     readyC: "Rescues",
@@ -705,9 +785,18 @@
                     pausedCopy: "Hold the orbit for a moment. Press Resume to keep riding the cascade.",
                     gameOverTitle: "Signal Lost",
                     gameOverCopy: "The spacecraft took too many fragment hits. Survive longer to grow your score faster.",
-                    wonTitle: "Safely Through Re-entry",
-                    wonCopy: "You survived 25 orbits and reached Earth again.",
+                    wonTitle: "Welcome Home",
+                    wonCopy: (bonus) => `Congratulations! You safely made it back to Earth. +${bonus} Points.`,
+                    highscore: "Highscore",
+                    reviewLateTitle: "Late-Orbit Review",
+                    reviewLateCopy: "Invincible preview starting at level 21.",
+                    reviewEndingTitle: "Finale Review",
+                    reviewEndingCopy: "The final orbit is about to end, followed by re-entry.",
+                    reviewInvincible: "Invincible",
+                    reviewStart: "Start review",
+                    reentryStages: ["Deorbit burn", "Atmospheric interface", "Plasma blackout", "Atmospheric flight"],
                     again: "Again",
+                    againVictory: "Fly again",
                     rescued: "Rescues",
                     waveNames: {
                         orbitalTraffic: "Orbital Traffic",
@@ -867,6 +956,18 @@
                 };
             });
 
+            const victorySparkles = Array.from({ length: 34 }, (_, index) => {
+                const rand = mulberry32(18031 + index * 53);
+                return {
+                    x: 24 + rand() * (WORLD.width - 48),
+                    phase: rand(),
+                    speed: 0.045 + rand() * 0.07,
+                    drift: 8 + rand() * 22,
+                    size: 1.5 + rand() * 3.2,
+                    color: rand() > 0.48 ? "#ffe29a" : "#7ee8ff"
+                };
+            });
+
             const ORBITAL_SCENES = [
                 { key: "earthDay" },
                 { key: "terminator" },
@@ -893,6 +994,9 @@
                 shake: 0,
                 bannerTimer: 0,
                 recentCascades: 0,
+                victoryTime: 0,
+                plasmaIntensity: 0,
+                reviewInvincible: Boolean(reviewMode),
                 rngSeed: 424242,
                 rng: mulberry32(424242),
                 levelThemes: {},
@@ -931,7 +1035,12 @@
                 reentry: {
                     timer: 0,
                     duration: REENTRY_DURATION,
-                    active: false
+                    clearanceTimer: 0,
+                    clearanceDuration: REENTRY_CLEARANCE_DURATION,
+                    active: false,
+                    stage: 0,
+                    startX: WORLD.width * 0.5,
+                    startY: 760
                 },
                 tilt: {
                     enabled: false,
@@ -1208,7 +1317,7 @@
                 const progress = clamp((level - 1) / (MAX_LEVEL - 1), 0, 1);
                 return progress < 0.5
                     ? progress * 0.82
-                    : 0.41 + (progress - 0.5) * 1.58;
+                    : 0.41 + (progress - 0.5) * 1.28;
             }
 
             function currentWavePattern(level = state.level) {
@@ -1245,15 +1354,18 @@
             }
 
             function resetGame() {
+                shell.classList.remove("is-cinematic");
                 state.mode = "ready";
-                state.level = 1;
+                state.level = reviewMode === "late" ? 21 : reviewMode === "ending" ? MAX_LEVEL : 1;
                 state.cascadeTimer = 0;
                 state.score = 0;
                 state.survivalTime = 0;
-                state.shields = STARTING_SHIELDS;
+                state.shields = reviewMode ? MAX_SHIELDS : STARTING_SHIELDS;
                 state.shake = 0;
                 state.bannerTimer = 0;
                 state.recentCascades = 0;
+                state.victoryTime = 0;
+                state.plasmaIntensity = 0;
                 state.rngSeed = 424242 + Math.floor(performance.now()) % 100000;
                 state.rng = mulberry32(state.rngSeed);
                 state.levelThemes = buildRunThemes();
@@ -1266,7 +1378,12 @@
                 state.laser.deflected = 0;
                 state.reentry.timer = 0;
                 state.reentry.duration = REENTRY_DURATION;
+                state.reentry.clearanceTimer = 0;
+                state.reentry.clearanceDuration = REENTRY_CLEARANCE_DURATION;
                 state.reentry.active = false;
+                state.reentry.stage = 0;
+                state.reentry.startX = WORLD.width * 0.5;
+                state.reentry.startY = 760;
                 state.player.x = WORLD.width * 0.5;
                 state.player.y = 760;
                 state.player.vx = 0;
@@ -1282,6 +1399,24 @@
                 state.lastInput.x = 0;
                 state.lastInput.y = 0;
                 configureCloudPhase(state.level);
+                if (reviewMode === "ending") {
+                    state.phase = "cloud";
+                    state.phaseDuration = cloudDurationForLevel(state.level);
+                    state.phaseTimer = Math.max(0, state.phaseDuration - 2.4);
+                    state.spawnTimer = 999;
+                    state.astronautTimer = Infinity;
+                    [
+                        { kind: "panel", x: 112, y: 168, vx: 38, vy: 104, size: 2, radius: 15 },
+                        { kind: "chunk", x: 398, y: 246, vx: -52, vy: 132, size: 3, radius: 21 },
+                        { kind: "shard", x: 252, y: 412, vx: 74, vy: 92, size: 1, radius: 7 },
+                        { kind: "fuelTank", x: 458, y: 66, vx: -24, vy: 126, size: 3, radius: 18 }
+                    ].forEach((debris) => spawnDebris({
+                        ...debris,
+                        velocityScale: 1,
+                        canCollide: false,
+                        canCascade: false
+                    }));
+                }
                 showReadyMessage();
                 updateHud();
                 render();
@@ -1295,11 +1430,10 @@
                 }
                 if (state.mode === "ready") {
                     state.mode = "playing";
-                    state.bannerTimer = 1.8;
+                    state.bannerTimer = 0;
                     messagePanel.classList.remove("is-visible");
                     messagePanel.hidden = true;
-                    levelBanner.textContent = copy.bannerCloud(state.level, currentWaveName());
-                    levelBanner.classList.add("is-visible");
+                    levelBanner.classList.remove("is-visible");
                     return;
                 }
                 if (state.mode === "paused") {
@@ -1350,37 +1484,45 @@
             function spawnIntervalForLevel(level) {
                 const progress = clamp((level - 1) / (MAX_LEVEL - 1), 0, 1);
                 const latePressure = Math.max(0, (progress - 0.46) / 0.54);
-                return Math.max(0.18, 0.84 - progress * 0.37 - latePressure * 0.25);
+                return Math.max(0.22, 0.84 - progress * 0.37 - latePressure * 0.2);
             }
 
             function showReadyMessage() {
+                messagePanel.classList.remove("is-win");
                 messagePanel.hidden = false;
                 tiltControls.hidden = false;
-                messageTitle.textContent = copy.readyTitle;
-                messageCopy.textContent = copy.readyCopy;
-                statA.textContent = copy.readyA;
-                statB.textContent = copy.readyB;
-                statC.textContent = copy.readyC;
-                messageStats.hidden = false;
-                startButton.textContent = copy.start;
+                messageTitle.textContent = reviewMode === "late"
+                    ? copy.reviewLateTitle
+                    : reviewMode === "ending" ? copy.reviewEndingTitle : copy.readyTitle;
+                messageCopy.textContent = reviewMode === "late"
+                    ? copy.reviewLateCopy
+                    : reviewMode === "ending" ? copy.reviewEndingCopy : copy.readyCopy;
+                statA.textContent = reviewMode ? `${copy.level} ${state.level}` : copy.readyA;
+                statB.textContent = reviewMode ? copy.reviewInvincible : copy.readyB;
+                statC.textContent = reviewMode === "ending" ? copy.phaseReentry : reviewMode === "late" ? "21–25" : copy.readyC;
+                messageStats.hidden = true;
+                startButton.textContent = reviewMode ? copy.reviewStart : copy.start;
                 updateTiltControls();
                 messagePanel.classList.add("is-visible");
             }
 
             function showPausedMessage() {
+                messagePanel.classList.remove("is-win");
                 messagePanel.hidden = false;
-                tiltControls.hidden = true;
+                tiltControls.hidden = false;
                 messageTitle.textContent = copy.pausedTitle;
                 messageCopy.textContent = copy.pausedCopy;
                 statA.textContent = `${Math.floor(state.score)}`;
                 statB.textContent = `${copy.level} ${state.level}`;
                 statC.textContent = `${state.shields}/${MAX_SHIELDS}`;
-                messageStats.hidden = false;
+                messageStats.hidden = true;
                 startButton.textContent = copy.resume;
+                updateTiltControls();
                 messagePanel.classList.add("is-visible");
             }
 
             function showGameOverMessage() {
+                messagePanel.classList.remove("is-win");
                 saveBest();
                 messagePanel.hidden = false;
                 tiltControls.hidden = false;
@@ -1395,16 +1537,25 @@
                 messagePanel.classList.add("is-visible");
             }
 
+            function setWinStat(element, label, value) {
+                const labelElement = document.createElement("small");
+                const valueElement = document.createElement("strong");
+                labelElement.textContent = label;
+                valueElement.textContent = String(value);
+                element.replaceChildren(labelElement, valueElement);
+            }
+
             function showWinMessage() {
                 messagePanel.hidden = false;
                 tiltControls.hidden = false;
+                messagePanel.classList.add("is-win");
                 messageTitle.textContent = copy.wonTitle;
-                messageCopy.textContent = copy.wonCopy;
-                statA.textContent = `${copy.level} ${MAX_LEVEL}`;
-                statB.textContent = `${copy.score} ${Math.floor(state.score)}`;
-                statC.textContent = `${copy.rescued} ${state.astronautsRescued}`;
+                messageCopy.textContent = copy.wonCopy(VICTORY_BONUS);
+                setWinStat(statA, copy.score, Math.floor(state.score));
+                setWinStat(statB, copy.highscore, Math.max(state.best, Math.floor(state.score)));
+                setWinStat(statC, copy.rescued, state.astronautsRescued);
                 messageStats.hidden = false;
-                startButton.textContent = copy.again;
+                startButton.textContent = copy.againVictory;
                 updateTiltControls();
                 messagePanel.classList.add("is-visible");
             }
@@ -1506,7 +1657,7 @@
                     rand(102 + difficulty * 108, 164 + difficulty * 140)
                 );
                 const drift = Math.sin(level * 1.83) * (18 + difficulty * 42);
-                const fromSide = options.fromSide ?? (rand() < pattern.sideChance);
+                const fromSide = options.fromSide ?? (!SATELLITE_KINDS.has(kind) && rand() < pattern.sideChance);
                 let x;
                 let y;
                 let vx;
@@ -1531,7 +1682,9 @@
                     y = -radius - rand(8, 110);
                     vx = drift + rand(-42 - level * 2, 42 + level * 2);
                     vy = speed;
-                    if (pattern.key === "shardRain") {
+                    if (SATELLITE_KINDS.has(kind)) {
+                        vx *= 0.28;
+                    } else if (pattern.key === "shardRain") {
                         vx *= 0.42;
                     } else if (pattern.key === "crosswind") {
                         vx += rand() < 0.5 ? -rand(36, 80 + level * 4) : rand(36, 80 + level * 4);
@@ -1543,8 +1696,11 @@
                 }
 
                 const velocityScale = options.velocityScale ?? DEBRIS_SPEED_MULTIPLIER;
-                vx *= velocityScale;
-                vy *= velocityScale;
+                const speedFactor = options.x === undefined
+                    ? rand(level === 1 ? 0.68 : 0.5, level === 1 ? 1.34 : 1.62)
+                    : 1;
+                vx *= velocityScale * (0.78 + speedFactor * 0.22);
+                vy *= velocityScale * speedFactor;
 
                 const debris = {
                     kind,
@@ -1553,22 +1709,25 @@
                     y,
                     vx,
                     vy,
+                    speedFactor,
                     r: radius,
                     size,
                     age: 0,
                     hitScale: kind === "battery" || kind === "shard" ? 0.82 : kind === "antenna" || kind === "solarWing" ? 1.18 : kind === "operationalSatellite" ? 0.9 : 1,
-                    spin: kind === "operationalSatellite" ? rand(-0.24, 0.24) : kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(-4.8, 4.8) : kind === "shard" || kind === "battery" ? rand(-2.2, 2.2) : rand(-3.2, 3.2),
+                    spin: SATELLITE_KINDS.has(kind) ? 0 : kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(-4.8, 4.8) : kind === "shard" || kind === "battery" ? rand(-2.2, 2.2) : rand(-3.2, 3.2),
                     rot: rand(0, Math.PI * 2),
+                    satelliteVariant: SATELLITE_KINDS.has(kind) ? Math.floor(rand(0, 5)) : null,
                     seed: rand(0, 1000),
-                    fuse: kind === "satellite" || kind === "cubesat" ? rand(1.9, 3.25) : 0,
                     weave: kind === "panel" || kind === "solarWing" || kind === "foil" ? rand(0.7, 1.4) * (rand() < 0.5 ? -1 : 1) : 0,
                     flash: 0,
                     laserGlow: 0,
+                    laserHeat: 0,
+                    laserHeating: false,
                     collisionGrace: options.x !== undefined ? 0.22 : 0,
                     laserDeflected: 0,
                     laserHitCooldown: 0,
                     canCollide: options.canCollide ?? true,
-                    canCascade: options.canCascade ?? (level >= 2 && kind !== "operationalSatellite"),
+                    canCascade: options.canCascade ?? (level >= 2 || SATELLITE_KINDS.has(kind)),
                     scoredNear: false
                 };
                 state.debris.push(debris);
@@ -1595,7 +1754,62 @@
                 });
             }
 
+            function explodeFuelTank(debris) {
+                if (debris.remove) return 0;
+                let clearedFragments = 0;
+                for (const other of state.debris) {
+                    if (other === debris || other.remove) continue;
+                    const dx = other.x - debris.x;
+                    const dy = other.y - debris.y;
+                    const distance = Math.hypot(dx, dy);
+                    if (distance <= 0 || distance >= FUEL_BLAST_RADIUS) continue;
+                    if (other.size <= 1 && distance < FUEL_FRAGMENT_CLEAR_RADIUS) {
+                        other.remove = true;
+                        clearedFragments += 1;
+                        createBurst(other.x, other.y, "#ffd69a", 5, 76);
+                        continue;
+                    }
+                    const impulse = (1 - distance / FUEL_BLAST_RADIUS) * 118;
+                    other.vx += dx / distance * impulse;
+                    other.vy += dy / distance * impulse;
+                    other.flash = Math.max(other.flash, 0.22);
+                    other.collisionGrace = Math.max(other.collisionGrace, 0.28);
+                }
+
+                const playerDistance = Math.hypot(state.player.x - debris.x, state.player.y - debris.y);
+                if (playerDistance < FUEL_PLAYER_BLAST_RADIUS + PLAYER_RADIUS) {
+                    applyShieldDamage("#ff8658", 0.52);
+                }
+
+                const shardCount = 2 + Math.floor(rand(0, 2));
+                for (let index = 0; index < shardCount; index += 1) {
+                    const angle = rand(0, Math.PI * 2);
+                    const power = rand(94, 148);
+                    const shard = spawnDebris({
+                        x: debris.x + Math.cos(angle) * debris.r * 0.5,
+                        y: debris.y + Math.sin(angle) * debris.r * 0.5,
+                        vx: debris.vx * 0.5 + Math.cos(angle) * power,
+                        vy: debris.vy * 0.5 + Math.sin(angle) * power,
+                        kind: "shard",
+                        size: 1,
+                        radius: rand(4.8, 7.2),
+                        velocityScale: 1,
+                        canCascade: true
+                    });
+                    if (shard) shard.collisionGrace = 0.32;
+                }
+                createShockwave(debris.x, debris.y, "#ff8a55", FUEL_BLAST_RADIUS, 0.58);
+                createShockwave(debris.x, debris.y, "#ffe2a1", FUEL_FRAGMENT_CLEAR_RADIUS, 0.42);
+                createBurst(debris.x, debris.y, "#ff623f", 54, 270);
+                createBurst(debris.x, debris.y, "#ffd88f", 30, 178);
+                debris.remove = true;
+                state.recentCascades += 1;
+                state.score += clearedFragments;
+                return shardCount;
+            }
+
             function splitDebris(debris, reason = "cascade") {
+                if (debris.kind === "fuelTank") return explodeFuelTank(debris);
                 if (!debris.canCascade) {
                     createBurst(debris.x, debris.y, reason === "hit" ? "#ffcf6d" : "#a7ecff", 10, 92);
                     debris.remove = true;
@@ -1605,15 +1819,13 @@
                     debris.flash = 0.22;
                     return 0;
                 }
-                const count = debris.kind === "fuelTank" ? 5 : debris.kind === "satellite" ? 4 : debris.kind === "cubesat" ? 3 : debris.size === 3 ? 3 : 2;
+                const count = debris.kind === "satellite" || debris.kind === "operationalSatellite" ? 4 : debris.kind === "cubesat" ? 3 : debris.size === 3 ? 3 : 2;
                 const base = Math.PI / 2 + rand(-0.26, 0.26);
                 for (let i = 0; i < count; i += 1) {
                     const angle = base + (i - (count - 1) / 2) * rand(0.44, 0.84) + rand(-0.18, 0.18);
                     let fragmentKind;
-                    if (debris.kind === "satellite" || debris.kind === "cubesat") {
+                    if (SATELLITE_KINDS.has(debris.kind)) {
                         fragmentKind = i % 3 === 0 ? "panel" : "shard";
-                    } else if (debris.kind === "fuelTank") {
-                        fragmentKind = i % 2 === 0 ? "battery" : "shard";
                     } else if (debris.kind === "solarWing") {
                         fragmentKind = i === 0 ? "panel" : "shard";
                     } else if (debris.kind === "antenna") {
@@ -1623,10 +1835,10 @@
                 }
                 const burstColor = reason === "hit"
                     ? "#ffcf6d"
-                    : debris.kind === "satellite" || debris.kind === "cubesat" || debris.kind === "fuelTank"
+                    : SATELLITE_KINDS.has(debris.kind)
                         ? "#ff7d6e"
                         : "#a7ecff";
-                createBurst(debris.x, debris.y, burstColor, 12 + count * 4, debris.kind === "fuelTank" ? 190 : 120);
+                createBurst(debris.x, debris.y, burstColor, 12 + count * 4, 120);
                 debris.remove = true;
                 state.recentCascades += 1;
                 return count;
@@ -1647,6 +1859,23 @@
                         color
                     });
                 }
+            }
+
+            function createShockwave(x, y, color, radius, duration) {
+                if (state.particles.length >= MAX_PARTICLES) return;
+                state.particles.push({
+                    type: "shockwave",
+                    x,
+                    y,
+                    vx: 0,
+                    vy: 0,
+                    r: 8,
+                    startR: 8,
+                    targetR: radius,
+                    life: duration,
+                    maxLife: duration,
+                    color
+                });
             }
 
             function updateInput(dt) {
@@ -1741,15 +1970,9 @@
                     state.phase = "calm";
                     state.phaseTimer = 0;
                     state.phaseDuration = calmDurationForLevel(state.level);
-                    state.bannerTimer = 1.35;
-                    levelBanner.textContent = copy.bannerCalm(state.level);
-                    levelBanner.classList.add("is-visible");
                 } else if (state.phase === "calm" && state.phaseTimer >= state.phaseDuration) {
                     state.level += 1;
                     configureCloudPhase(state.level);
-                    state.bannerTimer = 1.55;
-                    levelBanner.textContent = copy.bannerCloud(state.level, currentWaveName());
-                    levelBanner.classList.add("is-visible");
                 }
             }
 
@@ -1759,7 +1982,7 @@
                 if (state.spawnTimer <= 0) {
                     const pattern = currentWavePattern();
                     spawnDebris({ pattern });
-                    const burstPressure = Math.min(0.2, Math.max(0, state.level - 5) * 0.013);
+                    const burstPressure = Math.min(0.14, Math.max(0, state.level - 5) * 0.009);
                     if (pattern.key !== "orbitalTraffic" && rand() < pattern.burstChance + burstPressure) {
                         for (let i = 0; i < pattern.burstCount; i += 1) {
                             spawnDebris({
@@ -1784,11 +2007,23 @@
             function applyLaserToDebris(dt) {
                 const beamX = state.player.x;
                 const beamBottom = state.player.y - SHIP_SPRITE_HEIGHT * 0.42;
-                for (const debris of state.debris) {
+                for (const debris of state.debris.slice()) {
                     if (debris.remove || debris.y - debris.r > beamBottom) continue;
                     const hitWidth = LASER_HALF_WIDTH + debris.r * 0.72 * (debris.hitScale || 1);
                     const offsetX = debris.x - beamX;
                     if (Math.abs(offsetX) > hitWidth) continue;
+                    if (debris.kind === "fuelTank") {
+                        debris.laserHeating = true;
+                        debris.laserHeat = Math.min(1, debris.laserHeat + dt / FUEL_LASER_DETONATION_TIME);
+                        debris.flash = Math.max(debris.flash, 0.08);
+                        debris.vy -= LASER_PUSH_FORCE * dt * 0.18;
+                        if (debris.laserHitCooldown <= 0) {
+                            createBurst(debris.x, debris.y, "#ff9a62", 2, 34);
+                            debris.laserHitCooldown = 0.12;
+                        }
+                        if (debris.laserHeat >= 1 - 1e-6) explodeFuelTank(debris);
+                        continue;
+                    }
                     if (debris.size <= 1) {
                         debris.remove = true;
                         state.laser.disintegrated += 1;
@@ -1830,15 +2065,9 @@
             function updateDebris(dt) {
                 for (const debris of state.debris) {
                     if (debris.remove) continue;
-                    if (debris.kind === "satellite" || debris.kind === "cubesat") {
-                        debris.fuse -= dt;
-                        if (debris.fuse < 0.82) {
-                            debris.flash = Math.max(debris.flash, 0.08);
-                        }
-                        if (debris.fuse <= 0) {
-                            splitDebris(debris, "cascade");
-                            continue;
-                        }
+                    if (debris.kind === "fuelTank") {
+                        if (!debris.laserHeating) debris.laserHeat = Math.max(0, debris.laserHeat - dt * 0.62);
+                        debris.laserHeating = false;
                     }
                     if (debris.kind === "panel" || debris.kind === "solarWing" || debris.kind === "foil") {
                         const weavePower = debris.kind === "foil" ? 34 : debris.kind === "solarWing" ? 26 : 22;
@@ -1929,6 +2158,15 @@
                                     const rvx = a.vx - b.vx;
                                     const rvy = a.vy - b.vy;
                                     const relative = Math.hypot(rvx, rvy);
+                                    const fuelTank = a.kind === "fuelTank" ? a : b.kind === "fuelTank" ? b : null;
+                                    if (fuelTank) {
+                                        const impactor = fuelTank === a ? b : a;
+                                        explodeFuelTank(fuelTank);
+                                        impactor.flash = Math.max(impactor.flash, 0.2);
+                                        impactor.collisionGrace = Math.max(impactor.collisionGrace, 0.26);
+                                        state.cascadeTimer = 0.075;
+                                        return;
+                                    }
                                     if (relative < 34) {
                                         resolveDebrisContact(a, b, dx, dy, rr);
                                         state.cascadeTimer = 0.035;
@@ -1940,6 +2178,23 @@
                                         resolveDebrisContact(a, b, dx, dy, rr);
                                         createBurst((a.x + b.x) * 0.5, (a.y + b.y) * 0.5, "#dbe7f2", 3, 42);
                                         state.cascadeTimer = 0.045;
+                                        return;
+                                    }
+                                    const struckSatellites = [a, b].filter((debris) => SATELLITE_KINDS.has(debris.kind) && debris.canCascade && debris.size > 1);
+                                    if (struckSatellites.length) {
+                                        for (const satellite of struckSatellites) {
+                                            if (satellite.remove) continue;
+                                            if (state.debris.length < MAX_DEBRIS - 3) {
+                                                splitDebris(satellite, "cascade");
+                                            } else {
+                                                satellite.remove = true;
+                                                createBurst(satellite.x, satellite.y, "#a7ecff", 14, 110);
+                                            }
+                                        }
+                                        const impactor = struckSatellites.includes(a) ? b : a;
+                                        if (impactor.size <= 1) impactor.remove = true;
+                                        else impactor.collisionGrace = Math.max(impactor.collisionGrace, 0.24);
+                                        state.cascadeTimer = 0.075;
                                         return;
                                     }
                                     const collisionChance = 0.58 + difficultyForLevel() * 0.32;
@@ -1991,6 +2246,29 @@
                 }
             }
 
+            function applyShieldDamage(color = "#61d8ff", shake = 0.36) {
+                if (state.mode !== "playing" || state.reviewInvincible || state.player.invulnerable > 0) return false;
+                state.shields -= 1;
+                state.shake = Math.max(state.shake, shake);
+                state.player.invulnerable = 1.35;
+                createBurst(
+                    state.player.x,
+                    state.player.y,
+                    state.shields <= 0 ? "#ff6969" : color,
+                    state.shields <= 0 ? 58 : 34,
+                    210
+                );
+                if (state.shields <= 0) {
+                    state.mode = "gameover";
+                    state.joystick.active = false;
+                    state.laser.active = false;
+                    state.laser.remaining = 0;
+                    showGameOverMessage();
+                }
+                updateHud();
+                return true;
+            }
+
             function handlePlayerCollisions() {
                 const player = state.player;
                 player.invulnerable = Math.max(0, player.invulnerable - FIXED_DT);
@@ -2005,25 +2283,23 @@
                         state.score += 2 + state.level * 0.35;
                     }
                     if (distanceSq > hitRadius * hitRadius) continue;
+                    if (state.reviewInvincible) {
+                        createBurst(player.x, player.y, "#b8f6ff", 12, 110);
+                        if (debris.canCascade && debris.size > 1) {
+                            splitDebris(debris, "hit");
+                        } else {
+                            debris.remove = true;
+                        }
+                        continue;
+                    }
                     if (player.invulnerable > 0) {
                         debris.vx -= dx * 2.4;
                         debris.vy -= dy * 2.4;
                         continue;
                     }
-                    state.shields -= 1;
-                    state.shake = 0.36;
-                    player.invulnerable = 1.35;
-                    createBurst(player.x, player.y, state.shields <= 0 ? "#ff6969" : "#61d8ff", state.shields <= 0 ? 58 : 34, 210);
+                    applyShieldDamage();
                     splitDebris(debris, "hit");
                     debris.remove = true;
-                    if (state.shields <= 0) {
-                        state.mode = "gameover";
-                        state.joystick.active = false;
-                        state.laser.active = false;
-                        state.laser.remaining = 0;
-                        showGameOverMessage();
-                    }
-                    updateHud();
                     return;
                 }
             }
@@ -2086,24 +2362,81 @@
                 state.mode = "reentry";
                 state.reentry.active = true;
                 state.reentry.timer = 0;
-                state.debris.length = 0;
-                state.collectibles.length = 0;
+                state.reentry.clearanceTimer = 0;
+                state.reentry.stage = 0;
+                state.reentry.startX = state.player.x;
+                state.reentry.startY = state.player.y;
+                for (const debris of state.debris) {
+                    debris.canCollide = false;
+                    debris.canCascade = false;
+                    debris.collisionGrace = state.reentry.clearanceDuration + 1;
+                    debris.laserHeating = false;
+                }
                 state.joystick.active = false;
                 state.laser.active = false;
                 state.laser.remaining = 0;
-                state.player.vx = 0;
-                state.player.vy = 0;
                 state.player.invulnerable = 0;
                 state.lastInput.x = 0;
                 state.lastInput.y = 0;
                 state.bannerTimer = 2.2;
-                levelBanner.textContent = copy.bannerReentry;
+                levelBanner.textContent = copy.reentryStages[0];
                 levelBanner.classList.add("is-visible");
+            }
+
+            function updateReentryDrift(dt) {
+                const cinematicProgress = clamp(state.reentry.timer / 1.7, 0, 1);
+                const cameraSeparation = smoothstep(cinematicProgress) * 480;
+                for (const debris of state.debris) {
+                    if (debris.remove) continue;
+                    if (debris.kind === "fuelTank") {
+                        debris.laserHeat = Math.max(0, debris.laserHeat - dt * 0.62);
+                        debris.laserHeating = false;
+                    }
+                    if (debris.kind === "panel" || debris.kind === "solarWing" || debris.kind === "foil") {
+                        const weavePower = debris.kind === "foil" ? 34 : debris.kind === "solarWing" ? 26 : 22;
+                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * weavePower * DEBRIS_SPEED_MULTIPLIER * dt;
+                    }
+                    debris.x += debris.vx * dt;
+                    debris.y += (debris.vy - cameraSeparation) * dt;
+                    debris.age += dt;
+                    debris.vx *= Math.max(0, 1 - 0.52 * dt);
+                    debris.vy *= Math.max(0, 1 - 0.03 * dt);
+                    debris.rot += debris.spin * dt;
+                    debris.flash = Math.max(0, debris.flash - dt);
+                    debris.laserGlow = Math.max(0, debris.laserGlow - dt * 0.72);
+                    debris.laserDeflected = Math.max(0, debris.laserDeflected - dt);
+                    debris.laserHitCooldown = Math.max(0, debris.laserHitCooldown - dt);
+                    if (
+                        debris.y > WORLD.height + debris.r + DEBRIS_EXIT_MARGIN ||
+                        debris.y < -debris.r - 140 ||
+                        debris.x < -debris.r - 100 ||
+                        debris.x > WORLD.width + debris.r + 100
+                    ) {
+                        debris.remove = true;
+                    }
+                }
+                state.debris = state.debris.filter((debris) => !debris.remove);
+
+                for (const astronaut of state.collectibles) {
+                    astronaut.x += astronaut.vx * dt;
+                    astronaut.y += (astronaut.vy - cameraSeparation) * dt;
+                    if (
+                        astronaut.y > WORLD.height + astronaut.r + DEBRIS_EXIT_MARGIN ||
+                        astronaut.y < -astronaut.r - 140 ||
+                        astronaut.x < -astronaut.r - 100 ||
+                        astronaut.x > WORLD.width + astronaut.r + 100
+                    ) {
+                        astronaut.remove = true;
+                    }
+                }
+                state.collectibles = state.collectibles.filter((astronaut) => !astronaut.remove);
             }
 
             function finishReentry() {
                 state.mode = "won";
                 state.reentry.active = false;
+                state.score += VICTORY_BONUS;
+                state.victoryTime = 0;
                 state.bannerTimer = 0;
                 levelBanner.classList.remove("is-visible");
                 saveBest();
@@ -2112,23 +2445,74 @@
 
             function updateReentry(dt) {
                 const reentry = state.reentry;
-                reentry.timer += dt;
                 state.survivalTime += dt;
                 state.score += dt * 24;
+                updateReentryDrift(dt);
+
+                if (reentry.clearanceTimer < reentry.clearanceDuration) {
+                    reentry.clearanceTimer = Math.min(reentry.clearanceDuration, reentry.clearanceTimer + dt);
+                    const clearance = smoothstep(reentry.clearanceTimer / reentry.clearanceDuration);
+                    const previousX = state.player.x;
+                    const previousY = state.player.y;
+                    state.player.x += (WORLD.width * 0.5 - state.player.x) * (1 - Math.exp(-1.35 * dt));
+                    state.player.y += (720 - state.player.y) * (1 - Math.exp(-1.05 * dt));
+                    state.player.vx = (state.player.x - previousX) / Math.max(dt, 0.001);
+                    state.player.vy = (state.player.y - previousY) / Math.max(dt, 0.001);
+                    state.player.thrust = 0.3 + clearance * 0.34 + Math.sin(state.survivalTime * 9) * 0.05;
+                    if (reentry.clearanceTimer >= reentry.clearanceDuration) {
+                        reentry.startX = state.player.x;
+                        reentry.startY = state.player.y;
+                        shell.classList.add("is-cinematic");
+                    }
+                    return;
+                }
+
+                reentry.timer += dt;
                 const progress = clamp(reentry.timer / reentry.duration, 0, 1);
-                const eased = progress * progress * (3 - 2 * progress);
+                const stage = progress < 0.18 ? 0 : progress < 0.48 ? 1 : progress < 0.78 ? 2 : 3;
+                if (stage !== reentry.stage) {
+                    reentry.stage = stage;
+                    state.bannerTimer = 1.8;
+                    levelBanner.textContent = copy.reentryStages[stage];
+                    levelBanner.classList.add("is-visible");
+                }
+                const entry = smoothstep(progress / 0.18);
+                const descent = smoothstep((progress - 0.18) / 0.58);
+                const glide = smoothstep((progress - 0.76) / 0.24);
+                const plasma = reentryPlasmaProgress(progress);
                 const previousX = state.player.x;
                 const previousY = state.player.y;
-                state.player.x = WORLD.width * 0.5 + Math.sin(progress * Math.PI * 3.2) * (22 - eased * 12);
-                state.player.y = 448 + eased * 172;
+                const centerApproach = reentry.startX + (WORLD.width * 0.5 - reentry.startX) * entry;
+                state.player.x = centerApproach + Math.sin(progress * Math.PI * 5.2) * (24 - glide * 16);
+                state.player.y = reentry.startY + (430 - reentry.startY) * entry + descent * 210 - glide * 80;
                 state.player.vx = (state.player.x - previousX) / Math.max(dt, 0.001);
                 state.player.vy = (state.player.y - previousY) / Math.max(dt, 0.001);
-                state.player.thrust = 0.38 + Math.sin(progress * Math.PI * 4) * 0.12;
+                state.player.thrust = 0.24 + plasma * 0.42 + Math.sin(progress * Math.PI * 4) * 0.08;
+                state.shake = Math.max(state.shake, plasma * 0.18);
                 if (progress >= 1) finishReentry();
+            }
+
+            function updatePlasmaIntensity(dt) {
+                let target = lateAtmosphereProgress();
+                if (state.mode === "reentry" && state.reentry.clearanceTimer >= state.reentry.clearanceDuration) {
+                    const progress = clamp(state.reentry.timer / state.reentry.duration, 0, 1);
+                    target = 1 - smoothstep((progress - 0.72) / 0.16);
+                } else if (state.mode === "won" || state.mode === "gameover") {
+                    target = 0;
+                }
+                const response = target > state.plasmaIntensity ? 0.58 : 1.5;
+                state.plasmaIntensity += (target - state.plasmaIntensity) * (1 - Math.exp(-response * dt));
+                if (state.plasmaIntensity < 0.001) state.plasmaIntensity = 0;
             }
 
             function updateParticles(dt) {
                 for (const particle of state.particles) {
+                    if (particle.type === "shockwave") {
+                        const progress = 1 - particle.life / particle.maxLife;
+                        particle.r = particle.startR + (particle.targetR - particle.startR) * smoothstep(progress);
+                        particle.life -= dt;
+                        continue;
+                    }
                     particle.x += particle.vx * dt;
                     particle.y += particle.vy * dt;
                     particle.vx *= 0.982;
@@ -2141,6 +2525,7 @@
             function update(dt) {
                 if (state.mode === "reentry") {
                     updateReentry(dt);
+                    updatePlasmaIntensity(dt);
                     updateParticles(dt);
                     state.shake = Math.max(0, state.shake - dt * 2.8);
                     state.bannerTimer = Math.max(0, state.bannerTimer - dt);
@@ -2149,12 +2534,14 @@
                     return;
                 }
                 if (state.mode !== "playing") {
+                    if (state.mode === "won") state.victoryTime += dt;
                     updateParticles(dt);
                     return;
                 }
                 state.survivalTime += dt;
                 state.score += dt * (9.4 + state.level * 1.55 + state.debris.length * 0.018);
                 updatePhase(dt);
+                updatePlasmaIntensity(dt);
                 if (state.mode !== "playing") {
                     updateParticles(dt);
                     updateHud();
@@ -2215,6 +2602,20 @@
                     ? 0.82 + phaseProgress * 0.18
                     : phaseProgress * 0.82;
                 return clamp((state.level - 1 + withinLevel) / (MAX_LEVEL - 1), 0, 1);
+            }
+
+            function lateAtmosphereProgress() {
+                if (state.mode === "reentry" || state.mode === "won") return 1;
+                if (state.level < 22) return 0;
+                const phaseProgress = clamp(state.phaseTimer / Math.max(0.001, state.phaseDuration), 0, 1);
+                const withinLevel = state.phase === "calm" ? 0.82 + phaseProgress * 0.18 : phaseProgress * 0.82;
+                return Math.pow(smoothstep((state.level - 22 + withinLevel) / 4), 0.7);
+            }
+
+            function reentryPlasmaProgress(progress) {
+                const fadeIn = smoothstep((progress - 0.04) / 0.32);
+                const fadeOut = 1 - smoothstep((progress - 0.72) / 0.16);
+                return fadeIn * fadeOut;
             }
 
             function backgroundObjectProgress() {
@@ -2398,11 +2799,11 @@
             }
 
             function drawProjectedEarthTexture(x, y, radius, time) {
-                const sourceSize = Math.min(earthSprite.naturalWidth, earthSprite.naturalHeight) * 0.54;
+                const sourceSize = Math.min(earthSprite.naturalWidth, earthSprite.naturalHeight);
                 const sourceX = (earthSprite.naturalWidth - sourceSize) / 2;
                 const sourceY = (earthSprite.naturalHeight - sourceSize) / 2;
                 const scroll = earthTextureScrollProgress(time) * 2;
-                const bandHeight = radius > 1000 ? 4 : 2;
+                const bandHeight = radius > 1350 ? 4 : 2;
                 const visibleTop = Math.max(0, Math.floor(y - radius));
                 const visibleBottom = Math.min(WORLD.height, Math.ceil(y + radius));
                 ctx.fillStyle = "#176f9f";
@@ -2417,15 +2818,22 @@
                     const latitude = Math.asin(sphereY) / Math.PI + 0.5;
                     const textureV = mirroredTextureCoordinate(latitude - scroll);
                     const sourceBandY = sourceY + textureV * (sourceSize - 2);
+                    const destinationLeft = x - halfChord;
+                    const destinationWidth = halfChord * 2;
+                    const clippedLeft = Math.max(0, destinationLeft);
+                    const clippedRight = Math.min(WORLD.width, destinationLeft + destinationWidth);
+                    if (clippedRight <= clippedLeft) continue;
+                    const sourceLeft = sourceX + (clippedLeft - destinationLeft) / destinationWidth * sourceSize;
+                    const sourceWidth = (clippedRight - clippedLeft) / destinationWidth * sourceSize;
                     ctx.drawImage(
                         earthSprite,
-                        sourceX,
+                        sourceLeft,
                         sourceBandY,
-                        sourceSize,
+                        sourceWidth,
                         2,
-                        x - halfChord,
+                        clippedLeft,
                         bandY,
-                        halfChord * 2,
+                        clippedRight - clippedLeft,
                         bandHeight + 1
                     );
                 }
@@ -2445,7 +2853,50 @@
                 ctx.fillRect(x - radius, visibleTop, radius * 2, visibleBottom - visibleTop);
             }
 
-            function drawEarthPlanet({ x, y, radius, alpha = 1, night = false, nightAmount = 0, sunrise = false, warmth = 0, aurora = false, cityLights = false, lightDirection = -1, time = 0 }) {
+            function drawAtmosphereBand({ x, y, radius, alpha, warmth, darkness, lightDirection }) {
+                const thickness = Math.max(10, radius * 0.032);
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.globalCompositeOperation = "lighter";
+
+                const haze = ctx.createRadialGradient(x, y, radius * 0.955, x, y, radius + thickness * 1.9);
+                haze.addColorStop(0, "rgba(38, 126, 204, 0)");
+                haze.addColorStop(0.3, `rgba(72, 185, 255, ${0.13 + darkness * 0.08})`);
+                haze.addColorStop(0.48, `rgba(135, 229, 255, ${0.27 + darkness * 0.08})`);
+                haze.addColorStop(0.68, "rgba(81, 184, 255, 0.12)");
+                haze.addColorStop(1, "rgba(49, 133, 238, 0)");
+                ctx.fillStyle = haze;
+                ctx.beginPath();
+                ctx.arc(x, y, radius + thickness * 1.9, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = `rgba(190, 244, 255, ${0.52 + darkness * 0.2})`;
+                ctx.lineWidth = Math.max(1.5, radius * 0.006);
+                ctx.beginPath();
+                ctx.arc(x, y, radius + Math.max(1.5, radius * 0.006), 0, Math.PI * 2);
+                ctx.stroke();
+
+                const warmSide = lightDirection < 0 ? Math.PI : Math.PI * 1.55;
+                const warmArc = ctx.createLinearGradient(x - radius, y, x + radius, y);
+                if (lightDirection < 0) {
+                    warmArc.addColorStop(0, `rgba(255, 158, 83, ${0.48 + warmth * 0.36})`);
+                    warmArc.addColorStop(0.52, "rgba(255, 213, 151, 0.08)");
+                    warmArc.addColorStop(1, "rgba(255, 213, 151, 0)");
+                } else {
+                    warmArc.addColorStop(0, "rgba(255, 213, 151, 0)");
+                    warmArc.addColorStop(0.48, "rgba(255, 213, 151, 0.08)");
+                    warmArc.addColorStop(1, `rgba(255, 158, 83, ${0.48 + warmth * 0.36})`);
+                }
+                ctx.strokeStyle = warmArc;
+                ctx.lineWidth = thickness * (0.34 + warmth * 0.18);
+                ctx.lineCap = "round";
+                ctx.beginPath();
+                ctx.arc(x, y, radius + thickness * 0.34, warmSide, warmSide + Math.PI * 0.46);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawEarthPlanet({ x, y, radius, alpha = 1, night = false, nightAmount = 0, sunrise = false, warmth = 0, cityLights = false, lightDirection = -1, time = 0 }) {
                 const texturedEarth = earthSpriteReady && earthSprite.complete && earthSprite.naturalWidth > 0;
                 const darkness = Math.max(night ? 1 : 0, nightAmount);
                 const warmLight = Math.max(sunrise ? 1 : 0, warmth);
@@ -2525,26 +2976,17 @@
                     }
                     ctx.restore();
                 }
-                if (aurora) {
-                    ctx.globalCompositeOperation = "lighter";
-                    ctx.strokeStyle = "rgba(108, 255, 171, 0.58)";
-                    ctx.lineWidth = Math.max(2, radius * 0.024);
-                    for (let index = 0; index < 4; index += 1) {
-                        ctx.beginPath();
-                        ctx.ellipse(x, y - radius * 0.48 + index * radius * 0.06, radius * (0.45 + index * 0.05), radius * 0.11, 0.02, Math.PI * 1.08, Math.PI * 1.92);
-                        ctx.stroke();
-                    }
-                }
                 ctx.restore();
 
-                ctx.save();
-                ctx.globalAlpha = alpha * (texturedEarth ? 0.38 : 0.78);
-                ctx.strokeStyle = warmLight > 0.25 ? `rgba(255, 204, 129, ${0.52 + warmLight * 0.34})` : "rgba(121, 224, 255, 0.74)";
-                ctx.lineWidth = Math.max(1.5, radius * 0.018);
-                ctx.beginPath();
-                ctx.arc(x, y, radius + Math.max(2, radius * 0.018), 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
+                drawAtmosphereBand({
+                    x,
+                    y,
+                    radius,
+                    alpha: alpha * (texturedEarth ? 0.82 : 1),
+                    warmth: warmLight,
+                    darkness,
+                    lightDirection
+                });
             }
 
             function drawOrbitalScene(scene, alpha, time, travel = backgroundObjectProgress(), drawCelestial = true) {
@@ -2566,7 +3008,7 @@
                     if (drawCelestial) drawMoon(moon.x, moon.y, 62 + earth.approach * 12, alpha * 0.9, time);
                     drawEarthPlanet({ ...earth, alpha, night: true, lightDirection: -0.64, time });
                 } else if (scene.key === "aurora") {
-                    drawEarthPlanet({ ...earth, alpha, aurora: true, lightDirection: -0.44, time });
+                    drawEarthPlanet({ ...earth, alpha, lightDirection: -0.44, time });
                 } else if (scene.key === "highOrbit") {
                     const moon = risingCelestialPosition(earth, travel, 0.2, time);
                     if (drawCelestial) drawMoon(moon.x, moon.y, 34, alpha * 0.7, time);
@@ -2594,47 +3036,100 @@
 
             function drawReentryBackground() {
                 const progress = clamp(state.reentry.timer / state.reentry.duration, 0, 1);
+                const skyMix = smoothstep((progress - 0.56) / 0.36);
+                const atmosphericFlight = smoothstep((progress - 0.68) / 0.25);
+                const plasma = reentryPlasmaProgress(progress);
+                const blackout = smoothstep((progress - 0.43) / 0.1) * (1 - smoothstep((progress - 0.67) / 0.12));
                 const orbitEarth = earthOrbitState(state.survivalTime);
+                const earthRadius = orbitEarth.radius + progress * 540;
+                const closeEarthY = orbitEarth.y - progress * 92;
+                const flightEarthY = WORLD.height + earthRadius * 0.7;
                 const earth = {
-                    x: orbitEarth.x + Math.sin(state.survivalTime * 0.05) * 12,
-                    y: orbitEarth.y - progress * 44,
-                    radius: orbitEarth.radius + progress * 440
+                    x: WORLD.width * 0.5 + Math.sin(state.survivalTime * 0.05) * (12 - skyMix * 8),
+                    y: closeEarthY + (flightEarthY - closeEarthY) * atmosphericFlight,
+                    radius: earthRadius
                 };
                 const horizon = earth.y - earth.radius;
-                drawSpaceGradient({ key: "sunrise" });
-                drawStars(state.survivalTime * 0.35);
-                drawSun(WORLD.width * 0.15 + Math.sin(state.survivalTime * 0.03) * 48, horizon + 72, 66, 0.66 + progress * 0.22);
+                const space = ctx.createLinearGradient(0, 0, 0, WORLD.height);
+                space.addColorStop(0, "#030713");
+                space.addColorStop(0.58, "#15162c");
+                space.addColorStop(1, "#593343");
+                ctx.fillStyle = space;
+                ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+                if (skyMix > 0) {
+                    const sky = ctx.createLinearGradient(0, 0, 0, WORLD.height);
+                    sky.addColorStop(0, "#105078");
+                    sky.addColorStop(0.52, "#3d91b4");
+                    sky.addColorStop(1, "#a7ddea");
+                    ctx.save();
+                    ctx.globalAlpha = skyMix;
+                    ctx.fillStyle = sky;
+                    ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+                    ctx.restore();
+                }
+                drawStars(state.survivalTime * 0.35, 1 - skyMix);
+                drawSun(WORLD.width * 0.13 + progress * 72, horizon + 80 - skyMix * 150, 66, 1);
                 drawEarthPlanet({
                     ...earth,
                     alpha: 1,
                     sunrise: true,
-                    night: progress < 0.42,
+                    nightAmount: Math.max(0, 0.8 - progress * 1.12),
+                    warmth: Math.max(0.16, 1 - skyMix * 0.75),
                     lightDirection: -1,
                     time: state.survivalTime
                 });
+
+                if (skyMix > 0.06) {
+                    ctx.save();
+                    ctx.globalAlpha = skyMix * 0.34;
+                    ctx.strokeStyle = "rgba(242, 252, 255, 0.82)";
+                    ctx.lineCap = "round";
+                    for (let index = 0; index < 9; index += 1) {
+                        const y = ((index * 143 + state.survivalTime * (58 + index * 3)) % (WORLD.height + 220)) - 110;
+                        const x = 40 + ((index * 97) % (WORLD.width - 80));
+                        ctx.lineWidth = 8 + (index % 4) * 5;
+                        ctx.beginPath();
+                        ctx.moveTo(x - 52 - skyMix * 35, y - 18);
+                        ctx.bezierCurveTo(x - 16, y + 4, x + 28, y - 8, x + 72 + skyMix * 42, y + 22);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+
                 ctx.save();
                 ctx.globalCompositeOperation = "lighter";
-                const streakCount = 16;
+                ctx.globalAlpha = plasma * 0.88;
+                const streakCount = 22;
                 for (let index = 0; index < streakCount; index += 1) {
                     const x = (index * 73 + state.survivalTime * (45 + index * 3)) % (WORLD.width + 60) - 30;
                     const y = PLAY_TOP + ((index * 119 + state.survivalTime * 155) % 590);
-                    const length = 28 + (index % 5) * 13 + progress * 42;
-                    const flare = ctx.createLinearGradient(x, y, x - 14, y - length);
+                    const length = 30 + (index % 5) * 14 + plasma * 84;
+                    const flare = ctx.createLinearGradient(x, y, x - 18, y - length);
                     flare.addColorStop(0, "rgba(255, 237, 176, 0)");
-                    flare.addColorStop(0.55, "rgba(255, 159, 92, 0.34)");
-                    flare.addColorStop(1, "rgba(255, 229, 181, 0.06)");
+                    flare.addColorStop(0.48, "rgba(255, 126, 63, 0.56)");
+                    flare.addColorStop(1, "rgba(255, 239, 194, 0.16)");
                     ctx.strokeStyle = flare;
-                    ctx.lineWidth = 1.2 + (index % 3) * 0.65;
+                    ctx.lineWidth = 1.4 + (index % 3) * 0.8;
                     ctx.beginPath();
                     ctx.moveTo(x, y);
-                    ctx.lineTo(x - 14, y - length);
+                    ctx.lineTo(x - 18, y - length);
                     ctx.stroke();
                 }
                 ctx.restore();
+
+                if (blackout > 0) {
+                    const blackoutVignette = ctx.createRadialGradient(WORLD.width * 0.5, WORLD.height * 0.48, 70, WORLD.width * 0.5, WORLD.height * 0.48, WORLD.width * 0.82);
+                    blackoutVignette.addColorStop(0, `rgba(16, 8, 20, ${blackout * 0.08})`);
+                    blackoutVignette.addColorStop(1, `rgba(3, 4, 13, ${blackout * 0.56})`);
+                    ctx.fillStyle = blackoutVignette;
+                    ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+                }
             }
 
             function drawBackground() {
-                if (state.mode === "reentry" || state.mode === "won") {
+                const reentryCinematic = state.mode === "reentry" &&
+                    state.reentry.clearanceTimer >= state.reentry.clearanceDuration;
+                if (reentryCinematic || state.mode === "won") {
                     drawReentryBackground();
                     return;
                 }
@@ -2652,7 +3147,6 @@
                     alpha: 1,
                     nightAmount: cycle.nightAmount,
                     warmth: cycle.warmth,
-                    aurora: accentScene.key === "aurora" && cycle.nightAmount > 0.48,
                     cityLights: cycle.nightAmount > 0.3,
                     lightDirection: cycle.lightDirection,
                     time
@@ -2660,10 +3154,245 @@
                 drawISSBackground();
             }
 
+            function drawSolarPanel(x, y, width, height, columns = 4, rows = 2, color = "#1c5d9d") {
+                ctx.save();
+                ctx.fillStyle = color;
+                ctx.strokeStyle = "rgba(210, 240, 255, 0.82)";
+                ctx.lineWidth = Math.max(1, height * 0.09);
+                ctx.beginPath();
+                ctx.roundRect(x, y, width, height, Math.min(2.5, height * 0.14));
+                ctx.fill();
+                ctx.stroke();
+                ctx.strokeStyle = "rgba(113, 190, 246, 0.7)";
+                ctx.lineWidth = Math.max(0.7, height * 0.045);
+                for (let column = 1; column < columns; column += 1) {
+                    const cellX = x + width * column / columns;
+                    ctx.beginPath();
+                    ctx.moveTo(cellX, y);
+                    ctx.lineTo(cellX, y + height);
+                    ctx.stroke();
+                }
+                for (let row = 1; row < rows; row += 1) {
+                    const cellY = y + height * row / rows;
+                    ctx.beginPath();
+                    ctx.moveTo(x, cellY);
+                    ctx.lineTo(x + width, cellY);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            function drawSatellite(debris) {
+                const r = debris.r;
+                const variant = debris.satelliteVariant ?? 0;
+                const outline = "rgba(6, 17, 31, 0.88)";
+                ctx.save();
+                ctx.lineJoin = "round";
+                ctx.lineCap = "round";
+
+                if (variant === 0) {
+                    const wingWidth = r * 1.28;
+                    const wingHeight = r * 0.56;
+                    drawSolarPanel(-r * 2.02, -wingHeight / 2, wingWidth, wingHeight, 4, 2);
+                    drawSolarPanel(r * 0.74, -wingHeight / 2, wingWidth, wingHeight, 4, 2);
+                    ctx.strokeStyle = "#c8d3d8";
+                    ctx.lineWidth = r * 0.1;
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 0.72, 0);
+                    ctx.lineTo(r * 0.72, 0);
+                    ctx.stroke();
+                    const bus = ctx.createLinearGradient(-r * 0.55, -r * 0.48, r * 0.58, r * 0.48);
+                    bus.addColorStop(0, "#fff1b0");
+                    bus.addColorStop(0.5, "#c9943f");
+                    bus.addColorStop(1, "#765027");
+                    ctx.fillStyle = bus;
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = Math.max(1.4, r * 0.1);
+                    ctx.beginPath();
+                    ctx.roundRect(-r * 0.58, -r * 0.48, r * 1.16, r * 0.96, r * 0.12);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.strokeStyle = "#e9f2f3";
+                    ctx.lineWidth = Math.max(1.2, r * 0.08);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -r * 0.48);
+                    ctx.lineTo(0, -r * 1.02);
+                    ctx.stroke();
+                    ctx.fillStyle = "#d8e6e9";
+                    ctx.strokeStyle = outline;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -r * 1.06, r * 0.52, r * 0.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (variant === 1) {
+                    drawSolarPanel(-r * 1.85, r * 0.36, r * 3.7, r * 0.54, 7, 2, "#244f91");
+                    ctx.fillStyle = "#dce8eb";
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = Math.max(1.4, r * 0.1);
+                    ctx.beginPath();
+                    ctx.roundRect(-r * 0.48, -r * 1.0, r * 0.96, r * 1.68, r * 0.32);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = "#f2b84b";
+                    ctx.fillRect(-r * 0.37, -r * 0.55, r * 0.74, r * 0.3);
+                    ctx.fillStyle = "#112f55";
+                    ctx.beginPath();
+                    ctx.arc(0, r * 0.52, r * 0.27, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = "#65dcff";
+                    ctx.beginPath();
+                    ctx.arc(-r * 0.07, r * 0.46, r * 0.1, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (variant === 2) {
+                    for (let arm = 0; arm < 4; arm += 1) {
+                        ctx.save();
+                        ctx.rotate(Math.PI / 4 + arm * Math.PI / 2);
+                        ctx.strokeStyle = "#d6e1e3";
+                        ctx.lineWidth = r * 0.09;
+                        ctx.beginPath();
+                        ctx.moveTo(r * 0.38, 0);
+                        ctx.lineTo(r * 0.72, 0);
+                        ctx.stroke();
+                        drawSolarPanel(r * 0.68, -r * 0.22, r * 0.92, r * 0.44, 3, 2, "#225c99");
+                        ctx.restore();
+                    }
+                    ctx.fillStyle = "#d2a04f";
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = Math.max(1.4, r * 0.1);
+                    ctx.beginPath();
+                    for (let point = 0; point < 6; point += 1) {
+                        const angle = -Math.PI / 2 + point * Math.PI / 3;
+                        const x = Math.cos(angle) * r * 0.58;
+                        const y = Math.sin(angle) * r * 0.58;
+                        if (point === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = "#edf5f3";
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * 0.23, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (variant === 3) {
+                    drawSolarPanel(-r * 1.85, r * 0.38, r * 1.35, r * 0.5, 4, 2, "#234f90");
+                    drawSolarPanel(r * 0.5, r * 0.38, r * 1.35, r * 0.5, 4, 2, "#234f90");
+                    const tube = ctx.createLinearGradient(-r * 0.5, 0, r * 0.5, 0);
+                    tube.addColorStop(0, "#687984");
+                    tube.addColorStop(0.45, "#edf3f1");
+                    tube.addColorStop(1, "#8798a0");
+                    ctx.fillStyle = tube;
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = Math.max(1.4, r * 0.1);
+                    ctx.beginPath();
+                    ctx.roundRect(-r * 0.5, -r * 0.9, r, r * 1.45, r * 0.24);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = "#172d49";
+                    ctx.beginPath();
+                    ctx.ellipse(0, -r * 0.85, r * 0.48, r * 0.22, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = "#72dfff";
+                    ctx.beginPath();
+                    ctx.ellipse(-r * 0.08, -r * 0.9, r * 0.21, r * 0.09, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = "#d6a14e";
+                    ctx.fillRect(-r * 0.42, r * 0.04, r * 0.84, r * 0.26);
+                } else {
+                    const panelScale = debris.kind === "cubesat" ? 0.72 : 1;
+                    drawSolarPanel(-r * (1.55 * panelScale + 0.5), -r * 0.3, r * 1.1 * panelScale, r * 0.6, 3, 2, "#1f5a9b");
+                    drawSolarPanel(r * 0.5, -r * 0.3, r * 1.1 * panelScale, r * 0.6, 3, 2, "#1f5a9b");
+                    ctx.fillStyle = "#bf8f42";
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = Math.max(1.4, r * 0.1);
+                    ctx.beginPath();
+                    ctx.roundRect(-r * 0.5, -r * 0.58, r, r * 1.16, r * 0.1);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.strokeStyle = "rgba(255, 239, 187, 0.78)";
+                    ctx.lineWidth = Math.max(0.8, r * 0.05);
+                    ctx.strokeRect(-r * 0.32, -r * 0.4, r * 0.64, r * 0.8);
+                    ctx.strokeStyle = "#e7eff0";
+                    ctx.lineWidth = r * 0.07;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -r * 0.58);
+                    ctx.lineTo(r * 0.2, -r * 1.24);
+                    ctx.lineTo(r * 0.54, -r * 1.5);
+                    ctx.stroke();
+                }
+
+                if (debris.kind === "operationalSatellite") {
+                    ctx.fillStyle = Math.sin(state.survivalTime * 6 + debris.seed) > 0 ? "#8ef088" : "#eaffef";
+                    ctx.beginPath();
+                    ctx.arc(r * 0.28, r * 0.25, Math.max(1.5, r * 0.1), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            function drawDebrisAtmosphericGlow(debris) {
+                if (state.mode !== "playing" || state.plasmaIntensity <= 0.02) return;
+                const speed = Math.hypot(debris.vx, debris.vy);
+                const speedFactor = clamp(speed / 360, 0.32, 1);
+                const strength = state.plasmaIntensity * (0.54 + speedFactor * 0.46);
+                const visibility = Math.pow(strength, 0.62);
+                const heat = smoothstep((strength - 0.18) / 0.72);
+                const r = debris.r;
+                const wakeLength = r * (1.7 + strength * 2.2);
+                const flowAngle = Math.atan2(debris.vy, debris.vx) + Math.PI / 2;
+                const flicker = 0.92 + Math.sin(state.survivalTime * 18 + debris.seed) * 0.08;
+
+                ctx.save();
+                ctx.rotate(flowAngle);
+                ctx.globalCompositeOperation = "lighter";
+
+                const wake = ctx.createLinearGradient(0, -r * 1.25, 0, wakeLength);
+                wake.addColorStop(0, heat > 0.36 ? "rgba(255, 244, 198, 0.78)" : "rgba(203, 251, 255, 0.72)");
+                wake.addColorStop(0.28, heat > 0.36 ? "rgba(255, 126, 68, 0.46)" : "rgba(91, 214, 255, 0.38)");
+                wake.addColorStop(1, "rgba(67, 154, 255, 0)");
+                ctx.globalAlpha = visibility * (0.22 + strength * 0.34) * flicker;
+                ctx.fillStyle = wake;
+                ctx.beginPath();
+                ctx.moveTo(0, -r * 1.36);
+                ctx.bezierCurveTo(r * 0.92, -r * 1.08, r * 1.18, -r * 0.18, r * 0.78, r * 0.68);
+                ctx.bezierCurveTo(r * 0.48, r * 1.18, r * 0.34, wakeLength * 0.78, 0, wakeLength);
+                ctx.bezierCurveTo(-r * 0.34, wakeLength * 0.78, -r * 0.48, r * 1.18, -r * 0.78, r * 0.68);
+                ctx.bezierCurveTo(-r * 1.18, -r * 0.18, -r * 0.92, -r * 1.08, 0, -r * 1.36);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.globalAlpha = visibility * (0.4 + strength * 0.45);
+                ctx.strokeStyle = heat > 0.34 ? "rgba(255, 196, 112, 0.94)" : "rgba(190, 248, 255, 0.88)";
+                ctx.lineWidth = Math.max(1, r * (0.1 + strength * 0.09));
+                ctx.lineCap = "round";
+                ctx.shadowColor = heat > 0.34 ? "#ff7448" : "#73e6ff";
+                ctx.shadowBlur = 4 + strength * 9;
+                ctx.beginPath();
+                ctx.arc(0, -r * 0.12, r * (1.02 + strength * 0.12), Math.PI * 1.08, Math.PI * 1.92);
+                ctx.stroke();
+
+                if (heat > 0.18) {
+                    ctx.globalAlpha = visibility * heat * 0.68;
+                    ctx.strokeStyle = "rgba(255, 91, 53, 0.78)";
+                    ctx.lineWidth = Math.max(1, r * 0.09);
+                    ctx.shadowColor = "#ff5739";
+                    ctx.shadowBlur = 7;
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 0.62, -r * 0.76);
+                    ctx.quadraticCurveTo(0, -r * 1.2, r * 0.62, -r * 0.76);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
             function drawDebris(debris) {
                 ctx.save();
                 ctx.translate(debris.x, debris.y);
                 const r = debris.r;
+                const fuelHeat = debris.kind === "fuelTank" ? clamp(debris.laserHeat, 0, 1) : 0;
+                drawDebrisAtmosphericGlow(debris);
                 if (debris.laserGlow > 0) {
                     ctx.save();
                     ctx.globalCompositeOperation = "lighter";
@@ -2678,9 +3407,22 @@
                     ctx.fill();
                     ctx.restore();
                 }
+                if (fuelHeat > 0) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = "lighter";
+                    ctx.globalAlpha = fuelHeat;
+                    const heatGlow = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r * 2.25);
+                    heatGlow.addColorStop(0, "rgba(255, 242, 178, 0.74)");
+                    heatGlow.addColorStop(0.35, "rgba(255, 87, 45, 0.42)");
+                    heatGlow.addColorStop(1, "rgba(255, 52, 32, 0)");
+                    ctx.fillStyle = heatGlow;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * 2.25, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
                 ctx.rotate(debris.rot);
-                const warning = (debris.kind === "satellite" || debris.kind === "cubesat") && debris.fuse < 0.85;
-                ctx.globalAlpha = debris.flash > 0 || warning ? 1 : 0.92;
+                ctx.globalAlpha = debris.flash > 0 ? 1 : 0.92;
                 const metal = debris.kind === "chunk" ? "#aeb9c2" :
                     debris.kind === "fuelTank" ? "#d9d2bb" :
                     debris.kind === "antenna" ? "#c5d0d9" :
@@ -2729,6 +3471,19 @@
                     ctx.moveTo(-r * 0.82, -r * 0.1);
                     ctx.lineTo(r * 0.82, -r * 0.1);
                     ctx.stroke();
+                    if (fuelHeat > 0) {
+                        ctx.save();
+                        ctx.globalCompositeOperation = "lighter";
+                        ctx.globalAlpha = fuelHeat * 0.84;
+                        ctx.fillStyle = "#ff4d2f";
+                        ctx.beginPath();
+                        ctx.roundRect(-r * 1.05, -r * 0.46, r * 2.1, r * 0.92, r * 0.42);
+                        ctx.fill();
+                        ctx.strokeStyle = "#fff1ba";
+                        ctx.lineWidth = Math.max(1.4, r * 0.1);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
                 } else if (debris.kind === "antenna") {
                     ctx.strokeStyle = "#d9edf8";
                     ctx.lineWidth = Math.max(2, r * 0.18);
@@ -2812,82 +3567,8 @@
                     ctx.moveTo(0, -r);
                     ctx.lineTo(0, r * 0.72);
                     ctx.stroke();
-                } else if (debris.kind === "operationalSatellite") {
-                    const busWidth = r * 1.18;
-                    const busHeight = r * 0.82;
-                    const wingWidth = r * 1.08;
-                    const wingHeight = r * 0.58;
-                    ctx.fillStyle = "#1d5f9a";
-                    ctx.fillRect(-r * 1.82, -wingHeight / 2, wingWidth, wingHeight);
-                    ctx.fillRect(r * 0.74, -wingHeight / 2, wingWidth, wingHeight);
-                    ctx.strokeStyle = "rgba(215, 241, 255, 0.66)";
-                    ctx.lineWidth = Math.max(1, r * 0.07);
-                    ctx.strokeRect(-r * 1.82, -wingHeight / 2, wingWidth, wingHeight);
-                    ctx.strokeRect(r * 0.74, -wingHeight / 2, wingWidth, wingHeight);
-                    ctx.strokeStyle = "rgba(119, 194, 255, 0.72)";
-                    for (const offset of [-r * 1.82, r * 0.74]) {
-                        for (let cell = 1; cell < 4; cell += 1) {
-                            const cellX = offset + wingWidth * cell / 4;
-                            ctx.beginPath();
-                            ctx.moveTo(cellX, -wingHeight / 2);
-                            ctx.lineTo(cellX, wingHeight / 2);
-                            ctx.stroke();
-                        }
-                    }
-                    const bus = ctx.createLinearGradient(-busWidth / 2, -busHeight / 2, busWidth / 2, busHeight / 2);
-                    bus.addColorStop(0, "#f2f5f2");
-                    bus.addColorStop(0.5, "#b5c3cb");
-                    bus.addColorStop(1, "#647a88");
-                    ctx.fillStyle = bus;
-                    ctx.fillRect(-busWidth / 2, -busHeight / 2, busWidth, busHeight);
-                    ctx.strokeStyle = "rgba(10, 25, 40, 0.82)";
-                    ctx.strokeRect(-busWidth / 2, -busHeight / 2, busWidth, busHeight);
-                    ctx.fillStyle = "#ffcf6d";
-                    ctx.fillRect(-busWidth * 0.14, -busHeight * 0.42, busWidth * 0.28, busHeight * 0.16);
-                    ctx.strokeStyle = "rgba(242, 247, 255, 0.78)";
-                    ctx.beginPath();
-                    ctx.moveTo(0, -busHeight / 2);
-                    ctx.lineTo(0, -r * 1.34);
-                    ctx.lineTo(r * 0.34, -r * 1.56);
-                    ctx.stroke();
-                    ctx.fillStyle = Math.sin(state.survivalTime * 6 + debris.seed) > 0 ? "#8ef088" : "#e7fff0";
-                    ctx.beginPath();
-                    ctx.arc(0, busHeight * 0.12, Math.max(1.8, r * 0.14), 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    const isCubesat = debris.kind === "cubesat";
-                    const bodySize = isCubesat ? r * 0.86 : r * 1.04;
-                    if (warning) {
-                        ctx.save();
-                        ctx.rotate(-debris.rot);
-                        ctx.globalAlpha = 0.35 + 0.28 * Math.sin(state.survivalTime * 18);
-                        ctx.strokeStyle = "#ff7d6e";
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, r * 1.55, 0, Math.PI * 2);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                    ctx.fillStyle = "#d6c29b";
-                    ctx.fillRect(-bodySize / 2, -bodySize / 2, bodySize, bodySize);
-                    ctx.strokeRect(-bodySize / 2, -bodySize / 2, bodySize, bodySize);
-                    ctx.fillStyle = "#5d9bff";
-                    const wingScale = isCubesat ? 0.62 : 1;
-                    ctx.fillRect(-r * 1.7 * wingScale, -r * 0.34, r * 0.9 * wingScale, r * 0.68);
-                    ctx.fillRect(r * 0.8 * wingScale, -r * 0.34, r * 0.9 * wingScale, r * 0.68);
-                    ctx.strokeRect(-r * 1.7 * wingScale, -r * 0.34, r * 0.9 * wingScale, r * 0.68);
-                    ctx.strokeRect(r * 0.8 * wingScale, -r * 0.34, r * 0.9 * wingScale, r * 0.68);
-                    ctx.strokeStyle = "rgba(255, 240, 190, 0.8)";
-                    ctx.beginPath();
-                    ctx.moveTo(0, -r * 0.52);
-                    ctx.lineTo(0, -r * 1.18);
-                    ctx.moveTo(0, -r * 1.18);
-                    ctx.lineTo(r * 0.38, -r * 1.46);
-                    ctx.stroke();
-                    ctx.fillStyle = warning ? "#ff6969" : "#8ef088";
-                    ctx.beginPath();
-                    ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2);
-                    ctx.fill();
+                } else if (SATELLITE_KINDS.has(debris.kind)) {
+                    drawSatellite(debris);
                 }
                 ctx.restore();
             }
@@ -2949,6 +3630,157 @@
                 ctx.restore();
             }
 
+            function drawAtmosphericPlasma(strength, heat) {
+                const visibility = Math.pow(clamp(strength, 0, 1), 0.55);
+                if (visibility <= 0.002) return;
+                const pulse = 0.94 + Math.sin(state.survivalTime * 17) * 0.06;
+                const orangeMix = smoothstep((heat - 0.28) / 0.6);
+                const wakeLength = 38 + strength * 72;
+                const hullWidth = 28 + strength * 5;
+                const wakeWidth = 8 + strength * 7;
+
+                ctx.save();
+                ctx.globalCompositeOperation = "lighter";
+
+                ctx.save();
+                ctx.scale(1, 1.42);
+                const ionHalo = ctx.createRadialGradient(0, -12, 3, 0, -3, 48 + strength * 14);
+                ionHalo.addColorStop(0, orangeMix > 0.38 ? "rgba(255, 183, 108, 0.38)" : "rgba(210, 252, 255, 0.3)");
+                ionHalo.addColorStop(0.48, orangeMix > 0.38 ? "rgba(255, 76, 46, 0.18)" : "rgba(87, 207, 255, 0.12)");
+                ionHalo.addColorStop(1, "rgba(66, 154, 255, 0)");
+                ctx.globalAlpha = visibility * (0.38 + strength * 0.24) * pulse;
+                ctx.fillStyle = ionHalo;
+                ctx.beginPath();
+                ctx.arc(0, -3, 48 + strength * 14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                const envelope = ctx.createLinearGradient(0, -62, 0, wakeLength);
+                envelope.addColorStop(0, "rgba(226, 255, 255, 0.94)");
+                envelope.addColorStop(0.18, "rgba(100, 225, 255, 0.52)");
+                envelope.addColorStop(0.52, orangeMix > 0.42 ? "rgba(255, 126, 72, 0.24)" : "rgba(69, 179, 255, 0.2)");
+                envelope.addColorStop(1, "rgba(60, 154, 255, 0)");
+                ctx.globalAlpha = visibility * (0.14 + strength * 0.23) * pulse;
+                ctx.fillStyle = envelope;
+                ctx.beginPath();
+                ctx.moveTo(0, -60 - strength * 4);
+                ctx.bezierCurveTo(hullWidth * 0.54, -57, hullWidth * 0.92, -30, hullWidth, -4);
+                ctx.bezierCurveTo(hullWidth * 1.04, 17, hullWidth * 0.72, 37, wakeWidth, 54);
+                ctx.bezierCurveTo(wakeWidth * 0.8, 71, wakeWidth * 0.42, wakeLength * 0.9, 0, wakeLength);
+                ctx.bezierCurveTo(-wakeWidth * 0.42, wakeLength * 0.9, -wakeWidth * 0.8, 71, -wakeWidth, 54);
+                ctx.bezierCurveTo(-hullWidth * 0.72, 37, -hullWidth * 1.04, 17, -hullWidth, -4);
+                ctx.bezierCurveTo(-hullWidth * 0.92, -30, -hullWidth * 0.54, -57, 0, -60 - strength * 4);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.shadowColor = orangeMix > 0.42 ? "#ff7147" : "#79e8ff";
+                ctx.shadowBlur = 7 + strength * 11;
+                ctx.lineWidth = 1.6 + strength * 2.2;
+                for (const side of [-1, 1]) {
+                    const leadingEdge = ctx.createLinearGradient(0, -56, side * hullWidth, 34);
+                    leadingEdge.addColorStop(0, "rgba(248, 255, 237, 0.94)");
+                    leadingEdge.addColorStop(0.34, orangeMix > 0.34 ? "rgba(255, 177, 86, 0.94)" : "rgba(145, 241, 255, 0.88)");
+                    leadingEdge.addColorStop(0.74, orangeMix > 0.34 ? "rgba(255, 70, 42, 0.72)" : "rgba(80, 199, 255, 0.54)");
+                    leadingEdge.addColorStop(1, "rgba(63, 159, 255, 0)");
+                    ctx.globalAlpha = visibility * (0.38 + strength * 0.5) * pulse;
+                    ctx.strokeStyle = leadingEdge;
+                    ctx.beginPath();
+                    ctx.moveTo(side * 2, -56);
+                    ctx.bezierCurveTo(side * 17, -50, side * 23, -29, side * hullWidth, -7);
+                    ctx.bezierCurveTo(side * (hullWidth + 1), 12, side * 22, 30, side * 12, 46);
+                    ctx.bezierCurveTo(side * 10, 61, side * wakeWidth, wakeLength * 0.76, side * 3, wakeLength);
+                    ctx.stroke();
+                }
+
+                ctx.globalAlpha = visibility * (0.32 + strength * 0.42);
+                ctx.strokeStyle = orangeMix > 0.48 ? "rgba(255, 224, 154, 0.96)" : "rgba(226, 255, 255, 0.9)";
+                ctx.lineWidth = 1.5 + strength * 1.7;
+                ctx.shadowBlur = 6 + strength * 8;
+                ctx.beginPath();
+                ctx.moveTo(-18 - strength * 3, -47);
+                ctx.bezierCurveTo(-11, -64 - strength * 5, 11, -64 - strength * 5, 18 + strength * 3, -47);
+                ctx.stroke();
+
+                const noseBloomRadius = 19 + strength * 6;
+                const noseBloom = ctx.createRadialGradient(0, -51, 1, 0, -49, noseBloomRadius);
+                noseBloom.addColorStop(0, "rgba(255, 244, 209, 0.72)");
+                noseBloom.addColorStop(0.3, orangeMix > 0.3 ? "rgba(255, 205, 126, 0.56)" : "rgba(165, 245, 255, 0.5)");
+                noseBloom.addColorStop(1, "rgba(255, 91, 48, 0)");
+                ctx.globalAlpha = visibility * (0.1 + orangeMix * 0.2) * pulse;
+                ctx.fillStyle = noseBloom;
+                ctx.beginPath();
+                ctx.arc(0, -49, noseBloomRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (orangeMix > 0.16) {
+                    ctx.globalAlpha = visibility * orangeMix * 0.72;
+                    ctx.strokeStyle = "rgba(255, 247, 204, 0.9)";
+                    ctx.lineWidth = 0.9 + strength * 0.9;
+                    ctx.shadowColor = "#ffb26d";
+                    ctx.shadowBlur = 6;
+                    for (const side of [-1, 1]) {
+                        ctx.beginPath();
+                        ctx.moveTo(side * 3, -52);
+                        ctx.bezierCurveTo(side * 13, -43, side * 19, -19, side * 22, 2);
+                        ctx.bezierCurveTo(side * 20, 20, side * 13, 34, side * 8, 46);
+                        ctx.stroke();
+                    }
+                }
+
+                if (orangeMix > 0.08) {
+                    const hotWake = ctx.createLinearGradient(0, 28, 0, wakeLength);
+                    hotWake.addColorStop(0, "rgba(255, 225, 151, 0.72)");
+                    hotWake.addColorStop(0.44, "rgba(255, 105, 58, 0.46)");
+                    hotWake.addColorStop(1, "rgba(255, 75, 46, 0)");
+                    ctx.globalAlpha = visibility * orangeMix * 0.7;
+                    ctx.strokeStyle = hotWake;
+                    ctx.lineWidth = 2 + strength * 2.4;
+                    ctx.shadowColor = "#ff623d";
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 34);
+                    ctx.bezierCurveTo(Math.sin(state.survivalTime * 12) * 3, 52, -3, wakeLength * 0.78, 0, wakeLength * 0.96);
+                    ctx.stroke();
+
+                    ctx.lineWidth = 1.1 + strength * 1.2;
+                    for (let ribbon = 0; ribbon < 3; ribbon += 1) {
+                        const side = ribbon % 2 === 0 ? -1 : 1;
+                        const wobble = Math.sin(state.survivalTime * (8.5 + ribbon) + ribbon * 2.3) * (2 + strength * 4);
+                        ctx.globalAlpha = visibility * orangeMix * (0.26 + ribbon * 0.08);
+                        ctx.strokeStyle = ribbon === 1 ? "rgba(255, 211, 132, 0.7)" : "rgba(255, 83, 48, 0.62)";
+                        ctx.beginPath();
+                        ctx.moveTo(side * (10 + ribbon * 2), 16 + ribbon * 5);
+                        ctx.bezierCurveTo(
+                            side * (17 + strength * 7) + wobble,
+                            38,
+                            side * (10 + ribbon * 3) - wobble,
+                            wakeLength * 0.7,
+                            side * (3 + ribbon),
+                            wakeLength * (0.86 + ribbon * 0.04)
+                        );
+                        ctx.stroke();
+                    }
+                }
+
+                ctx.shadowBlur = 0;
+                if (strength > 0.42) {
+                    const sparkCount = 1 + Math.floor(strength * 5);
+                    ctx.fillStyle = orangeMix > 0.42 ? "#ffd28d" : "#b7f6ff";
+                    for (let index = 0; index < sparkCount; index += 1) {
+                        const travel = (state.survivalTime * (0.62 + index * 0.04) + index * 0.19) % 1;
+                        const sparkY = 28 + travel * wakeLength;
+                        const sparkX = Math.sin(state.survivalTime * (8 + index) + index) * (5 + travel * strength * 13);
+                        ctx.globalAlpha = visibility * (1 - travel) * 0.72;
+                        ctx.beginPath();
+                        ctx.arc(sparkX, sparkY, 0.9 + index % 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                ctx.restore();
+            }
+
             function drawPlayer() {
                 const player = state.player;
                 const flicker = player.invulnerable > 0 && Math.floor(player.invulnerable * 18) % 2 === 0;
@@ -2976,20 +3808,14 @@
                 ctx.save();
                 ctx.translate(player.x, player.y);
 
-                if (state.mode === "reentry" || state.mode === "won") {
-                    const progress = clamp(state.reentry.timer / state.reentry.duration, 0, 1);
-                    ctx.save();
-                    ctx.globalCompositeOperation = "lighter";
-                    const plasma = ctx.createRadialGradient(0, 0, 8, 0, 0, 52 + progress * 18);
-                    plasma.addColorStop(0, "rgba(255, 245, 197, 0.7)");
-                    plasma.addColorStop(0.42, "rgba(255, 151, 86, 0.33)");
-                    plasma.addColorStop(1, "rgba(255, 105, 105, 0)");
-                    ctx.fillStyle = plasma;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 52 + progress * 18, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-                }
+                const lateEntry = state.plasmaIntensity;
+                const reentryProgress = clamp(state.reentry.timer / state.reentry.duration, 0, 1);
+                const cutscenePlasma = reentryPlasmaProgress(reentryProgress);
+                const plasmaStrength = state.mode === "won" ? 0 : lateEntry;
+                const plasmaHeat = state.mode === "reentry"
+                    ? 0.2 + cutscenePlasma * 0.8
+                    : 0.12 + lateEntry * 0.82;
+                drawAtmosphericPlasma(plasmaStrength, plasmaHeat);
 
                 const sidePower = Math.min(1, Math.abs(input.x));
                 const verticalPower = Math.min(1, Math.abs(input.y));
@@ -3163,6 +3989,15 @@
                 ctx.globalCompositeOperation = "lighter";
                 for (const particle of state.particles) {
                     const alpha = Math.max(0, particle.life / particle.maxLife);
+                    if (particle.type === "shockwave") {
+                        ctx.globalAlpha = alpha * 0.82;
+                        ctx.strokeStyle = particle.color;
+                        ctx.lineWidth = 2 + alpha * 7;
+                        ctx.beginPath();
+                        ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+                        ctx.stroke();
+                        continue;
+                    }
                     ctx.globalAlpha = Math.min(1, alpha);
                     ctx.fillStyle = particle.color;
                     ctx.beginPath();
@@ -3172,84 +4007,47 @@
                 ctx.restore();
             }
 
-            function drawCloudWarnings() {
-                if (state.phase !== "cloud") return;
-                const intensity = Math.min(0.34, 0.1 + state.level * 0.012);
-                const wave = currentWavePattern();
-                if (wave.key === "orbitalTraffic") {
-                    ctx.save();
-                    ctx.globalAlpha = 0.26 + Math.sin(state.survivalTime * 2.8) * 0.08;
-                    ctx.strokeStyle = "rgba(142, 240, 136, 0.72)";
-                    ctx.lineWidth = 1.4;
-                    ctx.setLineDash([7, 12]);
-                    for (const x of [WORLD.width * 0.25, WORLD.width * 0.5, WORLD.width * 0.75]) {
-                        ctx.beginPath();
-                        ctx.moveTo(x, PLAY_TOP + 18);
-                        ctx.lineTo(x, PLAY_TOP + 94);
-                        ctx.stroke();
-                    }
-                    ctx.setLineDash([]);
-                    ctx.restore();
-                    return;
-                }
+            function drawVictoryCelebration() {
+                if (state.mode !== "won") return;
+                const time = state.victoryTime;
                 ctx.save();
-                ctx.globalAlpha = intensity * (0.65 + 0.35 * Math.sin(state.survivalTime * 4));
-                ctx.fillStyle = "rgba(255, 207, 109, 0.18)";
-                ctx.fillRect(0, PLAY_TOP, WORLD.width, 7);
-                ctx.fillStyle = "rgba(255, 105, 105, 0.12)";
-                ctx.fillRect(0, PLAY_TOP + 8, WORLD.width, 4);
-                ctx.globalAlpha = 0.22 + intensity;
-                ctx.lineWidth = 2;
-                if (wave.key === "shardRain") {
-                    ctx.strokeStyle = "rgba(142, 232, 255, 0.72)";
-                    for (let x = 54; x < WORLD.width; x += 58) {
-                        const offset = Math.sin(state.survivalTime * 4 + x) * 8;
-                        ctx.beginPath();
-                        ctx.moveTo(x + offset, PLAY_TOP + 18);
-                        ctx.lineTo(x + offset * 0.35, PLAY_TOP + 54);
-                        ctx.stroke();
-                    }
-                } else if (wave.key === "crosswind") {
-                    ctx.strokeStyle = "rgba(255, 207, 109, 0.7)";
-                    for (let y = PLAY_TOP + 28; y < PLAY_TOP + 120; y += 28) {
-                        ctx.beginPath();
-                        ctx.moveTo(20, y);
-                        ctx.lineTo(46, y + 9);
-                        ctx.lineTo(20, y + 18);
-                        ctx.moveTo(WORLD.width - 20, y);
-                        ctx.lineTo(WORLD.width - 46, y + 9);
-                        ctx.lineTo(WORLD.width - 20, y + 18);
-                        ctx.stroke();
-                    }
-                } else if (wave.key === "panelDrift") {
-                    ctx.strokeStyle = "rgba(126, 174, 255, 0.58)";
-                    for (let i = 0; i < 3; i += 1) {
-                        ctx.beginPath();
-                        for (let x = 24; x <= WORLD.width - 24; x += 18) {
-                            const y = PLAY_TOP + 32 + i * 26 + Math.sin(x * 0.035 + state.survivalTime * 2.2 + i) * 8;
-                            if (x === 24) ctx.moveTo(x, y);
-                            else ctx.lineTo(x, y);
-                        }
-                        ctx.stroke();
-                    }
-                } else if (wave.key === "cascadeBurst") {
-                    ctx.strokeStyle = "rgba(255, 148, 116, 0.62)";
-                    for (let i = 0; i < 4; i += 1) {
-                        const x = 84 + i * 120;
-                        const r = 8 + ((state.survivalTime * 18 + i * 8) % 24);
-                        ctx.beginPath();
-                        ctx.arc(x, PLAY_TOP + 42, r, 0, Math.PI * 2);
-                        ctx.stroke();
-                    }
-                } else {
-                    ctx.strokeStyle = "rgba(255, 105, 105, 0.7)";
-                    ctx.fillStyle = "rgba(255, 105, 105, 0.22)";
-                    for (let x = 72; x < WORLD.width; x += 132) {
-                        ctx.beginPath();
-                        ctx.arc(x, PLAY_TOP + 40, 13 + Math.sin(state.survivalTime * 9 + x) * 3, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.stroke();
-                    }
+                ctx.globalCompositeOperation = "lighter";
+
+                const horizonGlow = ctx.createRadialGradient(WORLD.width * 0.5, WORLD.height * 0.72, 24, WORLD.width * 0.5, WORLD.height * 0.72, 310);
+                horizonGlow.addColorStop(0, "rgba(255, 238, 169, 0.3)");
+                horizonGlow.addColorStop(0.45, "rgba(97, 216, 255, 0.12)");
+                horizonGlow.addColorStop(1, "rgba(97, 216, 255, 0)");
+                ctx.fillStyle = horizonGlow;
+                ctx.fillRect(0, WORLD.height * 0.32, WORLD.width, WORLD.height * 0.68);
+
+                ctx.lineWidth = 2.4;
+                for (let ring = 0; ring < 3; ring += 1) {
+                    const cycle = (time * 0.16 + ring / 3) % 1;
+                    ctx.globalAlpha = (1 - cycle) * 0.38;
+                    ctx.strokeStyle = ring % 2 === 0 ? "#7ee8ff" : "#ffe29a";
+                    ctx.beginPath();
+                    ctx.arc(state.player.x, state.player.y, 44 + cycle * 120, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                for (const sparkle of victorySparkles) {
+                    const travel = (sparkle.phase + time * sparkle.speed) % 1;
+                    const x = sparkle.x + Math.sin(time * 1.4 + sparkle.phase * Math.PI * 2) * sparkle.drift;
+                    const y = WORLD.height + 24 - travel * (WORLD.height + 90);
+                    const alpha = Math.sin(travel * Math.PI) * 0.78;
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(time * 1.2 + sparkle.phase * Math.PI);
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = sparkle.color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -sparkle.size * 1.8);
+                    ctx.lineTo(sparkle.size * 0.7, 0);
+                    ctx.lineTo(0, sparkle.size * 1.8);
+                    ctx.lineTo(-sparkle.size * 0.7, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
                 }
                 ctx.restore();
             }
@@ -3264,7 +4062,7 @@
                 ctx.save();
                 ctx.translate(shakeX, shakeY);
                 drawBackground();
-                drawCloudWarnings();
+                drawVictoryCelebration();
                 drawLaserBeam();
                 for (const debris of state.debris) drawDebris(debris);
                 for (const astronaut of state.collectibles) drawAstronaut(astronaut);
@@ -3355,15 +4153,19 @@
                         y: Number(debris.y.toFixed(1)),
                         vx: Number(debris.vx.toFixed(1)),
                         vy: Number(debris.vy.toFixed(1)),
+                        rot: Number(debris.rot.toFixed(2)),
+                        spin: Number(debris.spin.toFixed(2)),
+                        speedFactor: Number(debris.speedFactor.toFixed(2)),
                         r: Number(debris.r.toFixed(1)),
                         size: debris.size,
                         kind: debris.kind,
+                        satelliteVariant: debris.satelliteVariant,
                         wave: debris.waveKey,
                         canCollide: debris.canCollide,
                         canCascade: debris.canCascade,
                         laserDeflected: Number(debris.laserDeflected.toFixed(2)),
                         laserGlow: Number(debris.laserGlow.toFixed(2)),
-                        fuse: debris.kind === "satellite" || debris.kind === "cubesat" ? Number(debris.fuse.toFixed(2)) : null
+                        laserHeat: debris.kind === "fuelTank" ? Number(debris.laserHeat.toFixed(2)) : null
                     }));
                 return JSON.stringify({
                     mode: state.mode,
@@ -3376,6 +4178,10 @@
                     },
                     difficulty: Number(difficultyForLevel().toFixed(2)),
                     debrisSpeedMultiplier: DEBRIS_SPEED_MULTIPLIER,
+                    review: {
+                        mode: reviewMode,
+                        invincible: state.reviewInvincible
+                    },
                     scenery: backgroundSceneForLevel().key,
                     iss: {
                         visible: ISS_DAMAGE_LEVELS.has(state.level),
@@ -3386,11 +4192,14 @@
                     },
                     orbit: {
                         approach: Number(campaignProgress().toFixed(2)),
+                        atmosphereEntry: Number(lateAtmosphereProgress().toFixed(2)),
+                        plasmaIntensity: Number(state.plasmaIntensity.toFixed(2)),
                         earthRadius: Number(earthOrbitState(state.survivalTime).radius.toFixed(1)),
                         textureScroll: Number(earthTextureScrollProgress().toFixed(2))
                     },
                     phaseRemaining: Number(Math.max(0, state.phaseDuration - state.phaseTimer).toFixed(2)),
                     score: Math.floor(state.score),
+                    victoryBonus: VICTORY_BONUS,
                     best: Math.max(state.best, Math.floor(state.score)),
                     survivalTime: Number(state.survivalTime.toFixed(2)),
                     shields: state.shields,
@@ -3450,7 +4259,15 @@
                     astronautsRescued: state.astronautsRescued,
                     reentry: {
                         active: state.reentry.active,
-                        progress: Number(clamp(state.reentry.timer / state.reentry.duration, 0, 1).toFixed(2))
+                        phase: state.reentry.active && state.reentry.clearanceTimer < state.reentry.clearanceDuration
+                            ? "orbital-clearance"
+                            : state.reentry.active ? "atmospheric-entry" : "inactive",
+                        clearanceProgress: Number(clamp(state.reentry.clearanceTimer / state.reentry.clearanceDuration, 0, 1).toFixed(2)),
+                        clearanceDuration: state.reentry.clearanceDuration,
+                        progress: Number(clamp(state.reentry.timer / state.reentry.duration, 0, 1).toFixed(2)),
+                        stage: state.reentry.stage,
+                        stageName: copy.reentryStages[state.reentry.stage],
+                        duration: state.reentry.duration
                     },
                     particles: state.particles.length,
                     recentCascades: state.recentCascades,
@@ -3517,6 +4334,7 @@
             loadBest();
             applyLanguage(language);
             resetGame();
+            if (reviewMode) startGame();
             resizeCanvas();
             requestAnimationFrame(frame);
         })();

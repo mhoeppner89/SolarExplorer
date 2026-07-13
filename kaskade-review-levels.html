@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kaskade Late-Level Review</title>
+    <script>
+        const target = new URL("kaskade.html", window.location.href);
+        target.searchParams.set("review", "late");
+        const language = new URLSearchParams(window.location.search).get("lang");
+        if (language) target.searchParams.set("lang", language);
+        window.location.replace(target.href);
+    </script>
+</head>
+<body></body>
+</html>
