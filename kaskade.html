@@ -884,6 +884,8 @@
             const ctx = canvas.getContext("2d");
             let laserBeamTexture = null;
             let debrisLaserGlowTexture = null;
+            let screenWakeLock = null;
+            let screenWakeLockRequest = null;
             const shell = document.getElementById("gameShell");
             const backButton = document.getElementById("backButton");
             const pauseButton = document.getElementById("pauseButton");
@@ -1149,6 +1151,50 @@
                 return "DeviceOrientationEvent" in window || "ondeviceorientation" in window;
             }
 
+            function screenWakeLockSupported() {
+                return Boolean(navigator.wakeLock?.request);
+            }
+
+            function shouldHoldScreenWakeLock() {
+                return state.tilt.enabled &&
+                    document.visibilityState === "visible" &&
+                    (state.mode === "playing" || state.mode === "reentry");
+            }
+
+            async function requestScreenWakeLock() {
+                if (!shouldHoldScreenWakeLock() || !screenWakeLockSupported() || screenWakeLock || screenWakeLockRequest) return;
+                screenWakeLockRequest = navigator.wakeLock.request("screen");
+                try {
+                    const lock = await screenWakeLockRequest;
+                    if (!shouldHoldScreenWakeLock()) {
+                        await lock.release();
+                        return;
+                    }
+                    screenWakeLock = lock;
+                    lock.addEventListener("release", () => {
+                        if (screenWakeLock === lock) screenWakeLock = null;
+                    });
+                } catch (error) {
+                    // Unsupported policies and low-power modes may reject wake locks.
+                } finally {
+                    screenWakeLockRequest = null;
+                }
+            }
+
+            function releaseScreenWakeLock() {
+                const lock = screenWakeLock;
+                screenWakeLock = null;
+                if (lock && !lock.released) lock.release().catch(() => {});
+            }
+
+            function syncScreenWakeLock() {
+                if (shouldHoldScreenWakeLock()) {
+                    void requestScreenWakeLock();
+                } else {
+                    releaseScreenWakeLock();
+                }
+            }
+
             function ensureTiltListener() {
                 if (state.tilt.listening) return;
                 window.addEventListener("deviceorientation", handleDeviceOrientation);
@@ -1234,6 +1280,7 @@
                 state.tilt.pendingCalibration = true;
                 calibrateTiltControl();
                 updateTiltControls();
+                syncScreenWakeLock();
                 return true;
             }
 
@@ -1244,6 +1291,7 @@
                     state.tilt.inputX = 0;
                     state.tilt.inputY = 0;
                     updateTiltControls();
+                    syncScreenWakeLock();
                     return;
                 }
                 await enableTiltControl();
@@ -1431,6 +1479,7 @@
                 }
                 showReadyMessage();
                 updateHud();
+                syncScreenWakeLock();
                 render();
             }
 
@@ -1446,6 +1495,7 @@
                     messagePanel.classList.remove("is-visible");
                     messagePanel.hidden = true;
                     levelBanner.classList.remove("is-visible");
+                    syncScreenWakeLock();
                     return;
                 }
                 if (state.mode === "paused") {
@@ -1453,6 +1503,7 @@
                     messagePanel.classList.remove("is-visible");
                     messagePanel.hidden = true;
                 }
+                syncScreenWakeLock();
             }
 
             function restartGame() {
@@ -1482,6 +1533,7 @@
                     state.mode = "paused";
                     showPausedMessage();
                 }
+                syncScreenWakeLock();
                 updateHud();
             }
 
@@ -2285,6 +2337,7 @@
                     state.joystick.active = false;
                     state.laser.active = false;
                     state.laser.remaining = 0;
+                    syncScreenWakeLock();
                     showGameOverMessage();
                 }
                 updateHud();
@@ -2398,6 +2451,7 @@
                 state.joystick.active = false;
                 state.laser.active = false;
                 state.laser.remaining = 0;
+                syncScreenWakeLock();
                 state.player.invulnerable = 0;
                 state.lastInput.x = 0;
                 state.lastInput.y = 0;
@@ -2462,6 +2516,7 @@
                 state.victoryTime = 0;
                 state.bannerTimer = 0;
                 levelBanner.classList.remove("is-visible");
+                syncScreenWakeLock();
                 saveBest();
                 showWinMessage();
             }
@@ -4285,6 +4340,8 @@
                             calibrated: state.tilt.calibrated,
                             pendingCalibration: state.tilt.pendingCalibration,
                             permission: state.tilt.permission,
+                            wakeLockSupported: screenWakeLockSupported(),
+                            wakeLockActive: Boolean(screenWakeLock && !screenWakeLock.released),
                             vector: {
                                 x: Number(state.tilt.inputX.toFixed(2)),
                                 y: Number(state.tilt.inputY.toFixed(2))
@@ -4379,6 +4436,8 @@
             window.addEventListener("resize", resizeCanvas);
             window.visualViewport?.addEventListener("resize", resizeCanvas);
             document.addEventListener("fullscreenchange", resizeCanvas);
+            document.addEventListener("visibilitychange", syncScreenWakeLock);
+            window.addEventListener("pagehide", releaseScreenWakeLock);
 
             loadBest();
             applyLanguage(language);
