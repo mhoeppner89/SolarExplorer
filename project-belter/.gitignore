@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+artifacts/playwright-report/
+artifacts/playwright-results/
+*.log
+.DS_Store
+.vscode/
+.idea/
+.env
+.env.*
+!.env.example

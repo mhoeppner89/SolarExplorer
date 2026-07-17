@@ -93,7 +93,9 @@
 
         .icon-button,
         .start-button,
-        .tilt-button {
+        .tilt-button,
+        .ability-button,
+        .difficulty-button {
             appearance: none;
             border: 1px solid rgba(222, 242, 255, 0.32);
             color: var(--ink);
@@ -122,6 +124,7 @@
 
         .icon-button.laser-button {
             --laser-charge: 1turn;
+            --ability-color: #61d8ff;
             position: absolute;
             right: max(0.9rem, env(safe-area-inset-right));
             bottom: max(1rem, env(safe-area-inset-bottom));
@@ -136,6 +139,7 @@
                 0 12px 30px rgba(0, 0, 0, 0.38),
                 0 0 18px rgba(97, 216, 255, 0.18);
             transition: opacity 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
+            touch-action: none;
         }
 
         .laser-button::before {
@@ -143,7 +147,7 @@
             position: absolute;
             inset: 3px;
             border-radius: inherit;
-            background: conic-gradient(from -90deg, #61d8ff var(--laser-charge), rgba(97, 216, 255, 0.12) 0);
+            background: conic-gradient(from -90deg, var(--ability-color) var(--laser-charge), rgba(97, 216, 255, 0.12) 0);
             -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
             mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
             pointer-events: none;
@@ -181,6 +185,64 @@
             background: #174b6c;
         }
 
+        .shield-icon {
+            position: relative;
+            width: 1.72rem;
+            height: 1.72rem;
+            border: 0.16rem solid #dcfff2;
+            border-radius: 50% 50% 58% 58%;
+            filter: drop-shadow(0 0 6px rgba(142, 240, 136, 0.72));
+        }
+
+        .shield-icon::before {
+            content: "";
+            position: absolute;
+            inset: 0.22rem;
+            border: 0.12rem solid rgba(142, 240, 136, 0.9);
+            border-radius: inherit;
+        }
+
+        .shield-icon::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 0.18rem;
+            bottom: 0.18rem;
+            width: 0.12rem;
+            border-radius: 999px;
+            transform: translateX(-50%);
+            background: linear-gradient(rgba(255, 255, 255, 0), #dcfff2, rgba(255, 255, 255, 0));
+        }
+
+        .laser-button.is-shield {
+            --ability-color: #8ef088;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                0 12px 30px rgba(0, 0, 0, 0.38),
+                0 0 18px rgba(142, 240, 136, 0.18);
+        }
+
+        .dodge-icon {
+            display: grid;
+            place-items: center;
+            width: 1.72rem;
+            height: 1.72rem;
+            color: #fff3bd;
+            font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+            font-size: 1.7rem;
+            font-weight: 900;
+            line-height: 1;
+            filter: drop-shadow(0 0 6px rgba(255, 207, 109, 0.72));
+        }
+
+        .laser-button.is-dodge {
+            --ability-color: #ffcf6d;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                0 12px 30px rgba(0, 0, 0, 0.38),
+                0 0 18px rgba(255, 207, 109, 0.2);
+        }
+
         .laser-timer {
             position: absolute;
             inset: 0;
@@ -192,7 +254,7 @@
             text-shadow: 0 1px 4px #030711;
         }
 
-        .laser-button.is-cooling .laser-icon {
+        .laser-button.is-cooling .ability-icon {
             opacity: 0.42;
         }
 
@@ -205,6 +267,16 @@
             border-color: rgba(220, 255, 255, 0.9);
             box-shadow: 0 0 18px rgba(97, 216, 255, 0.7), inset 0 0 12px rgba(255, 255, 255, 0.2);
             animation: laser-button-pulse 0.36s ease-in-out infinite alternate;
+        }
+
+        .laser-button.is-active.is-shield {
+            border-color: rgba(222, 255, 235, 0.92);
+            box-shadow: 0 0 22px rgba(142, 240, 136, 0.76), inset 0 0 14px rgba(255, 255, 255, 0.22);
+        }
+
+        .laser-button.is-active.is-dodge {
+            border-color: rgba(255, 243, 189, 0.94);
+            box-shadow: 0 0 22px rgba(255, 207, 109, 0.74), inset 0 0 14px rgba(255, 255, 255, 0.22);
         }
 
         .laser-button:disabled {
@@ -225,7 +297,9 @@
         .start-button:hover,
         .start-button:focus-visible,
         .tilt-button:hover,
-        .tilt-button:focus-visible {
+        .tilt-button:focus-visible,
+        .ability-button:hover,
+        .ability-button:focus-visible {
             border-color: rgba(255, 255, 255, 0.62);
             outline: none;
         }
@@ -464,6 +538,62 @@
             text-transform: uppercase;
         }
 
+        .skill-picker {
+            display: grid;
+            gap: 0.28rem;
+        }
+
+        .skill-picker[hidden] {
+            display: none;
+        }
+
+        .control-label {
+            color: #b7c8dd;
+            font-size: 0.62rem;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .ability-controls,
+        .difficulty-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            padding: 0.2rem;
+            border: 1px solid rgba(190, 224, 255, 0.2);
+            border-radius: 0.7rem;
+            background: rgba(3, 10, 22, 0.46);
+        }
+
+        .ability-controls {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .ability-controls[hidden],
+        .difficulty-controls[hidden] {
+            display: none;
+        }
+
+        .ability-button,
+        .difficulty-button {
+            min-width: 0;
+            min-height: 2.3rem;
+            border: 0;
+            border-radius: 0.5rem;
+            color: #c8d8e9;
+            background: transparent;
+            font-size: 0.74rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .ability-button[aria-pressed="true"],
+        .difficulty-button[aria-pressed="true"] {
+            color: #06111f;
+            background: linear-gradient(145deg, #b8ffd7, #61d8ff);
+            box-shadow: 0 4px 12px rgba(31, 142, 184, 0.24);
+        }
+
         .tilt-controls {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -575,7 +705,7 @@
         </nav>
 
         <button id="laserButton" class="icon-button laser-button" type="button" aria-label="Laser" title="Laser">
-            <span class="laser-icon" aria-hidden="true"></span>
+            <span class="ability-icon laser-icon" id="abilityIcon" aria-hidden="true"></span>
             <span class="laser-timer" id="laserTimer" aria-hidden="true"></span>
         </button>
 
@@ -616,6 +746,18 @@
                 <span id="statB">Wellen</span>
                 <span id="statC">Kaskaden</span>
             </div>
+            <div class="difficulty-controls" id="difficultyControls" role="group" aria-label="Schwierigkeit">
+                <button class="difficulty-button" type="button" data-difficulty="kids" aria-pressed="false">Kinder</button>
+                <button class="difficulty-button" type="button" data-difficulty="adult" aria-pressed="true">Erwachsene</button>
+            </div>
+            <div class="skill-picker" id="skillPicker">
+                <span class="control-label" id="skillLabel">Skill</span>
+                <div class="ability-controls" id="abilityControls" role="group" aria-label="Skill">
+                    <button class="ability-button" type="button" data-ability="laser" aria-pressed="true">Laser</button>
+                    <button class="ability-button" type="button" data-ability="shieldOverload" aria-pressed="false">Schild</button>
+                    <button class="ability-button" type="button" data-ability="dodge" aria-pressed="false">Dodge</button>
+                </div>
+            </div>
             <button id="startButton" class="start-button" type="button">Start</button>
             <div class="tilt-controls" id="tiltControls">
                 <button id="tiltToggleButton" class="tilt-button" type="button" aria-pressed="false">Neigung: Aus</button>
@@ -655,11 +797,13 @@
             const MAX_PARTICLES = 260;
             const MAX_LEVEL = 25;
             const STARTING_SHIELDS = 3;
+            const KIDS_STARTING_SHIELDS = 5;
             const MAX_SHIELDS = 7;
             const DAY_CYCLE_DURATION = 60;
             const DEBRIS_SPEED_MULTIPLIER = 1.5;
             const LASER_DURATION = 5;
-            const LASER_COOLDOWN = 30;
+            const LASER_COOLDOWN = 15;
+            const LASER_DEBRIS_BREAKUP_TIME = 0.1;
             const LASER_HALF_WIDTH = 5;
             const LASER_PUSH_FORCE = 236;
             const LASER_SIDE_FORCE = 46;
@@ -668,6 +812,11 @@
             const FUEL_BLAST_RADIUS = 210;
             const FUEL_FRAGMENT_CLEAR_RADIUS = 168;
             const FUEL_PLAYER_BLAST_RADIUS = 100.8;
+            const SHIELD_OVERLOAD_DURATION = 3;
+            const SHIELD_OVERLOAD_COOLDOWN = 25;
+            const SHIELD_OVERLOAD_RADIUS = 52;
+            const DODGE_DURATION = 1;
+            const DODGE_COOLDOWN = 6;
             const VICTORY_BONUS = 1000;
             const REENTRY_DURATION = 10.5;
             const REENTRY_CLEARANCE_DURATION = 2.2;
@@ -702,6 +851,12 @@
                     laserReady: "Laser bereit",
                     laserActive: (seconds) => `Laser aktiv: ${seconds}s`,
                     laserCooldown: (seconds) => `Laser lädt: ${seconds}s`,
+                    shieldOverloadReady: "Schildüberladung bereit",
+                    shieldOverloadActive: (seconds) => `Schildüberladung aktiv: ${seconds}s`,
+                    shieldOverloadCooldown: (seconds) => `Schildüberladung lädt: ${seconds}s`,
+                    dodgeReady: "Dodge bereit",
+                    dodgeActive: (seconds) => `Dodge aktiv: ${seconds}s`,
+                    dodgeCooldown: (seconds) => `Dodge lädt: ${seconds}s`,
                     score: "Punkte",
                     best: "Bestwert",
                     level: "Level",
@@ -716,6 +871,14 @@
                     readyB: "25 Level",
                     readyC: "Rettungen",
                     start: "Start",
+                    skillLabel: "Skill",
+                    abilityAria: "Skill",
+                    abilityLaser: "Laser",
+                    abilityShieldOverload: "Schild",
+                    abilityDodge: "Dodge",
+                    difficultyAria: "Schwierigkeit",
+                    difficultyKids: "Kinder",
+                    difficultyAdult: "Erwachsene",
                     tiltOn: "Neigung: An",
                     tiltOff: "Neigung: Aus",
                     tiltWaiting: "Neigung: Warten",
@@ -752,7 +915,7 @@
                     bannerCalm: (level) => `Level ${level + 1} wird vorbereitet`,
                     bannerReentry: "Wiedereintritt eingeleitet",
                     bannerRescue: (restored) => restored ? "Astronaut gerettet: +1 Schild · +100" : "Astronaut gerettet: +100",
-                    controls: "Ziehen zum Steuern · WASD/Pfeile · Leertaste Laser · P Pause · F Vollbild"
+                    controls: "Ziehen zum Steuern · WASD/Pfeile · Leertaste Fähigkeit · P Pause · F Vollbild"
                 },
                 en: {
                     documentTitle: "Kaskade - Solar Explorer",
@@ -766,6 +929,12 @@
                     laserReady: "Laser ready",
                     laserActive: (seconds) => `Laser active: ${seconds}s`,
                     laserCooldown: (seconds) => `Laser charging: ${seconds}s`,
+                    shieldOverloadReady: "Shield overload ready",
+                    shieldOverloadActive: (seconds) => `Shield overload active: ${seconds}s`,
+                    shieldOverloadCooldown: (seconds) => `Shield overload charging: ${seconds}s`,
+                    dodgeReady: "Dodge ready",
+                    dodgeActive: (seconds) => `Dodge active: ${seconds}s`,
+                    dodgeCooldown: (seconds) => `Dodge charging: ${seconds}s`,
                     score: "Score",
                     best: "Best",
                     level: "Level",
@@ -780,6 +949,14 @@
                     readyB: "25 levels",
                     readyC: "Rescues",
                     start: "Start",
+                    skillLabel: "Skill",
+                    abilityAria: "Skill",
+                    abilityLaser: "Laser",
+                    abilityShieldOverload: "Shield",
+                    abilityDodge: "Dodge",
+                    difficultyAria: "Difficulty",
+                    difficultyKids: "Kids",
+                    difficultyAdult: "Adult",
                     tiltOn: "Tilt: On",
                     tiltOff: "Tilt: Off",
                     tiltWaiting: "Tilt: Waiting",
@@ -816,7 +993,7 @@
                     bannerCalm: (level) => `Level ${level + 1} forming`,
                     bannerReentry: "Re-entry initiated",
                     bannerRescue: (restored) => restored ? "Astronaut rescued: +1 shield · +100" : "Astronaut rescued: +100",
-                    controls: "Drag to steer · WASD/arrows · Space laser · P pause · F fullscreen"
+                    controls: "Drag to steer · WASD/arrows · Space ability · P pause · F fullscreen"
                 }
             };
 
@@ -884,6 +1061,9 @@
             const ctx = canvas.getContext("2d");
             let laserBeamTexture = null;
             let debrisLaserGlowTexture = null;
+            let debrisAtmosphereTextures = null;
+            let spacecraftPlasmaTextures = null;
+            let shieldOverloadTexture = null;
             let screenWakeLock = null;
             let screenWakeLockRequest = null;
             const shell = document.getElementById("gameShell");
@@ -891,6 +1071,7 @@
             const pauseButton = document.getElementById("pauseButton");
             const restartButton = document.getElementById("restartButton");
             const laserButton = document.getElementById("laserButton");
+            const abilityIcon = document.getElementById("abilityIcon");
             const laserTimer = document.getElementById("laserTimer");
             const startButton = document.getElementById("startButton");
             const scoreLabel = document.getElementById("scoreLabel");
@@ -908,6 +1089,12 @@
             const statA = document.getElementById("statA");
             const statB = document.getElementById("statB");
             const statC = document.getElementById("statC");
+            const skillPicker = document.getElementById("skillPicker");
+            const skillLabel = document.getElementById("skillLabel");
+            const abilityControls = document.getElementById("abilityControls");
+            const abilityButtons = [...abilityControls.querySelectorAll("[data-ability]")];
+            const difficultyControls = document.getElementById("difficultyControls");
+            const difficultyButtons = [...difficultyControls.querySelectorAll("[data-difficulty]")];
             const tiltControls = document.getElementById("tiltControls");
             const tiltToggleButton = document.getElementById("tiltToggleButton");
             const tiltCalibrateButton = document.getElementById("tiltCalibrateButton");
@@ -1000,6 +1187,11 @@
                 best: 0,
                 survivalTime: 0,
                 shields: STARTING_SHIELDS,
+                abilityMode: "laser",
+                difficultyMode: "adult",
+                kidsAssist: 0,
+                kidsCleanTime: 0,
+                kidsHits: 0,
                 shake: 0,
                 bannerTimer: 0,
                 recentCascades: 0,
@@ -1040,7 +1232,20 @@
                     cooldown: 0,
                     sparkCooldown: 0,
                     disintegrated: 0,
-                    deflected: 0
+                    deflected: 0,
+                    brokenUp: 0
+                },
+                shieldOverload: {
+                    active: false,
+                    remaining: 0,
+                    cooldown: 0,
+                    blocked: 0
+                },
+                dodge: {
+                    active: false,
+                    remaining: 0,
+                    cooldown: 0,
+                    dodgedFrames: 0
                 },
                 reentry: {
                     timer: 0,
@@ -1145,6 +1350,86 @@
 
             function clamp(value, min, max) {
                 return Math.max(min, Math.min(max, value));
+            }
+
+            function isKidsMode() {
+                return state.difficultyMode === "kids";
+            }
+
+            function startingShields() {
+                return isKidsMode() ? KIDS_STARTING_SHIELDS : STARTING_SHIELDS;
+            }
+
+            function debrisLimit() {
+                return isKidsMode() ? 82 : MAX_DEBRIS;
+            }
+
+            function debrisSpeedMultiplier() {
+                return isKidsMode()
+                    ? 1.02 - state.kidsAssist * 0.16
+                    : DEBRIS_SPEED_MULTIPLIER;
+            }
+
+            function laserCooldownDuration() {
+                return LASER_COOLDOWN;
+            }
+
+            function updateAbilityControls() {
+                skillLabel.textContent = copy.skillLabel;
+                abilityControls.setAttribute("aria-label", copy.abilityAria);
+                abilityButtons.forEach((button) => {
+                    const mode = button.dataset.ability;
+                    const label = mode === "shieldOverload"
+                        ? copy.abilityShieldOverload
+                        : mode === "dodge" ? copy.abilityDodge : copy.abilityLaser;
+                    button.textContent = label;
+                    button.setAttribute("aria-label", label);
+                    button.setAttribute("aria-pressed", String(state.abilityMode === mode));
+                });
+            }
+
+            function setAbilityMode(mode) {
+                if (
+                    reviewMode ||
+                    (mode !== "laser" && mode !== "shieldOverload" && mode !== "dodge") ||
+                    state.mode === "playing" ||
+                    state.mode === "paused" ||
+                    state.mode === "reentry"
+                ) return;
+                state.abilityMode = mode;
+                state.laser.active = false;
+                state.laser.remaining = 0;
+                state.laser.cooldown = 0;
+                state.shieldOverload.active = false;
+                state.shieldOverload.remaining = 0;
+                state.shieldOverload.cooldown = 0;
+                state.dodge.active = false;
+                state.dodge.remaining = 0;
+                state.dodge.cooldown = 0;
+                updateAbilityControls();
+                updateHud();
+            }
+
+            function updateDifficultyControls() {
+                difficultyControls.setAttribute("aria-label", copy.difficultyAria);
+                difficultyButtons.forEach((button) => {
+                    const mode = button.dataset.difficulty;
+                    const label = mode === "kids" ? copy.difficultyKids : copy.difficultyAdult;
+                    button.textContent = label;
+                    button.setAttribute("aria-label", label);
+                    button.setAttribute("aria-pressed", String(state.difficultyMode === mode));
+                });
+            }
+
+            function setDifficultyMode(mode) {
+                if (reviewMode || (mode !== "kids" && mode !== "adult")) return;
+                state.difficultyMode = mode;
+                state.kidsAssist = isKidsMode() ? 0.18 : 0;
+                state.kidsCleanTime = 0;
+                state.kidsHits = 0;
+                if (state.mode === "ready") state.shields = startingShields();
+                updateDifficultyControls();
+                updateHud();
             }
 
             function tiltSupported() {
@@ -1374,9 +1659,12 @@
 
             function difficultyForLevel(level = state.level) {
                 const progress = clamp((level - 1) / (MAX_LEVEL - 1), 0, 1);
-                return progress < 0.5
+                const adultDifficulty = progress < 0.5
                     ? progress * 0.82
                     : 0.41 + (progress - 0.5) * 1.28;
+                return isKidsMode()
+                    ? adultDifficulty * (0.52 - state.kidsAssist * 0.14)
+                    : adultDifficulty;
             }
 
             function currentWavePattern(level = state.level) {
@@ -1398,6 +1686,7 @@
             }
 
             function astronautLevel(level = state.level) {
+                if (isKidsMode()) return level >= 2 && (level % 2 === 0 || state.shields <= 2);
                 return level >= 3 && level % 2 === 1;
             }
 
@@ -1419,7 +1708,10 @@
                 state.cascadeTimer = 0;
                 state.score = 0;
                 state.survivalTime = 0;
-                state.shields = reviewMode ? MAX_SHIELDS : STARTING_SHIELDS;
+                state.shields = reviewMode ? MAX_SHIELDS : startingShields();
+                state.kidsAssist = isKidsMode() ? 0.18 : 0;
+                state.kidsCleanTime = 0;
+                state.kidsHits = 0;
                 state.shake = 0;
                 state.bannerTimer = 0;
                 state.recentCascades = 0;
@@ -1436,6 +1728,15 @@
                 state.laser.sparkCooldown = 0;
                 state.laser.disintegrated = 0;
                 state.laser.deflected = 0;
+                state.laser.brokenUp = 0;
+                state.shieldOverload.active = false;
+                state.shieldOverload.remaining = 0;
+                state.shieldOverload.cooldown = 0;
+                state.shieldOverload.blocked = 0;
+                state.dodge.active = false;
+                state.dodge.remaining = 0;
+                state.dodge.cooldown = 0;
+                state.dodge.dodgedFrames = 0;
                 state.reentry.timer = 0;
                 state.reentry.duration = REENTRY_DURATION;
                 state.reentry.clearanceTimer = 0;
@@ -1548,13 +1849,18 @@
             function spawnIntervalForLevel(level) {
                 const progress = clamp((level - 1) / (MAX_LEVEL - 1), 0, 1);
                 const latePressure = Math.max(0, (progress - 0.46) / 0.54);
-                return Math.max(0.22, 0.84 - progress * 0.37 - latePressure * 0.2);
+                const adultInterval = Math.max(0.22, 0.84 - progress * 0.37 - latePressure * 0.2);
+                return isKidsMode()
+                    ? adultInterval * (1.82 + state.kidsAssist * 0.58)
+                    : adultInterval;
             }
 
             function showReadyMessage() {
                 messagePanel.classList.remove("is-win");
                 messagePanel.hidden = false;
                 tiltControls.hidden = false;
+                skillPicker.hidden = Boolean(reviewMode);
+                difficultyControls.hidden = Boolean(reviewMode);
                 messageTitle.textContent = reviewMode === "late"
                     ? copy.reviewLateTitle
                     : reviewMode === "ending" ? copy.reviewEndingTitle : copy.readyTitle;
@@ -1566,6 +1872,8 @@
                 statC.textContent = reviewMode === "ending" ? copy.phaseReentry : reviewMode === "late" ? "21–25" : copy.readyC;
                 messageStats.hidden = true;
                 startButton.textContent = reviewMode ? copy.reviewStart : copy.start;
+                updateAbilityControls();
+                updateDifficultyControls();
                 updateTiltControls();
                 messagePanel.classList.add("is-visible");
             }
@@ -1574,6 +1882,8 @@
                 messagePanel.classList.remove("is-win");
                 messagePanel.hidden = false;
                 tiltControls.hidden = false;
+                skillPicker.hidden = true;
+                difficultyControls.hidden = true;
                 messageTitle.textContent = copy.pausedTitle;
                 messageCopy.textContent = copy.pausedCopy;
                 statA.textContent = `${Math.floor(state.score)}`;
@@ -1590,6 +1900,8 @@
                 saveBest();
                 messagePanel.hidden = false;
                 tiltControls.hidden = false;
+                skillPicker.hidden = Boolean(reviewMode);
+                difficultyControls.hidden = Boolean(reviewMode);
                 messageTitle.textContent = copy.gameOverTitle;
                 messageCopy.textContent = copy.gameOverCopy;
                 statA.textContent = `${Math.floor(state.score)}`;
@@ -1597,6 +1909,8 @@
                 statC.textContent = `${Math.floor(state.survivalTime)}s`;
                 messageStats.hidden = false;
                 startButton.textContent = copy.again;
+                updateAbilityControls();
+                updateDifficultyControls();
                 updateTiltControls();
                 messagePanel.classList.add("is-visible");
             }
@@ -1612,6 +1926,8 @@
             function showWinMessage() {
                 messagePanel.hidden = false;
                 tiltControls.hidden = false;
+                skillPicker.hidden = Boolean(reviewMode);
+                difficultyControls.hidden = Boolean(reviewMode);
                 messagePanel.classList.add("is-win");
                 messageTitle.textContent = copy.wonTitle;
                 messageCopy.textContent = copy.wonCopy(VICTORY_BONUS);
@@ -1620,6 +1936,8 @@
                 setWinStat(statC, copy.rescued, state.astronautsRescued);
                 messageStats.hidden = false;
                 startButton.textContent = copy.againVictory;
+                updateAbilityControls();
+                updateDifficultyControls();
                 updateTiltControls();
                 messagePanel.classList.add("is-visible");
             }
@@ -1639,21 +1957,41 @@
                 [...shieldRow.children].forEach((dot, index) => {
                     dot.classList.toggle("is-live", index < state.shields);
                 });
-                const laser = state.laser;
-                const cooling = !laser.active && laser.cooldown > 0;
-                const charge = laser.active
-                    ? laser.remaining / LASER_DURATION
-                    : cooling ? 1 - laser.cooldown / LASER_COOLDOWN : 1;
-                const seconds = Math.ceil(laser.active ? laser.remaining : laser.cooldown);
-                const laserLabel = laser.active
-                    ? copy.laserActive(seconds)
-                    : cooling ? copy.laserCooldown(seconds) : copy.laserReady;
-                laserButton.classList.toggle("is-active", laser.active);
+                const shieldSelected = state.abilityMode === "shieldOverload";
+                const dodgeSelected = state.abilityMode === "dodge";
+                const ability = shieldSelected ? state.shieldOverload : dodgeSelected ? state.dodge : state.laser;
+                const duration = shieldSelected ? SHIELD_OVERLOAD_DURATION : dodgeSelected ? DODGE_DURATION : LASER_DURATION;
+                const cooldownDuration = shieldSelected
+                    ? SHIELD_OVERLOAD_COOLDOWN
+                    : dodgeSelected ? DODGE_COOLDOWN : laserCooldownDuration();
+                const cooling = !ability.active && ability.cooldown > 0;
+                const charge = ability.active
+                    ? ability.remaining / duration
+                    : cooling ? 1 - ability.cooldown / cooldownDuration : 1;
+                const seconds = Math.ceil(ability.active ? ability.remaining : ability.cooldown);
+                const abilityLabel = shieldSelected
+                    ? ability.active
+                        ? copy.shieldOverloadActive(seconds)
+                        : cooling ? copy.shieldOverloadCooldown(seconds) : copy.shieldOverloadReady
+                    : dodgeSelected
+                        ? ability.active
+                            ? copy.dodgeActive(seconds)
+                            : cooling ? copy.dodgeCooldown(seconds) : copy.dodgeReady
+                    : ability.active
+                        ? copy.laserActive(seconds)
+                        : cooling ? copy.laserCooldown(seconds) : copy.laserReady;
+                laserButton.classList.toggle("is-active", ability.active);
                 laserButton.classList.toggle("is-cooling", cooling);
+                laserButton.classList.toggle("is-shield", shieldSelected);
+                laserButton.classList.toggle("is-dodge", dodgeSelected);
+                abilityIcon.classList.toggle("laser-icon", !shieldSelected && !dodgeSelected);
+                abilityIcon.classList.toggle("shield-icon", shieldSelected);
+                abilityIcon.classList.toggle("dodge-icon", dodgeSelected);
+                abilityIcon.textContent = dodgeSelected ? "⇣" : "";
                 laserButton.style.setProperty("--laser-charge", `${clamp(charge, 0, 1)}turn`);
-                laserButton.disabled = state.mode !== "playing" || laser.active || cooling;
-                laserButton.setAttribute("aria-label", laserLabel);
-                laserButton.title = laserLabel;
+                laserButton.disabled = state.mode !== "playing" || ability.active || cooling;
+                laserButton.setAttribute("aria-label", abilityLabel);
+                laserButton.title = abilityLabel;
                 laserTimer.textContent = cooling ? String(seconds) : "";
             }
 
@@ -1674,6 +2012,8 @@
                 bestLabel.textContent = copy.best;
                 levelLabel.textContent = copy.level;
                 shieldRow.setAttribute("aria-label", copy.shieldAria);
+                updateAbilityControls();
+                updateDifficultyControls();
                 if (state.mode === "ready") showReadyMessage();
                 if (state.mode === "paused") showPausedMessage();
                 if (state.mode === "gameover") showGameOverMessage();
@@ -1683,7 +2023,7 @@
             }
 
             function spawnDebris(options = {}) {
-                if (state.debris.length >= MAX_DEBRIS) return null;
+                if (state.debris.length >= debrisLimit()) return null;
                 const level = state.level;
                 const pattern = options.pattern || currentWavePattern();
                 const kind = options.kind || chooseDebrisKind(pattern);
@@ -1759,7 +2099,7 @@
                     }
                 }
 
-                const velocityScale = options.velocityScale ?? DEBRIS_SPEED_MULTIPLIER;
+                const velocityScale = options.velocityScale ?? debrisSpeedMultiplier();
                 const speedFactor = options.x === undefined
                     ? rand(level === 1 ? 0.68 : 0.5, level === 1 ? 1.34 : 1.62)
                     : 1;
@@ -1787,9 +2127,12 @@
                     laserGlow: 0,
                     laserHeat: 0,
                     laserHeating: false,
+                    laserBreakHeat: 0,
+                    laserBreakHeating: false,
                     collisionGrace: options.x !== undefined ? 0.22 : 0,
                     laserDeflected: 0,
                     laserHitCooldown: 0,
+                    shieldHitCooldown: 0,
                     canCollide: options.canCollide ?? true,
                     canCascade: options.canCascade ?? (level >= 2 || SATELLITE_KINDS.has(kind)),
                     scoredNear: false
@@ -1801,9 +2144,10 @@
             function spawnFragment(source, angle, power, sizeOverride, kindOverride) {
                 const size = sizeOverride || Math.max(1, source.size - 1);
                 const radius = Math.max(4.5, source.r * rand(0.42, 0.62));
-                const fragmentPower = power * DEBRIS_SPEED_MULTIPLIER;
+                const speedMultiplier = debrisSpeedMultiplier();
+                const fragmentPower = power * speedMultiplier;
                 const vx = source.vx * 0.46 + Math.cos(angle) * fragmentPower;
-                const vy = Math.max((54 + state.level * 5) * DEBRIS_SPEED_MULTIPLIER, source.vy * 0.5 + Math.sin(angle) * fragmentPower);
+                const vy = Math.max((54 + state.level * 5) * speedMultiplier, source.vy * 0.5 + Math.sin(angle) * fragmentPower);
                 const kind = kindOverride || (size <= 1 ? "shard" : source.kind === "satellite" || source.kind === "cubesat" ? "panel" : "chunk");
                 return spawnDebris({
                     x: source.x + Math.cos(angle) * source.r * 0.34,
@@ -1879,11 +2223,12 @@
                     debris.remove = true;
                     return 0;
                 }
-                if (state.debris.length >= MAX_DEBRIS - 2 || debris.size <= 1) {
+                if (state.debris.length >= debrisLimit() - 2 || debris.size <= 1) {
                     debris.flash = 0.22;
                     return 0;
                 }
-                const count = debris.kind === "satellite" || debris.kind === "operationalSatellite" ? 4 : debris.kind === "cubesat" ? 3 : debris.size === 3 ? 3 : 2;
+                const adultCount = debris.kind === "satellite" || debris.kind === "operationalSatellite" ? 4 : debris.kind === "cubesat" ? 3 : debris.size === 3 ? 3 : 2;
+                const count = isKidsMode() ? Math.max(2, adultCount - 1) : adultCount;
                 const base = Math.PI / 2 + rand(-0.26, 0.26);
                 for (let i = 0; i < count; i += 1) {
                     const angle = base + (i - (count - 1) / 2) * rand(0.44, 0.84) + rand(-0.18, 0.18);
@@ -2047,7 +2392,11 @@
                     const pattern = currentWavePattern();
                     spawnDebris({ pattern });
                     const burstPressure = Math.min(0.14, Math.max(0, state.level - 5) * 0.009);
-                    if (pattern.key !== "orbitalTraffic" && rand() < pattern.burstChance + burstPressure) {
+                    const burstChance = pattern.burstChance + burstPressure;
+                    const adjustedBurstChance = isKidsMode()
+                        ? burstChance * (0.32 - state.kidsAssist * 0.08)
+                        : burstChance;
+                    if (pattern.key !== "orbitalTraffic" && rand() < adjustedBurstChance) {
                         for (let i = 0; i < pattern.burstCount; i += 1) {
                             spawnDebris({
                                 pattern,
@@ -2061,12 +2410,40 @@
 
             function activateLaser() {
                 const laser = state.laser;
-                if (state.mode !== "playing" || laser.active || laser.cooldown > 0) return false;
+                if (state.mode !== "playing" || state.abilityMode !== "laser" || laser.active || laser.cooldown > 0) return false;
                 laser.active = true;
                 laser.remaining = LASER_DURATION;
                 laser.sparkCooldown = 0;
                 updateHud();
                 return true;
+            }
+
+            function activateShieldOverload() {
+                const shield = state.shieldOverload;
+                if (state.mode !== "playing" || state.abilityMode !== "shieldOverload" || shield.active || shield.cooldown > 0) return false;
+                shield.active = true;
+                shield.remaining = SHIELD_OVERLOAD_DURATION;
+                createShockwave(state.player.x, state.player.y, "#b8ffd7", SHIELD_OVERLOAD_RADIUS * 1.5, 0.32);
+                createBurst(state.player.x, state.player.y, "#8ef088", 16, 112);
+                updateHud();
+                return true;
+            }
+
+            function activateDodge() {
+                const dodge = state.dodge;
+                if (state.mode !== "playing" || state.abilityMode !== "dodge" || dodge.active || dodge.cooldown > 0) return false;
+                dodge.active = true;
+                dodge.remaining = DODGE_DURATION;
+                dodge.cooldown = DODGE_COOLDOWN;
+                createBurst(state.player.x, state.player.y, "#ffdf89", 8, 66);
+                updateHud();
+                return true;
+            }
+
+            function activateAbility() {
+                if (state.abilityMode === "shieldOverload") return activateShieldOverload();
+                if (state.abilityMode === "dodge") return activateDodge();
+                return activateLaser();
             }
 
             function applyLaserToDebris(dt) {
@@ -2094,10 +2471,16 @@
                         if (debris.laserHeat >= 1 - 1e-6) explodeFuelTank(debris);
                         continue;
                     }
+                    debris.laserBreakHeating = true;
+                    debris.laserBreakHeat = Math.min(1, debris.laserBreakHeat + dt / LASER_DEBRIS_BREAKUP_TIME);
+                    debris.flash = Math.max(debris.flash, 0.08 + debris.laserBreakHeat * 0.08);
+                    debris.laserGlow = Math.max(debris.laserGlow, 0.28 + debris.laserBreakHeat * 0.16);
                     if (debris.size <= 1) {
-                        debris.remove = true;
-                        state.laser.disintegrated += 1;
-                        createBurst(debris.x, debris.y, "#b8f6ff", 6, 92);
+                        if (debris.laserBreakHeat >= 1 - 1e-6) {
+                            debris.remove = true;
+                            state.laser.disintegrated += 1;
+                            createBurst(debris.x, debris.y, "#b8f6ff", 6, 92);
+                        }
                         continue;
                     }
 
@@ -2107,8 +2490,6 @@
                     debris.collisionGrace = Math.max(debris.collisionGrace, 0.18);
                     debris.vy -= LASER_PUSH_FORCE * dt;
                     debris.vx += side * LASER_SIDE_FORCE * dt;
-                    debris.flash = Math.max(debris.flash, 0.08);
-                    debris.laserGlow = Math.max(debris.laserGlow, 0.28);
                     if (firstDeflection) state.laser.deflected += 1;
                     if (debris.laserHitCooldown <= 0) {
                         debris.laserHitCooldown = LASER_SPARK_INTERVAL;
@@ -2116,6 +2497,15 @@
                             createBurst(debris.x, debris.y + debris.r * 0.38, "#8cecff", 2, 54);
                             state.laser.sparkCooldown = 0.055;
                         }
+                    }
+                    if (debris.laserBreakHeat >= 1 - 1e-6) {
+                        const fragmentCount = splitDebris(debris, "laser");
+                        if (!debris.remove) {
+                            debris.remove = true;
+                            createBurst(debris.x, debris.y, "#dffcff", 18, 136);
+                        }
+                        state.laser.brokenUp += 1;
+                        state.score += 12 + debris.size * 4 + fragmentCount * 2;
                     }
                 }
             }
@@ -2129,10 +2519,39 @@
                     if (laser.remaining <= 0.0001) {
                         laser.remaining = 0;
                         laser.active = false;
-                        laser.cooldown = LASER_COOLDOWN;
+                        laser.cooldown = laserCooldownDuration();
                     }
                 } else if (laser.cooldown > 0) {
                     laser.cooldown = Math.max(0, laser.cooldown - dt);
+                }
+            }
+
+            function updateShieldOverload(dt) {
+                const shield = state.shieldOverload;
+                if (shield.active) {
+                    shield.remaining = Math.max(0, shield.remaining - dt);
+                    if (shield.remaining <= 0.0001) {
+                        shield.remaining = 0;
+                        shield.active = false;
+                        shield.cooldown = SHIELD_OVERLOAD_COOLDOWN;
+                    }
+                } else if (shield.cooldown > 0) {
+                    shield.cooldown = Math.max(0, shield.cooldown - dt);
+                }
+            }
+
+            function updateDodge(dt) {
+                const dodge = state.dodge;
+                if (dodge.cooldown > 0) {
+                    dodge.cooldown = Math.max(0, dodge.cooldown - dt);
+                    if (dodge.cooldown < 0.0001) dodge.cooldown = 0;
+                }
+                if (dodge.active) {
+                    dodge.remaining = Math.max(0, dodge.remaining - dt);
+                    if (dodge.remaining <= 0.0001) {
+                        dodge.remaining = 0;
+                        dodge.active = false;
+                    }
                 }
             }
 
@@ -2143,9 +2562,11 @@
                         if (!debris.laserHeating) debris.laserHeat = Math.max(0, debris.laserHeat - dt * 0.62);
                         debris.laserHeating = false;
                     }
+                    if (!debris.laserBreakHeating) debris.laserBreakHeat = 0;
+                    debris.laserBreakHeating = false;
                     if (debris.kind === "panel" || debris.kind === "solarWing" || debris.kind === "foil") {
                         const weavePower = debris.kind === "foil" ? 34 : debris.kind === "solarWing" ? 26 : 22;
-                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * weavePower * DEBRIS_SPEED_MULTIPLIER * dt;
+                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * weavePower * debrisSpeedMultiplier() * dt;
                     }
                     debris.x += debris.vx * dt;
                     debris.y += debris.vy * dt;
@@ -2158,6 +2579,7 @@
                     debris.collisionGrace = Math.max(0, debris.collisionGrace - dt);
                     debris.laserDeflected = Math.max(0, debris.laserDeflected - dt);
                     debris.laserHitCooldown = Math.max(0, debris.laserHitCooldown - dt);
+                    debris.shieldHitCooldown = Math.max(0, debris.shieldHitCooldown - dt);
                     if (
                         debris.y > WORLD.height + debris.r + DEBRIS_EXIT_MARGIN ||
                         debris.x < -debris.r - 100 ||
@@ -2258,7 +2680,7 @@
                                     if (struckSatellites.length) {
                                         for (const satellite of struckSatellites) {
                                             if (satellite.remove) continue;
-                                            if (state.debris.length < MAX_DEBRIS - 3) {
+                                            if (state.debris.length < debrisLimit() - 3) {
                                                 splitDebris(satellite, "cascade");
                                             } else {
                                                 satellite.remove = true;
@@ -2303,7 +2725,12 @@
                                         if (secondary.size <= 1) {
                                             secondary.remove = true;
                                             createBurst(secondary.x, secondary.y, "#d9f5ff", 6, 68);
-                                        } else if (secondary.canCascade && relative > 118 && state.debris.length < MAX_DEBRIS - 5 && rand() < 0.42) {
+                                        } else if (
+                                            secondary.canCascade &&
+                                            relative > 118 &&
+                                            state.debris.length < debrisLimit() - 5 &&
+                                            rand() < (isKidsMode() ? 0.14 : 0.42)
+                                        ) {
                                             splitDebris(secondary, "cascade");
                                         } else {
                                             resolveDebrisContact(a, b, dx, dy, rr);
@@ -2321,10 +2748,21 @@
             }
 
             function applyShieldDamage(color = "#61d8ff", shake = 0.36) {
-                if (state.mode !== "playing" || state.reviewInvincible || state.player.invulnerable > 0) return false;
+                if (
+                    state.mode !== "playing" ||
+                    state.reviewInvincible ||
+                    state.shieldOverload.active ||
+                    state.dodge.active ||
+                    state.player.invulnerable > 0
+                ) return false;
+                if (isKidsMode()) {
+                    state.kidsAssist = Math.min(1, state.kidsAssist + 0.26);
+                    state.kidsCleanTime = 0;
+                    state.kidsHits += 1;
+                }
                 state.shields -= 1;
                 state.shake = Math.max(state.shake, shake);
-                state.player.invulnerable = 1.35;
+                state.player.invulnerable = isKidsMode() ? 2.1 : 1.35;
                 createBurst(
                     state.player.x,
                     state.player.y,
@@ -2337,11 +2775,33 @@
                     state.joystick.active = false;
                     state.laser.active = false;
                     state.laser.remaining = 0;
+                    state.shieldOverload.active = false;
+                    state.shieldOverload.remaining = 0;
+                    state.dodge.active = false;
+                    state.dodge.remaining = 0;
                     syncScreenWakeLock();
                     showGameOverMessage();
                 }
                 updateHud();
                 return true;
+            }
+
+            function repelDebrisFromShield(debris, dx, dy, distance, impactRadius) {
+                const nx = distance > 0.001 ? -dx / distance : Math.sin(debris.seed) < 0 ? -1 : 1;
+                const ny = distance > 0.001 ? -dy / distance : -0.2;
+                const bounceSpeed = 250 + debris.size * 42;
+                debris.x = state.player.x + nx * (impactRadius + 4);
+                debris.y = state.player.y + ny * (impactRadius + 4);
+                debris.vx = nx * bounceSpeed + state.player.vx * 0.22;
+                debris.vy = ny * bounceSpeed + state.player.vy * 0.22;
+                debris.flash = Math.max(debris.flash, 0.2);
+                debris.laserGlow = Math.max(debris.laserGlow, 0.18);
+                debris.collisionGrace = Math.max(debris.collisionGrace, 0.35);
+                debris.shieldHitCooldown = 0.28;
+                state.shieldOverload.blocked += 1;
+                state.shake = Math.max(state.shake, 0.1);
+                createBurst(debris.x - nx * debris.r * 0.5, debris.y - ny * debris.r * 0.5, "#b8ffd7", 5, 72);
+                createShockwave(state.player.x, state.player.y, "#8ef088", SHIELD_OVERLOAD_RADIUS * 1.35, 0.24);
             }
 
             function handlePlayerCollisions() {
@@ -2351,8 +2811,25 @@
                     if (debris.remove) continue;
                     const dx = player.x - debris.x;
                     const dy = player.y - debris.y;
-                    const hitRadius = PLAYER_RADIUS + debris.r * 0.78 * (debris.hitScale || 1);
+                    const debrisHitScale = isKidsMode() ? 0.66 : 0.78;
+                    const hitRadius = PLAYER_RADIUS + debris.r * debrisHitScale * (debris.hitScale || 1);
                     const distanceSq = dx * dx + dy * dy;
+                    if (state.dodge.active) {
+                        if (distanceSq <= hitRadius * hitRadius) state.dodge.dodgedFrames += 1;
+                        continue;
+                    }
+                    if (state.shieldOverload.active && debris.shieldHitCooldown <= 0) {
+                        const shieldHitRadius = SHIELD_OVERLOAD_RADIUS + debris.r * 0.72 * (debris.hitScale || 1);
+                        if (distanceSq <= shieldHitRadius * shieldHitRadius) {
+                            if (debris.kind === "fuelTank") {
+                                state.shieldOverload.blocked += 1;
+                                explodeFuelTank(debris);
+                            } else {
+                                repelDebrisFromShield(debris, dx, dy, Math.sqrt(distanceSq), shieldHitRadius);
+                            }
+                            continue;
+                        }
+                    }
                     if (!debris.scoredNear && distanceSq < (hitRadius + 24) * (hitRadius + 24) && distanceSq > hitRadius * hitRadius) {
                         debris.scoredNear = true;
                         state.score += 2 + state.level * 0.35;
@@ -2447,10 +2924,15 @@
                     debris.canCascade = false;
                     debris.collisionGrace = state.reentry.clearanceDuration + 1;
                     debris.laserHeating = false;
+                    debris.laserBreakHeating = false;
                 }
                 state.joystick.active = false;
                 state.laser.active = false;
                 state.laser.remaining = 0;
+                state.shieldOverload.active = false;
+                state.shieldOverload.remaining = 0;
+                state.dodge.active = false;
+                state.dodge.remaining = 0;
                 syncScreenWakeLock();
                 state.player.invulnerable = 0;
                 state.lastInput.x = 0;
@@ -2469,9 +2951,11 @@
                         debris.laserHeat = Math.max(0, debris.laserHeat - dt * 0.62);
                         debris.laserHeating = false;
                     }
+                    debris.laserBreakHeat = 0;
+                    debris.laserBreakHeating = false;
                     if (debris.kind === "panel" || debris.kind === "solarWing" || debris.kind === "foil") {
                         const weavePower = debris.kind === "foil" ? 34 : debris.kind === "solarWing" ? 26 : 22;
-                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * weavePower * DEBRIS_SPEED_MULTIPLIER * dt;
+                        debris.vx += Math.sin(debris.age * 3.1 + debris.seed) * debris.weave * weavePower * debrisSpeedMultiplier() * dt;
                     }
                     debris.x += debris.vx * dt;
                     debris.y += (debris.vy - cameraSeparation) * dt;
@@ -2483,6 +2967,7 @@
                     debris.laserGlow = Math.max(0, debris.laserGlow - dt * 0.72);
                     debris.laserDeflected = Math.max(0, debris.laserDeflected - dt);
                     debris.laserHitCooldown = Math.max(0, debris.laserHitCooldown - dt);
+                    debris.shieldHitCooldown = Math.max(0, debris.shieldHitCooldown - dt);
                     if (
                         debris.y > WORLD.height + debris.r + DEBRIS_EXIT_MARGIN ||
                         debris.y < -debris.r - 140 ||
@@ -2600,6 +3085,14 @@
                 state.particles = state.particles.filter((particle) => particle.life > 0);
             }
 
+            function updateKidsAssist(dt) {
+                if (!isKidsMode()) return;
+                state.kidsCleanTime += dt;
+                if (state.kidsCleanTime > 18) {
+                    state.kidsAssist = Math.max(0.08, state.kidsAssist - dt * 0.005);
+                }
+            }
+
             function update(dt) {
                 if (state.mode === "reentry") {
                     updateReentry(dt);
@@ -2618,6 +3111,7 @@
                 }
                 state.survivalTime += dt;
                 state.score += dt * (9.4 + state.level * 1.55 + state.debris.length * 0.018);
+                updateKidsAssist(dt);
                 updatePhase(dt);
                 updatePlasmaIntensity(dt);
                 if (state.mode !== "playing") {
@@ -2628,6 +3122,8 @@
                 updateSpawning(dt);
                 updateInput(dt);
                 updateLaser(dt);
+                updateShieldOverload(dt);
+                updateDodge(dt);
                 updateAstronautSpawning(dt);
                 updateCollectibles(dt);
                 updateDebris(dt);
@@ -3410,6 +3906,64 @@
                 ctx.restore();
             }
 
+            function createDebrisAtmosphereTexture(hot) {
+                const texture = document.createElement("canvas");
+                texture.width = 160;
+                texture.height = 220;
+                const glowCtx = texture.getContext("2d");
+                const centerX = texture.width / 2;
+                const noseY = 52;
+                const r = 25;
+                const wakeLength = 148;
+                glowCtx.translate(centerX, noseY);
+                glowCtx.globalCompositeOperation = "lighter";
+
+                const wake = glowCtx.createLinearGradient(0, -r * 1.25, 0, wakeLength);
+                wake.addColorStop(0, hot ? "rgba(255, 244, 198, 0.78)" : "rgba(203, 251, 255, 0.72)");
+                wake.addColorStop(0.28, hot ? "rgba(255, 126, 68, 0.46)" : "rgba(91, 214, 255, 0.38)");
+                wake.addColorStop(1, "rgba(67, 154, 255, 0)");
+                glowCtx.fillStyle = wake;
+                glowCtx.beginPath();
+                glowCtx.moveTo(0, -r * 1.36);
+                glowCtx.bezierCurveTo(r * 0.92, -r * 1.08, r * 1.18, -r * 0.18, r * 0.78, r * 0.68);
+                glowCtx.bezierCurveTo(r * 0.48, r * 1.18, r * 0.34, wakeLength * 0.78, 0, wakeLength);
+                glowCtx.bezierCurveTo(-r * 0.34, wakeLength * 0.78, -r * 0.48, r * 1.18, -r * 0.78, r * 0.68);
+                glowCtx.bezierCurveTo(-r * 1.18, -r * 0.18, -r * 0.92, -r * 1.08, 0, -r * 1.36);
+                glowCtx.closePath();
+                glowCtx.fill();
+
+                glowCtx.lineCap = "round";
+                glowCtx.strokeStyle = hot ? "rgba(255, 196, 112, 0.94)" : "rgba(190, 248, 255, 0.88)";
+                glowCtx.lineWidth = 4;
+                glowCtx.shadowColor = hot ? "#ff7448" : "#73e6ff";
+                glowCtx.shadowBlur = 12;
+                glowCtx.beginPath();
+                glowCtx.arc(0, -r * 0.12, r * 1.12, Math.PI * 1.08, Math.PI * 1.92);
+                glowCtx.stroke();
+
+                if (hot) {
+                    glowCtx.strokeStyle = "rgba(255, 91, 53, 0.82)";
+                    glowCtx.lineWidth = 2.5;
+                    glowCtx.shadowColor = "#ff5739";
+                    glowCtx.shadowBlur = 8;
+                    glowCtx.beginPath();
+                    glowCtx.moveTo(-r * 0.62, -r * 0.76);
+                    glowCtx.quadraticCurveTo(0, -r * 1.2, r * 0.62, -r * 0.76);
+                    glowCtx.stroke();
+                }
+                return texture;
+            }
+
+            function getDebrisAtmosphereTextures() {
+                if (!debrisAtmosphereTextures) {
+                    debrisAtmosphereTextures = {
+                        cool: createDebrisAtmosphereTexture(false),
+                        hot: createDebrisAtmosphereTexture(true)
+                    };
+                }
+                return debrisAtmosphereTextures;
+            }
+
             function drawDebrisAtmosphericGlow(debris) {
                 if (state.mode !== "playing" || state.plasmaIntensity <= 0.02) return;
                 const speed = Math.hypot(debris.vx, debris.vy);
@@ -3418,49 +3972,20 @@
                 const visibility = Math.pow(strength, 0.62);
                 const heat = smoothstep((strength - 0.18) / 0.72);
                 const r = debris.r;
-                const wakeLength = r * (1.7 + strength * 2.2);
                 const flowAngle = Math.atan2(debris.vy, debris.vx) + Math.PI / 2;
                 const flicker = 0.92 + Math.sin(state.survivalTime * 18 + debris.seed) * 0.08;
+                const width = r * (4.1 + strength * 0.35);
+                const height = r * (3.5 + strength * 2.2);
+                const textures = getDebrisAtmosphereTextures();
 
                 ctx.save();
                 ctx.rotate(flowAngle);
                 ctx.globalCompositeOperation = "lighter";
-
-                const wake = ctx.createLinearGradient(0, -r * 1.25, 0, wakeLength);
-                wake.addColorStop(0, heat > 0.36 ? "rgba(255, 244, 198, 0.78)" : "rgba(203, 251, 255, 0.72)");
-                wake.addColorStop(0.28, heat > 0.36 ? "rgba(255, 126, 68, 0.46)" : "rgba(91, 214, 255, 0.38)");
-                wake.addColorStop(1, "rgba(67, 154, 255, 0)");
-                ctx.globalAlpha = visibility * (0.22 + strength * 0.34) * flicker;
-                ctx.fillStyle = wake;
-                ctx.beginPath();
-                ctx.moveTo(0, -r * 1.36);
-                ctx.bezierCurveTo(r * 0.92, -r * 1.08, r * 1.18, -r * 0.18, r * 0.78, r * 0.68);
-                ctx.bezierCurveTo(r * 0.48, r * 1.18, r * 0.34, wakeLength * 0.78, 0, wakeLength);
-                ctx.bezierCurveTo(-r * 0.34, wakeLength * 0.78, -r * 0.48, r * 1.18, -r * 0.78, r * 0.68);
-                ctx.bezierCurveTo(-r * 1.18, -r * 0.18, -r * 0.92, -r * 1.08, 0, -r * 1.36);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.globalAlpha = visibility * (0.4 + strength * 0.45);
-                ctx.strokeStyle = heat > 0.34 ? "rgba(255, 196, 112, 0.94)" : "rgba(190, 248, 255, 0.88)";
-                ctx.lineWidth = Math.max(1, r * (0.1 + strength * 0.09));
-                ctx.lineCap = "round";
-                ctx.shadowColor = heat > 0.34 ? "#ff7448" : "#73e6ff";
-                ctx.shadowBlur = 4 + strength * 9;
-                ctx.beginPath();
-                ctx.arc(0, -r * 0.12, r * (1.02 + strength * 0.12), Math.PI * 1.08, Math.PI * 1.92);
-                ctx.stroke();
-
-                if (heat > 0.18) {
-                    ctx.globalAlpha = visibility * heat * 0.68;
-                    ctx.strokeStyle = "rgba(255, 91, 53, 0.78)";
-                    ctx.lineWidth = Math.max(1, r * 0.09);
-                    ctx.shadowColor = "#ff5739";
-                    ctx.shadowBlur = 7;
-                    ctx.beginPath();
-                    ctx.moveTo(-r * 0.62, -r * 0.76);
-                    ctx.quadraticCurveTo(0, -r * 1.2, r * 0.62, -r * 0.76);
-                    ctx.stroke();
+                ctx.globalAlpha = visibility * flicker * (0.72 + strength * 0.28) * (1 - heat * 0.56);
+                ctx.drawImage(textures.cool, -width / 2, -r * 1.72, width, height);
+                if (heat > 0.02) {
+                    ctx.globalAlpha = visibility * flicker * heat * 0.92;
+                    ctx.drawImage(textures.hot, -width / 2, -r * 1.72, width, height);
                 }
                 ctx.restore();
             }
@@ -3486,12 +4011,13 @@
                 ctx.translate(debris.x, debris.y);
                 const r = debris.r;
                 const fuelHeat = debris.kind === "fuelTank" ? clamp(debris.laserHeat, 0, 1) : 0;
+                const breakupHeat = debris.kind === "fuelTank" ? 0 : clamp(debris.laserBreakHeat, 0, 1);
                 drawDebrisAtmosphericGlow(debris);
-                if (debris.laserGlow > 0) {
+                if (debris.laserGlow > 0 || breakupHeat > 0) {
                     ctx.save();
                     ctx.globalCompositeOperation = "lighter";
-                    ctx.globalAlpha = clamp(debris.laserGlow / 0.28, 0, 1);
-                    const glowSize = r * 4.7;
+                    ctx.globalAlpha = clamp(Math.max(debris.laserGlow / 0.28, breakupHeat * 1.18), 0, 1);
+                    const glowSize = r * (4.7 + breakupHeat * 1.2);
                     ctx.drawImage(getDebrisLaserGlowTexture(), -glowSize / 2, -glowSize / 2, glowSize, glowSize);
                     ctx.restore();
                 }
@@ -3519,8 +4045,10 @@
                     debris.kind === "satellite" || debris.kind === "cubesat" || debris.kind === "operationalSatellite" ? "#d6c29b" :
                     "#dbe7f2";
                 ctx.fillStyle = metal;
-                ctx.strokeStyle = debris.laserGlow > 0 ? "#9cefff" : debris.flash > 0 ? "#ffffff" : "rgba(9, 16, 28, 0.72)";
-                ctx.lineWidth = Math.max(1.4, r * 0.12);
+                ctx.strokeStyle = breakupHeat > 0.72
+                    ? "#fff3c2"
+                    : debris.laserGlow > 0 ? "#9cefff" : debris.flash > 0 ? "#ffffff" : "rgba(9, 16, 28, 0.72)";
+                ctx.lineWidth = Math.max(1.4, r * (0.12 + breakupHeat * 0.06));
 
                 if (debris.kind === "chunk") {
                     ctx.beginPath();
@@ -3719,126 +4247,138 @@
                 ctx.restore();
             }
 
+            function createSpacecraftPlasmaTexture(hot) {
+                const texture = document.createElement("canvas");
+                texture.width = 180;
+                texture.height = 300;
+                const plasmaCtx = texture.getContext("2d");
+                const centerX = texture.width / 2;
+                const originY = 82;
+                const wakeLength = 132;
+                const hullWidth = 33;
+                const wakeWidth = 15;
+                plasmaCtx.translate(centerX, originY);
+                plasmaCtx.globalCompositeOperation = "lighter";
+
+                plasmaCtx.save();
+                plasmaCtx.scale(1, 1.42);
+                const ionHalo = plasmaCtx.createRadialGradient(0, -12, 3, 0, -3, 62);
+                ionHalo.addColorStop(0, hot ? "rgba(255, 183, 108, 0.42)" : "rgba(210, 252, 255, 0.34)");
+                ionHalo.addColorStop(0.48, hot ? "rgba(255, 76, 46, 0.2)" : "rgba(87, 207, 255, 0.14)");
+                ionHalo.addColorStop(1, "rgba(66, 154, 255, 0)");
+                plasmaCtx.fillStyle = ionHalo;
+                plasmaCtx.beginPath();
+                plasmaCtx.arc(0, -3, 62, 0, Math.PI * 2);
+                plasmaCtx.fill();
+                plasmaCtx.restore();
+
+                const envelope = plasmaCtx.createLinearGradient(0, -66, 0, wakeLength);
+                envelope.addColorStop(0, "rgba(226, 255, 255, 0.94)");
+                envelope.addColorStop(0.18, hot ? "rgba(255, 203, 132, 0.68)" : "rgba(100, 225, 255, 0.56)");
+                envelope.addColorStop(0.52, hot ? "rgba(255, 126, 72, 0.3)" : "rgba(69, 179, 255, 0.22)");
+                envelope.addColorStop(1, hot ? "rgba(255, 75, 46, 0)" : "rgba(60, 154, 255, 0)");
+                plasmaCtx.fillStyle = envelope;
+                plasmaCtx.beginPath();
+                plasmaCtx.moveTo(0, -64);
+                plasmaCtx.bezierCurveTo(hullWidth * 0.54, -57, hullWidth * 0.92, -30, hullWidth, -4);
+                plasmaCtx.bezierCurveTo(hullWidth * 1.04, 17, hullWidth * 0.72, 37, wakeWidth, 54);
+                plasmaCtx.bezierCurveTo(wakeWidth * 0.8, 71, wakeWidth * 0.42, wakeLength * 0.9, 0, wakeLength);
+                plasmaCtx.bezierCurveTo(-wakeWidth * 0.42, wakeLength * 0.9, -wakeWidth * 0.8, 71, -wakeWidth, 54);
+                plasmaCtx.bezierCurveTo(-hullWidth * 0.72, 37, -hullWidth * 1.04, 17, -hullWidth, -4);
+                plasmaCtx.bezierCurveTo(-hullWidth * 0.92, -30, -hullWidth * 0.54, -57, 0, -64);
+                plasmaCtx.closePath();
+                plasmaCtx.fill();
+
+                plasmaCtx.lineCap = "round";
+                plasmaCtx.lineJoin = "round";
+                plasmaCtx.shadowColor = hot ? "#ff7147" : "#79e8ff";
+                plasmaCtx.shadowBlur = 18;
+                plasmaCtx.lineWidth = 3.8;
+                for (const side of [-1, 1]) {
+                    const leadingEdge = plasmaCtx.createLinearGradient(0, -56, side * hullWidth, 34);
+                    leadingEdge.addColorStop(0, "rgba(248, 255, 237, 0.96)");
+                    leadingEdge.addColorStop(0.34, hot ? "rgba(255, 177, 86, 0.96)" : "rgba(145, 241, 255, 0.9)");
+                    leadingEdge.addColorStop(0.74, hot ? "rgba(255, 70, 42, 0.76)" : "rgba(80, 199, 255, 0.58)");
+                    leadingEdge.addColorStop(1, "rgba(63, 159, 255, 0)");
+                    plasmaCtx.strokeStyle = leadingEdge;
+                    plasmaCtx.beginPath();
+                    plasmaCtx.moveTo(side * 2, -56);
+                    plasmaCtx.bezierCurveTo(side * 17, -50, side * 23, -29, side * hullWidth, -7);
+                    plasmaCtx.bezierCurveTo(side * 34, 12, side * 22, 30, side * 12, 46);
+                    plasmaCtx.bezierCurveTo(side * 10, 61, side * wakeWidth, wakeLength * 0.76, side * 3, wakeLength);
+                    plasmaCtx.stroke();
+                }
+
+                plasmaCtx.strokeStyle = hot ? "rgba(255, 224, 154, 0.96)" : "rgba(226, 255, 255, 0.92)";
+                plasmaCtx.lineWidth = 3.2;
+                plasmaCtx.shadowBlur = 14;
+                plasmaCtx.beginPath();
+                plasmaCtx.moveTo(-21, -47);
+                plasmaCtx.bezierCurveTo(-11, -69, 11, -69, 21, -47);
+                plasmaCtx.stroke();
+
+                const noseBloom = plasmaCtx.createRadialGradient(0, -51, 1, 0, -49, 25);
+                noseBloom.addColorStop(0, "rgba(255, 244, 209, 0.74)");
+                noseBloom.addColorStop(0.3, hot ? "rgba(255, 205, 126, 0.62)" : "rgba(165, 245, 255, 0.54)");
+                noseBloom.addColorStop(1, "rgba(255, 91, 48, 0)");
+                plasmaCtx.fillStyle = noseBloom;
+                plasmaCtx.beginPath();
+                plasmaCtx.arc(0, -49, 25, 0, Math.PI * 2);
+                plasmaCtx.fill();
+
+                if (hot) {
+                    plasmaCtx.strokeStyle = "rgba(255, 247, 204, 0.92)";
+                    plasmaCtx.lineWidth = 1.8;
+                    plasmaCtx.shadowColor = "#ffb26d";
+                    plasmaCtx.shadowBlur = 7;
+                    for (const side of [-1, 1]) {
+                        plasmaCtx.beginPath();
+                        plasmaCtx.moveTo(side * 3, -52);
+                        plasmaCtx.bezierCurveTo(side * 13, -43, side * 19, -19, side * 22, 2);
+                        plasmaCtx.bezierCurveTo(side * 20, 20, side * 13, 34, side * 8, 46);
+                        plasmaCtx.stroke();
+                    }
+                }
+                return texture;
+            }
+
+            function getSpacecraftPlasmaTextures() {
+                if (!spacecraftPlasmaTextures) {
+                    spacecraftPlasmaTextures = {
+                        cool: createSpacecraftPlasmaTexture(false),
+                        hot: createSpacecraftPlasmaTexture(true)
+                    };
+                }
+                return spacecraftPlasmaTextures;
+            }
+
             function drawAtmosphericPlasma(strength, heat) {
                 const visibility = Math.pow(clamp(strength, 0, 1), 0.55);
                 if (visibility <= 0.002) return;
                 const pulse = 0.94 + Math.sin(state.survivalTime * 17) * 0.06;
                 const orangeMix = smoothstep((heat - 0.28) / 0.6);
                 const wakeLength = 38 + strength * 72;
-                const hullWidth = 28 + strength * 5;
-                const wakeWidth = 8 + strength * 7;
+                const textureHeight = 158 + strength * 142;
+                const textureWidth = 156 + strength * 24;
+                const textures = getSpacecraftPlasmaTextures();
 
                 ctx.save();
                 ctx.globalCompositeOperation = "lighter";
-
-                ctx.save();
-                ctx.scale(1, 1.42);
-                const ionHalo = ctx.createRadialGradient(0, -12, 3, 0, -3, 48 + strength * 14);
-                ionHalo.addColorStop(0, orangeMix > 0.38 ? "rgba(255, 183, 108, 0.38)" : "rgba(210, 252, 255, 0.3)");
-                ionHalo.addColorStop(0.48, orangeMix > 0.38 ? "rgba(255, 76, 46, 0.18)" : "rgba(87, 207, 255, 0.12)");
-                ionHalo.addColorStop(1, "rgba(66, 154, 255, 0)");
-                ctx.globalAlpha = visibility * (0.38 + strength * 0.24) * pulse;
-                ctx.fillStyle = ionHalo;
-                ctx.beginPath();
-                ctx.arc(0, -3, 48 + strength * 14, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-
-                const envelope = ctx.createLinearGradient(0, -62, 0, wakeLength);
-                envelope.addColorStop(0, "rgba(226, 255, 255, 0.94)");
-                envelope.addColorStop(0.18, "rgba(100, 225, 255, 0.52)");
-                envelope.addColorStop(0.52, orangeMix > 0.42 ? "rgba(255, 126, 72, 0.24)" : "rgba(69, 179, 255, 0.2)");
-                envelope.addColorStop(1, "rgba(60, 154, 255, 0)");
-                ctx.globalAlpha = visibility * (0.14 + strength * 0.23) * pulse;
-                ctx.fillStyle = envelope;
-                ctx.beginPath();
-                ctx.moveTo(0, -60 - strength * 4);
-                ctx.bezierCurveTo(hullWidth * 0.54, -57, hullWidth * 0.92, -30, hullWidth, -4);
-                ctx.bezierCurveTo(hullWidth * 1.04, 17, hullWidth * 0.72, 37, wakeWidth, 54);
-                ctx.bezierCurveTo(wakeWidth * 0.8, 71, wakeWidth * 0.42, wakeLength * 0.9, 0, wakeLength);
-                ctx.bezierCurveTo(-wakeWidth * 0.42, wakeLength * 0.9, -wakeWidth * 0.8, 71, -wakeWidth, 54);
-                ctx.bezierCurveTo(-hullWidth * 0.72, 37, -hullWidth * 1.04, 17, -hullWidth, -4);
-                ctx.bezierCurveTo(-hullWidth * 0.92, -30, -hullWidth * 0.54, -57, 0, -60 - strength * 4);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.lineCap = "round";
-                ctx.lineJoin = "round";
-                ctx.shadowColor = orangeMix > 0.42 ? "#ff7147" : "#79e8ff";
-                ctx.shadowBlur = 7 + strength * 11;
-                ctx.lineWidth = 1.6 + strength * 2.2;
-                for (const side of [-1, 1]) {
-                    const leadingEdge = ctx.createLinearGradient(0, -56, side * hullWidth, 34);
-                    leadingEdge.addColorStop(0, "rgba(248, 255, 237, 0.94)");
-                    leadingEdge.addColorStop(0.34, orangeMix > 0.34 ? "rgba(255, 177, 86, 0.94)" : "rgba(145, 241, 255, 0.88)");
-                    leadingEdge.addColorStop(0.74, orangeMix > 0.34 ? "rgba(255, 70, 42, 0.72)" : "rgba(80, 199, 255, 0.54)");
-                    leadingEdge.addColorStop(1, "rgba(63, 159, 255, 0)");
-                    ctx.globalAlpha = visibility * (0.38 + strength * 0.5) * pulse;
-                    ctx.strokeStyle = leadingEdge;
-                    ctx.beginPath();
-                    ctx.moveTo(side * 2, -56);
-                    ctx.bezierCurveTo(side * 17, -50, side * 23, -29, side * hullWidth, -7);
-                    ctx.bezierCurveTo(side * (hullWidth + 1), 12, side * 22, 30, side * 12, 46);
-                    ctx.bezierCurveTo(side * 10, 61, side * wakeWidth, wakeLength * 0.76, side * 3, wakeLength);
-                    ctx.stroke();
-                }
-
-                ctx.globalAlpha = visibility * (0.32 + strength * 0.42);
-                ctx.strokeStyle = orangeMix > 0.48 ? "rgba(255, 224, 154, 0.96)" : "rgba(226, 255, 255, 0.9)";
-                ctx.lineWidth = 1.5 + strength * 1.7;
-                ctx.shadowBlur = 6 + strength * 8;
-                ctx.beginPath();
-                ctx.moveTo(-18 - strength * 3, -47);
-                ctx.bezierCurveTo(-11, -64 - strength * 5, 11, -64 - strength * 5, 18 + strength * 3, -47);
-                ctx.stroke();
-
-                const noseBloomRadius = 19 + strength * 6;
-                const noseBloom = ctx.createRadialGradient(0, -51, 1, 0, -49, noseBloomRadius);
-                noseBloom.addColorStop(0, "rgba(255, 244, 209, 0.72)");
-                noseBloom.addColorStop(0.3, orangeMix > 0.3 ? "rgba(255, 205, 126, 0.56)" : "rgba(165, 245, 255, 0.5)");
-                noseBloom.addColorStop(1, "rgba(255, 91, 48, 0)");
-                ctx.globalAlpha = visibility * (0.1 + orangeMix * 0.2) * pulse;
-                ctx.fillStyle = noseBloom;
-                ctx.beginPath();
-                ctx.arc(0, -49, noseBloomRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                if (orangeMix > 0.16) {
-                    ctx.globalAlpha = visibility * orangeMix * 0.72;
-                    ctx.strokeStyle = "rgba(255, 247, 204, 0.9)";
-                    ctx.lineWidth = 0.9 + strength * 0.9;
-                    ctx.shadowColor = "#ffb26d";
-                    ctx.shadowBlur = 6;
-                    for (const side of [-1, 1]) {
-                        ctx.beginPath();
-                        ctx.moveTo(side * 3, -52);
-                        ctx.bezierCurveTo(side * 13, -43, side * 19, -19, side * 22, 2);
-                        ctx.bezierCurveTo(side * 20, 20, side * 13, 34, side * 8, 46);
-                        ctx.stroke();
-                    }
+                ctx.globalAlpha = visibility * pulse * (0.72 + strength * 0.28) * (1 - orangeMix * 0.5);
+                ctx.drawImage(textures.cool, -textureWidth / 2, -82, textureWidth, textureHeight);
+                if (orangeMix > 0.02) {
+                    ctx.globalAlpha = visibility * pulse * orangeMix * 0.94;
+                    ctx.drawImage(textures.hot, -textureWidth / 2, -82, textureWidth, textureHeight);
                 }
 
                 if (orangeMix > 0.08) {
-                    const hotWake = ctx.createLinearGradient(0, 28, 0, wakeLength);
-                    hotWake.addColorStop(0, "rgba(255, 225, 151, 0.72)");
-                    hotWake.addColorStop(0.44, "rgba(255, 105, 58, 0.46)");
-                    hotWake.addColorStop(1, "rgba(255, 75, 46, 0)");
-                    ctx.globalAlpha = visibility * orangeMix * 0.7;
-                    ctx.strokeStyle = hotWake;
-                    ctx.lineWidth = 2 + strength * 2.4;
-                    ctx.shadowColor = "#ff623d";
-                    ctx.shadowBlur = 10;
-                    ctx.beginPath();
-                    ctx.moveTo(0, 34);
-                    ctx.bezierCurveTo(Math.sin(state.survivalTime * 12) * 3, 52, -3, wakeLength * 0.78, 0, wakeLength * 0.96);
-                    ctx.stroke();
-
-                    ctx.lineWidth = 1.1 + strength * 1.2;
+                    ctx.lineCap = "round";
+                    ctx.lineWidth = 1.3 + strength * 1.5;
                     for (let ribbon = 0; ribbon < 3; ribbon += 1) {
                         const side = ribbon % 2 === 0 ? -1 : 1;
                         const wobble = Math.sin(state.survivalTime * (8.5 + ribbon) + ribbon * 2.3) * (2 + strength * 4);
-                        ctx.globalAlpha = visibility * orangeMix * (0.26 + ribbon * 0.08);
-                        ctx.strokeStyle = ribbon === 1 ? "rgba(255, 211, 132, 0.7)" : "rgba(255, 83, 48, 0.62)";
+                        ctx.globalAlpha = visibility * orangeMix * (0.24 + ribbon * 0.07);
+                        ctx.strokeStyle = ribbon === 1 ? "rgba(255, 211, 132, 0.72)" : "rgba(255, 83, 48, 0.64)";
                         ctx.beginPath();
                         ctx.moveTo(side * (10 + ribbon * 2), 16 + ribbon * 5);
                         ctx.bezierCurveTo(
@@ -3853,7 +4393,6 @@
                     }
                 }
 
-                ctx.shadowBlur = 0;
                 if (strength > 0.42) {
                     const sparkCount = 1 + Math.floor(strength * 5);
                     ctx.fillStyle = orangeMix > 0.42 ? "#ffd28d" : "#b7f6ff";
@@ -3868,6 +4407,74 @@
                     }
                 }
                 ctx.restore();
+            }
+
+            function getShieldOverloadTexture() {
+                if (shieldOverloadTexture) return shieldOverloadTexture;
+                const texture = document.createElement("canvas");
+                texture.width = 256;
+                texture.height = 256;
+                const shieldCtx = texture.getContext("2d");
+                const glow = shieldCtx.createRadialGradient(128, 128, 42, 128, 128, 126);
+                glow.addColorStop(0, "rgba(142, 240, 136, 0.04)");
+                glow.addColorStop(0.52, "rgba(112, 237, 210, 0.12)");
+                glow.addColorStop(0.78, "rgba(97, 216, 255, 0.3)");
+                glow.addColorStop(0.92, "rgba(206, 255, 235, 0.7)");
+                glow.addColorStop(1, "rgba(97, 216, 255, 0)");
+                shieldCtx.fillStyle = glow;
+                shieldCtx.fillRect(0, 0, 256, 256);
+                shieldCtx.strokeStyle = "rgba(209, 255, 235, 0.86)";
+                shieldCtx.lineWidth = 4;
+                shieldCtx.beginPath();
+                shieldCtx.arc(128, 128, 104, 0, Math.PI * 2);
+                shieldCtx.stroke();
+                shieldCtx.strokeStyle = "rgba(97, 216, 255, 0.38)";
+                shieldCtx.lineWidth = 2;
+                shieldCtx.beginPath();
+                shieldCtx.arc(128, 128, 91, 0, Math.PI * 2);
+                shieldCtx.stroke();
+                shieldOverloadTexture = texture;
+                return shieldOverloadTexture;
+            }
+
+            function drawShieldOverload() {
+                const shield = state.shieldOverload;
+                if (!shield.active) return;
+                const elapsed = SHIELD_OVERLOAD_DURATION - shield.remaining;
+                const fadeIn = smoothstep(elapsed / 0.16);
+                const fadeOut = smoothstep(shield.remaining / 0.24);
+                const pulse = 1 + Math.sin(state.survivalTime * 13) * 0.035;
+                const alpha = fadeIn * fadeOut;
+                ctx.save();
+                ctx.globalCompositeOperation = "lighter";
+                ctx.globalAlpha = alpha * 0.82;
+                ctx.scale(pulse, pulse * 1.17);
+                ctx.drawImage(getShieldOverloadTexture(), -73, -73, 146, 146);
+                ctx.globalAlpha = alpha * 0.66;
+                ctx.rotate(state.survivalTime * 0.72);
+                ctx.strokeStyle = "#b8ffd7";
+                ctx.lineWidth = 2.2;
+                ctx.lineCap = "round";
+                for (let index = 0; index < 3; index += 1) {
+                    const start = index * Math.PI * 2 / 3 + Math.sin(state.survivalTime * 2 + index) * 0.08;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 61, start, start + 0.7);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            function dodgeVisualState() {
+                if (!state.dodge.active) {
+                    return { progress: 0, depth: 0, scale: 1 };
+                }
+                const progress = clamp((DODGE_DURATION - state.dodge.remaining) / DODGE_DURATION, 0, 1);
+                const depth = Math.sin(progress * Math.PI);
+                return {
+                    progress,
+                    depth,
+                    scale: 1 - depth * 0.58
+                };
             }
 
             function drawPlayer() {
@@ -3896,6 +4503,8 @@
 
                 ctx.save();
                 ctx.translate(player.x, player.y);
+                const dodgeVisual = dodgeVisualState();
+                ctx.scale(dodgeVisual.scale, dodgeVisual.scale);
 
                 const lateEntry = state.plasmaIntensity;
                 const reentryProgress = clamp(state.reentry.timer / state.reentry.duration, 0, 1);
@@ -3905,6 +4514,7 @@
                     ? 0.2 + cutscenePlasma * 0.8
                     : 0.12 + lateEntry * 0.82;
                 drawAtmosphericPlasma(plasmaStrength, plasmaHeat);
+                drawShieldOverload();
 
                 const sidePower = Math.min(1, Math.abs(input.x));
                 const verticalPower = Math.min(1, Math.abs(input.y));
@@ -4167,10 +4777,21 @@
                 drawBackground();
                 drawVictoryCelebration();
                 drawLaserBeam();
-                for (const debris of state.debris) drawDebris(debris);
+                const drawPlayerSprite = state.mode !== "gameover" || state.shields > 0;
+                if (state.dodge.active && drawPlayerSprite) drawPlayer();
+                for (const debris of state.debris) {
+                    const renderMargin = debris.r * (state.plasmaIntensity > 0.02 ? 6 : 3.5);
+                    if (
+                        debris.x + renderMargin < 0 ||
+                        debris.x - renderMargin > WORLD.width ||
+                        debris.y + renderMargin < 0 ||
+                        debris.y - renderMargin > WORLD.height
+                    ) continue;
+                    drawDebris(debris);
+                }
                 for (const astronaut of state.collectibles) drawAstronaut(astronaut);
                 drawParticles();
-                if (state.mode !== "gameover" || state.shields > 0) drawPlayer();
+                if (!state.dodge.active && drawPlayerSprite) drawPlayer();
                 drawJoystick();
                 ctx.restore();
             }
@@ -4237,6 +4858,12 @@
                 }
             }
 
+            function onAbilityPointerDown(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                activateAbility();
+            }
+
             function toggleFullscreen() {
                 if (!document.fullscreenElement) {
                     shell.requestFullscreen?.();
@@ -4247,6 +4874,7 @@
 
             function renderGameToText() {
                 const cycle = dayCycleState();
+                const dodgeVisual = dodgeVisualState();
                 const relevantDebris = state.debris
                     .slice()
                     .sort((a, b) => Math.hypot(a.x - state.player.x, a.y - state.player.y) - Math.hypot(b.x - state.player.x, b.y - state.player.y))
@@ -4268,7 +4896,9 @@
                         canCascade: debris.canCascade,
                         laserDeflected: Number(debris.laserDeflected.toFixed(2)),
                         laserGlow: Number(debris.laserGlow.toFixed(2)),
-                        laserHeat: debris.kind === "fuelTank" ? Number(debris.laserHeat.toFixed(2)) : null
+                        laserHeat: debris.kind === "fuelTank" ? Number(debris.laserHeat.toFixed(2)) : null,
+                        laserBreakHeat: debris.kind !== "fuelTank" ? Number(debris.laserBreakHeat.toFixed(2)) : null,
+                        shieldHitCooldown: Number(debris.shieldHitCooldown.toFixed(2))
                     }));
                 return JSON.stringify({
                     mode: state.mode,
@@ -4279,8 +4909,12 @@
                         key: currentWavePattern().key,
                         name: currentWaveName()
                     },
+                    difficultyMode: state.difficultyMode,
                     difficulty: Number(difficultyForLevel().toFixed(2)),
-                    debrisSpeedMultiplier: DEBRIS_SPEED_MULTIPLIER,
+                    adaptiveHelp: isKidsMode() ? Number(state.kidsAssist.toFixed(2)) : 0,
+                    adaptiveHits: isKidsMode() ? state.kidsHits : 0,
+                    debrisLimit: debrisLimit(),
+                    debrisSpeedMultiplier: Number(debrisSpeedMultiplier().toFixed(2)),
                     review: {
                         mode: reviewMode,
                         invincible: state.reviewInvincible
@@ -4307,15 +4941,41 @@
                     survivalTime: Number(state.survivalTime.toFixed(2)),
                     shields: state.shields,
                     maxShields: MAX_SHIELDS,
+                    abilityMode: state.abilityMode,
                     laser: {
                         active: state.laser.active,
                         duration: LASER_DURATION,
                         remaining: Number(state.laser.remaining.toFixed(2)),
-                        cooldownDuration: LASER_COOLDOWN,
+                        cooldownDuration: laserCooldownDuration(),
                         cooldown: Number(state.laser.cooldown.toFixed(2)),
                         ready: !state.laser.active && state.laser.cooldown <= 0,
                         disintegrated: state.laser.disintegrated,
-                        deflected: state.laser.deflected
+                        deflected: state.laser.deflected,
+                        brokenUp: state.laser.brokenUp
+                    },
+                    shieldOverload: {
+                        active: state.shieldOverload.active,
+                        duration: SHIELD_OVERLOAD_DURATION,
+                        remaining: Number(state.shieldOverload.remaining.toFixed(2)),
+                        cooldownDuration: SHIELD_OVERLOAD_COOLDOWN,
+                        cooldown: Number(state.shieldOverload.cooldown.toFixed(2)),
+                        ready: !state.shieldOverload.active && state.shieldOverload.cooldown <= 0,
+                        blocked: state.shieldOverload.blocked,
+                        radius: SHIELD_OVERLOAD_RADIUS
+                    },
+                    dodge: {
+                        active: state.dodge.active,
+                        duration: DODGE_DURATION,
+                        remaining: Number(state.dodge.remaining.toFixed(2)),
+                        cooldownDuration: DODGE_COOLDOWN,
+                        cooldown: Number(state.dodge.cooldown.toFixed(2)),
+                        ready: !state.dodge.active && state.dodge.cooldown <= 0,
+                        dodgedFrames: state.dodge.dodgedFrames,
+                        belowDebris: state.dodge.active,
+                        visual: {
+                            progress: Number(dodgeVisual.progress.toFixed(2)),
+                            scale: Number(dodgeVisual.scale.toFixed(2))
+                        }
                     },
                     dayCycle: {
                         duration: DAY_CYCLE_DURATION,
@@ -4397,9 +5057,18 @@
             });
             tiltToggleButton.addEventListener("click", toggleTiltControl);
             tiltCalibrateButton.addEventListener("click", calibrateTiltFromButton);
+            difficultyButtons.forEach((button) => {
+                button.addEventListener("click", () => setDifficultyMode(button.dataset.difficulty));
+            });
+            abilityButtons.forEach((button) => {
+                button.addEventListener("click", () => setAbilityMode(button.dataset.ability));
+            });
             restartButton.addEventListener("click", restartGame);
             pauseButton.addEventListener("click", togglePause);
-            laserButton.addEventListener("click", activateLaser);
+            laserButton.addEventListener("pointerdown", onAbilityPointerDown);
+            laserButton.addEventListener("click", (event) => {
+                if (event.detail === 0) activateAbility();
+            });
             canvas.addEventListener("pointerdown", onPointerDown);
             canvas.addEventListener("pointermove", onPointerMove);
             canvas.addEventListener("pointerup", onPointerUp);
@@ -4413,7 +5082,7 @@
                 if (key === " ") {
                     if (state.mode === "ready") startGame();
                     else if (state.mode === "gameover" || state.mode === "won") restartGame();
-                    else if (state.mode === "playing" && !event.repeat) activateLaser();
+                    else if (state.mode === "playing" && !event.repeat) activateAbility();
                 } else if (key === "Enter") {
                     if (state.mode === "ready") startGame();
                     else if (state.mode === "gameover" || state.mode === "won") restartGame();
